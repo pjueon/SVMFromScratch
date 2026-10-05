@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>6장 · 커널 트릭 — 밑바닥부터 시작하는 SVM</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
 <link rel="stylesheet" href="assets/book.css">
 </head>
 <body>
@@ -15,18 +16,18 @@
   <p class="kicker">6장 · 화면 1</p>
   <h1>커널 트릭</h1>
 
-  <p class="lead">5장의 소프트 마진은 이상치 몇 개가 끼어도 직선을 지켜 냈습니다. 그런데 <b>직선이라는 틀 자체가 맞지 않는 데이터</b>가 있습니다. 5장 화면 3 의 한계 상자에서 &ldquo;점이 원형으로 안팎을 둘러싼 데이터는 <code>C</code> 를 어떻게 정해도 고쳐지지 않는다&rdquo;고 미뤄 둔 것, 1장 화면 4 에서 처음 던진 질문이 이 장의 출발점입니다.
+  <p class="lead">5장의 소프트 마진은 이상치 몇 개가 끼어도 직선을 지켜 냈습니다. 그런데 <b>직선이라는 틀 자체가 맞지 않는 데이터</b>가 있습니다. 5장 화면 3 의 한계 상자에서 &ldquo;점이 원형으로 안팎을 둘러싼 데이터는 \(C\) 를 어떻게 정해도 고쳐지지 않는다&rdquo;고 미뤄 둔 것, 1장 화면 4 에서 처음 던진 질문이 이 장의 출발점입니다.
   이 화면에서는 그런 데이터를 하나 만들고, 직선이 왜 안 되는지 5장에서 쓴 방법 그대로 확인합니다.</p>
 
   <h2>이 장의 데이터</h2>
 
-  <p>점 12개입니다. 안쪽에 파란 점(+1) 6개가 모여 있고, 그 둘레를 빨간 점(−1) 6개가 고리처럼 둘러쌉니다. 5장까지는 좌표가 0 에서 6 까지였지만 이 장에서는 <b>원점 <code>(0, 0)</code> 이 데이터의 한가운데</b>이고 좌표는 −3 에서 3 까지입니다.</p>
+  <p>점 12개입니다. 안쪽에 파란 점(+1) 6개가 모여 있고, 그 둘레를 빨간 점(−1) 6개가 고리처럼 둘러쌉니다. 5장까지는 좌표가 0 에서 6 까지였지만 이 장에서는 <b>원점 \((0, 0)\) 이 데이터의 한가운데</b>이고 좌표는 −3 에서 3 까지입니다.</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th>레이블</th><th>점 (번호: 좌표 <code>(x₁, x₂)</code>)</th></tr>
-      <tr><td>+1 (안쪽)</td><td><code>x⁽¹⁾ (0, 0)</code>, &nbsp;<code>x⁽²⁾ (0.9, 0.3)</code>, &nbsp;<code>x⁽³⁾ (0.5, −0.8)</code>, &nbsp;<code>x⁽⁴⁾ (−0.6, −0.6)</code>, &nbsp;<code>x⁽⁵⁾ (−1, 0.4)</code>, &nbsp;<code>x⁽⁶⁾ (−0.3, 1)</code></td></tr>
-      <tr><td>−1 (바깥)</td><td><code>x⁽⁷⁾ (2.2, 0.4)</code>, &nbsp;<code>x⁽⁸⁾ (−2.2, −0.4)</code>, &nbsp;<code>x⁽⁹⁾ (1.2, 2.2)</code>, &nbsp;<code>x⁽¹⁰⁾ (−1, 2.3)</code>, &nbsp;<code>x⁽¹¹⁾ (−0.8, −2.2)</code>, &nbsp;<code>x⁽¹²⁾ (1.6, −1.8)</code></td></tr>
+      <tr><th>레이블</th><th>점 (번호: 좌표 \((x_{1}, x_{2})\))</th></tr>
+      <tr><td>+1 (안쪽)</td><td>\(x^{(1)} (0, 0)\), &nbsp;\(x^{(2)} (0.9, 0.3)\), &nbsp;\(x^{(3)} (0.5, -0.8)\), &nbsp;\(x^{(4)} (-0.6, -0.6)\), &nbsp;\(x^{(5)} (-1, 0.4)\), &nbsp;\(x^{(6)} (-0.3, 1)\)</td></tr>
+      <tr><td>−1 (바깥)</td><td>\(x^{(7)} (2.2, 0.4)\), &nbsp;\(x^{(8)} (-2.2, -0.4)\), &nbsp;\(x^{(9)} (1.2, 2.2)\), &nbsp;\(x^{(10)} (-1, 2.3)\), &nbsp;\(x^{(11)} (-0.8, -2.2)\), &nbsp;\(x^{(12)} (1.6, -1.8)\)</td></tr>
     </table>
   </div>
 
@@ -76,35 +77,35 @@
         <text x="64" y="158">직선 나: x₂ = 0.5</text>
       </g>
     </svg>
-    <figcaption>파란 원은 +1, 빨간 네모는 −1 입니다. 실선이 직선 가(<code>x₁ = 1.1</code>), 긴 점선이 직선 나(<code>x₂ = 0.5</code>)이고, 짧은 점선은 <code>x⁽⁷⁾</code> 과 <code>x⁽⁸⁾</code> 을 잇는 선분입니다. 그 선분의 한가운데에 <code>x⁽¹⁾</code> 이 있습니다.</figcaption>
+    <figcaption>파란 원은 +1, 빨간 네모는 −1 입니다. 실선이 직선 가(\(x_{1} = 1.1\)), 긴 점선이 직선 나(\(x_{2} = 0.5\))이고, 짧은 점선은 \(x^{(7)}\) 과 \(x^{(8)}\) 을 잇는 선분입니다. 그 선분의 한가운데에 \(x^{(1)}\) 이 있습니다.</figcaption>
   </figure>
 
   <h3>직선으로는 왜 안 갈리나</h3>
 
-  <p>그림의 직선 두 개는 틀리는 점이 있습니다. 직선 가는 <code>x₁ &lt; 1.1</code> 쪽을 +1 로 보면 바깥 점 <code>x⁽⁸⁾, x⁽¹⁰⁾, x⁽¹¹⁾</code> 세 개를 틀리게 두고, 직선 나는 <code>x₂ &lt; 0.5</code> 쪽을 +1 로 보면 다섯 개(<code>x⁽⁶⁾, x⁽⁷⁾, x⁽⁸⁾, x⁽¹¹⁾, x⁽¹²⁾</code>)를 틀립니다. 다른 직선을 찾아도 같을까요? 5장 화면 1 (가) 에서 쓴 &ldquo;섞기&rdquo; 논법으로 확인합니다.
-  <code>x⁽⁷⁾</code> 과 <code>x⁽⁸⁾</code> 는 원점을 가운데 두고 정반대에 놓여 있고, 그 가운데가 안쪽 점 <code>x⁽¹⁾</code> 입니다.</p>
+  <p>그림의 직선 두 개는 틀리는 점이 있습니다. 직선 가는 \(x_{1} &lt; 1.1\) 쪽을 +1 로 보면 바깥 점 \(x^{(8)}, x^{(10)}, x^{(11)}\) 세 개를 틀리게 두고, 직선 나는 \(x_{2} &lt; 0.5\) 쪽을 +1 로 보면 다섯 개(\(x^{(6)}, x^{(7)}, x^{(8)}, x^{(11)}, x^{(12)}\))를 틀립니다. 다른 직선을 찾아도 같을까요? 5장 화면 1 (가) 에서 쓴 &ldquo;섞기&rdquo; 논법으로 확인합니다.
+  \(x^{(7)}\) 과 \(x^{(8)}\) 는 원점을 가운데 두고 정반대에 놓여 있고, 그 가운데가 안쪽 점 \(x^{(1)}\) 입니다.</p>
 
   <div class="table-wrap">
     <table>
       <tr><th style="width:2.2rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
-      <tr><td>1</td><td><code>x⁽¹⁾ = ½ x⁽⁷⁾ + ½ x⁽⁸⁾</code></td><td><code>½(2.2, 0.4) + ½(−2.2, −0.4) = (0, 0)</code> 입니다.</td></tr>
-      <tr><td>2</td><td><code>f(x⁽¹⁾) = ½ f(x⁽⁷⁾) + ½ f(x⁽⁸⁾)</code></td><td><code>f(x) = w·x + b</code> 이고 <code>½ + ½ = 1</code> 이라 <code>b</code> 도 같은 비율로 섞입니다. 어떤 <code>(w, b)</code> 에서도 성립합니다.</td></tr>
-      <tr><td>3</td><td><code>f(x⁽⁷⁾) &lt; 0</code>, <code>f(x⁽⁸⁾) &lt; 0</code> 이므로 오른쪽 <code>&lt; 0</code></td><td>직선이 두 점을 모두 맞게 가르려면, −1 점이니 <code>f</code> 가 음수여야 합니다.</td></tr>
-      <tr><td>4</td><td>그런데 <code>x⁽¹⁾</code> 은 +1 점이라 <code>f(x⁽¹⁾) &gt; 0</code></td><td>2 줄에 의해 왼쪽은 양수, 오른쪽은 음수여야 하니 <b>동시에 만족할 수 없습니다.</b></td></tr>
+      <tr><td>1</td><td>\(x^{(1)} = \tfrac12  x^{(7)} + \tfrac12  x^{(8)}\)</td><td>\(\tfrac12 (2.2, 0.4) + \tfrac12 (-2.2, -0.4) = (0, 0)\) 입니다.</td></tr>
+      <tr><td>2</td><td>\(f(x^{(1)}) = \tfrac12  f(x^{(7)}) + \tfrac12  f(x^{(8)})\)</td><td>\(f(x) = w\cdot x + b\) 이고 \(\tfrac12  + \tfrac12  = 1\) 이라 \(b\) 도 같은 비율로 섞입니다. 어떤 \((w, b)\) 에서도 성립합니다.</td></tr>
+      <tr><td>3</td><td>\(f(x^{(7)}) &lt; 0\), \(f(x^{(8)}) &lt; 0\) 이므로 오른쪽 \(&lt; 0\)</td><td>직선이 두 점을 모두 맞게 가르려면, −1 점이니 \(f\) 가 음수여야 합니다.</td></tr>
+      <tr><td>4</td><td>그런데 \(x^{(1)}\) 은 +1 점이라 \(f(x^{(1)}) > 0\)</td><td>2 줄에 의해 왼쪽은 양수, 오른쪽은 음수여야 하니 <b>동시에 만족할 수 없습니다.</b></td></tr>
     </table>
   </div>
 
-  <p>소프트 마진도 같은 식에서 막힙니다. 점마다 <code>ξ⁽ⁱ⁾ ≥ 1 − y⁽ⁱ⁾f(x⁽ⁱ⁾)</code> 이니 <code>ξ⁽¹⁾ ≥ 1 − f(x⁽¹⁾)</code>, <code>ξ⁽⁷⁾ ≥ 1 + f(x⁽⁷⁾)</code>, <code>ξ⁽⁸⁾ ≥ 1 + f(x⁽⁸⁾)</code> 입니다. 1 : ½ : ½ 의 비율로 더하면
-  <code>ξ⁽¹⁾ + ½ξ⁽⁷⁾ + ½ξ⁽⁸⁾ ≥ 2 + (½f(x⁽⁷⁾) + ½f(x⁽⁸⁾) − f(x⁽¹⁾)) = 2</code> 이고, 계수가 모두 1 이하이니 <code>Σξ ≥ 2</code> 입니다. 어떤 직선을 골라도, <code>C</code> 를 얼마로 키워도 침범의 합은 2 아래로 내려가지 않습니다. 5장에서 하드 마진으로 &ldquo;돌아갈 곳&rdquo;이 있었던 것과 달리 여기는 돌아갈 곳이 없습니다.
+  <p>소프트 마진도 같은 식에서 막힙니다. 점마다 \(\xi ^{(i)} \ge  1 - y^{(i)}f(x^{(i)})\) 이니 \(\xi ^{(1)} \ge  1 - f(x^{(1)})\), \(\xi ^{(7)} \ge  1 + f(x^{(7)})\), \(\xi ^{(8)} \ge  1 + f(x^{(8)})\) 입니다. 1 : ½ : ½ 의 비율로 더하면
+  \(\xi ^{(1)} + \tfrac12 \xi ^{(7)} + \tfrac12 \xi ^{(8)} \ge  2 + (\tfrac12 f(x^{(7)}) + \tfrac12 f(x^{(8)}) - f(x^{(1)})) = 2\) 이고, 계수가 모두 1 이하이니 \(\sum \xi  \ge  2\) 입니다. 어떤 직선을 골라도, \(C\) 를 얼마로 키워도 침범의 합은 2 아래로 내려가지 않습니다. 5장에서 하드 마진으로 &ldquo;돌아갈 곳&rdquo;이 있었던 것과 달리 여기는 돌아갈 곳이 없습니다.
   12 점의 가능한 갈림을 전부 따져 보면(컴퓨터로 확인) 틀리는 점이 3 개보다 적은 직선은 하나도 없습니다. 위의 직선 가가 그 최선입니다.</p>
 
   <div class="box warn">
     <p class="box-t">이상치가 아니라 모양의 문제입니다</p>
-    <p>5장의 이상치는 &ldquo;점 몇 개만 규칙에서 벗어난&rdquo; 경우였고, 그래서 그 점의 침범을 싸게 만들면(작은 <code>C</code>) 직선이 살아났습니다. 이 데이터는 점 하나도 잡음이 아닙니다. 12 점 모두 규칙을 지키고 있는데 규칙의 <b>모양이 원</b>이라서, 직선이라는 도구가 맞지 않습니다.
-    <code>C</code> 로 조절할 수 있는 것은 &ldquo;어느 점을 포기할까&rdquo; 뿐입니다.</p>
+    <p>5장의 이상치는 &ldquo;점 몇 개만 규칙에서 벗어난&rdquo; 경우였고, 그래서 그 점의 침범을 싸게 만들면(작은 \(C\)) 직선이 살아났습니다. 이 데이터는 점 하나도 잡음이 아닙니다. 12 점 모두 규칙을 지키고 있는데 규칙의 <b>모양이 원</b>이라서, 직선이라는 도구가 맞지 않습니다.
+    \(C\) 로 조절할 수 있는 것은 &ldquo;어느 점을 포기할까&rdquo; 뿐입니다.</p>
   </div>
 
-  <p>그렇다면 요구사항은 이렇게 바뀝니다. <b>직선이 아니라 원 같은 곡선으로 가를 수 있어야 하고, 그러면서 지금까지 만든 쌍대문제의 틀(마진, 서포트 벡터, <code>C</code>)은 그대로 쓰고 싶다.</b> 다음 화면에서 그 방법의 아이디어를 봅니다.</p>
+  <p>그렇다면 요구사항은 이렇게 바뀝니다. <b>직선이 아니라 원 같은 곡선으로 가를 수 있어야 하고, 그러면서 지금까지 만든 쌍대문제의 틀(마진, 서포트 벡터, \(C\))은 그대로 쓰고 싶다.</b> 다음 화면에서 그 방법의 아이디어를 봅니다.</p>
 
   <div class="box note">
     <p class="box-t">이 장의 진행</p>
@@ -121,8 +122,8 @@
   <div class="box good">
     <p class="box-t">이 장에서 갚는 빚</p>
     <ul>
-      <li>원형 데이터는 <code>C</code> 로 안 고쳐진다 → 이 화면에서 이유를 확인하고, 화면 2~6 에서 해결 (1장 화면 4, 5장 화면 3)</li>
-      <li>쌍대문제에 내적 <code>x⁽ⁱ⁾·x⁽ʲ⁾</code> 만 남았다 → 화면 4~5 (4장 화면 5)</li>
+      <li>원형 데이터는 \(C\) 로 안 고쳐진다 → 이 화면에서 이유를 확인하고, 화면 2~6 에서 해결 (1장 화면 4, 5장 화면 3)</li>
+      <li>쌍대문제에 내적 \(x^{(i)}\cdot x^{(j)}\) 만 남았다 → 화면 4~5 (4장 화면 5)</li>
     </ul>
   </div>
 </section>
@@ -133,36 +134,36 @@
   <h2>아이디어 — 차원을 하나 올리면 갈린다</h2>
 
   <p>화면 1 의 데이터를 다시 보면 레이블을 정하는 것은 <b>원점에서 얼마나 먼가</b>입니다. 안쪽 점은 원점 가까이, 바깥 점은 멀리 있습니다. 원점까지의 거리는 좌표 둘로 계산되는 값이니, 그 값을 <b>새 좌표 하나</b>로 만들어 점에 붙여 봅시다.
-  피타고라스 정리에 따라 점 <code>(x₁, x₂)</code> 의 원점까지 거리의 제곱은 <code>x₁² + x₂²</code> 이고, 이것을 <code>z</code> 라 부릅니다(제곱근을 안 씌우는 이유는 뒤에서 나옵니다).</p>
+  피타고라스 정리에 따라 점 \((x_{1}, x_{2})\) 의 원점까지 거리의 제곱은 \(x_{1}^{2} + x_{2}^{2}\) 이고, 이것을 \(z\) 라 부릅니다(제곱근을 안 씌우는 이유는 뒤에서 나옵니다).</p>
 
-  <p style="text-align:center;font-size:1.05rem"><code>(x₁, x₂) &nbsp;→&nbsp; (x₁, x₂, z)</code>, &nbsp;&nbsp; <code>z = x₁² + x₂²</code></p>
+  <p style="text-align:center;font-size:1.05rem">\((x_{1}, x_{2}) \; \to \;  (x_{1}, x_{2}, z)\), &nbsp;&nbsp; \(z = x_{1}^{2} + x_{2}^{2}\)</p>
 
-  <p>평면 위의 점이 <b>높이 <code>z</code> 를 얻어 3차원 공간의 점</b>이 됩니다. 12 점의 <code>z</code> 를 계산하면 이렇습니다(예: <code>x⁽⁵⁾ = (−1, 0.4)</code> 는 <code>1 + 0.16 = 1.16</code>).</p>
+  <p>평면 위의 점이 <b>높이 \(z\) 를 얻어 3차원 공간의 점</b>이 됩니다. 12 점의 \(z\) 를 계산하면 이렇습니다(예: \(x^{(5)} = (-1, 0.4)\) 는 \(1 + 0.16 = 1.16\)).</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th>레이블</th><th><code>z = x₁² + x₂²</code> (점 번호 순서)</th><th>범위</th></tr>
-      <tr><td>+1 (안쪽, <code>x⁽¹⁾~x⁽⁶⁾</code>)</td><td>0, 0.9, 0.89, 0.72, 1.16, 1.09</td><td>모두 <b>1.16 이하</b></td></tr>
-      <tr><td>−1 (바깥, <code>x⁽⁷⁾~x⁽¹²⁾</code>)</td><td>5, 5, 6.28, 6.29, 5.48, 5.8</td><td>모두 <b>5 이상</b></td></tr>
+      <tr><th>레이블</th><th>\(z = x_{1}^{2} + x_{2}^{2}\) (점 번호 순서)</th><th>범위</th></tr>
+      <tr><td>+1 (안쪽, \(x^{(1)}\sim x^{(6)}\))</td><td>0, 0.9, 0.89, 0.72, 1.16, 1.09</td><td>모두 <b>1.16 이하</b></td></tr>
+      <tr><td>−1 (바깥, \(x^{(7)}\sim x^{(12)}\))</td><td>5, 5, 6.28, 6.29, 5.48, 5.8</td><td>모두 <b>5 이상</b></td></tr>
     </table>
   </div>
 
-  <p>안쪽 점은 모두 낮고 바깥 점은 모두 높습니다. 1.16 과 5 사이에 아무 높이나 하나 고르면(예: <code>z = 3</code>) <b>수평한 평면 하나가 두 무리를 가릅니다.</b> 1장 화면 2 에서 초평면은 3차원에서는 평면이라고 했습니다. SVM 이 하는 일, 곧 초평면으로 가르는 일은 3차원에서도 똑같습니다.
-  새 공간의 점 <code>p = (x₁, x₂, z)</code> 에서 이 평면은 <code>w = (0, 0, −1)</code>, <code>b = c</code>, 곧 <code>f(p) = w·p + b = c − z</code> 이고 안쪽(+1)이 <code>f &gt; 0</code> 입니다(<code>c</code> 는 평면의 높이).</p>
+  <p>안쪽 점은 모두 낮고 바깥 점은 모두 높습니다. 1.16 과 5 사이에 아무 높이나 하나 고르면(예: \(z = 3\)) <b>수평한 평면 하나가 두 무리를 가릅니다.</b> 1장 화면 2 에서 초평면은 3차원에서는 평면이라고 했습니다. SVM 이 하는 일, 곧 초평면으로 가르는 일은 3차원에서도 똑같습니다.
+  새 공간의 점 \(p = (x_{1}, x_{2}, z)\) 에서 이 평면은 \(w = (0, 0, -1)\), \(b = c\), 곧 \(f(p) = w\cdot p + b = c - z\) 이고 안쪽(+1)이 \(f > 0\) 입니다(\(c\) 는 평면의 높이).</p>
 
   <h3>3차원의 평면은 2차원에서는 원입니다</h3>
 
-  <p><code>c − z = 0</code> 인 점들은 <code>x₁² + x₂² = c</code> 를 만족합니다. 원점 중심, 반지름 <code>√c</code> 인 원입니다. 곧 3차원에서 평면으로 가른 것을 원래의 평면으로 되돌리면 <b>원으로 가른 것</b>이 됩니다. 직선으로는 안 되던 일을, 직선 하나(3차원에서는 평면 하나)로 해결했습니다.</p>
+  <p>\(c - z = 0\) 인 점들은 \(x_{1}^{2} + x_{2}^{2} = c\) 를 만족합니다. 원점 중심, 반지름 \(\sqrt{c}\) 인 원입니다. 곧 3차원에서 평면으로 가른 것을 원래의 평면으로 되돌리면 <b>원으로 가른 것</b>이 됩니다. 직선으로는 안 되던 일을, 직선 하나(3차원에서는 평면 하나)로 해결했습니다.</p>
 
   <div class="box note">
     <p class="box-t">원의 중심이 원점이 아니어도 될까요</p>
-    <p>중심이 <code>(a, b)</code>, 반지름이 <code>r</code> 인 원은 <code>(x₁ − a)² + (x₂ − b)² = r²</code>, 전개해서 정리하면 <code>x₁² + x₂² = 2a·x₁ + 2b·x₂ + (r² − a² − b²)</code> 입니다. 왼쪽이 <code>z</code> 이니 <code>z = 2a·x₁ + 2b·x₂ + (상수)</code>, 곧 <code>(x₁, x₂, z)</code> 세 좌표에 대한 평면입니다. 그래서 새 좌표로 <code>z</code> 만 남기지 않고 <code>x₁, x₂</code> 도 함께 두는 것이 안전합니다(화면 3).</p>
+    <p>중심이 \((a, b)\), 반지름이 \(r\) 인 원은 \((x_{1} - a)^{2} + (x_{2} - b)^{2} = r^{2}\), 전개해서 정리하면 \(x_{1}^{2} + x_{2}^{2} = 2a\cdot x_{1} + 2b\cdot x_{2} + (r^{2} - a^{2} - b^{2})\) 입니다. 왼쪽이 \(z\) 이니 \(z = 2a\cdot x_{1} + 2b\cdot x_{2} + (\text{상수})\), 곧 \((x_{1}, x_{2}, z)\) 세 좌표에 대한 평면입니다. 그래서 새 좌표로 \(z\) 만 남기지 않고 \(x_{1}, x_{2}\) 도 함께 두는 것이 안전합니다(화면 3).</p>
   </div>
 
   <h3>직접 움직여 보기</h3>
 
-  <p>결론은 위에 적었습니다. 위젯은 이것을 확인하는 도구입니다. <b>올리기</b> 슬라이더가 0 이면 모든 점이 바닥(원래의 평면)에 놓여 있고, 1 이면 각 점이 <code>z = x₁² + x₂²</code> 높이까지 올라갑니다(그림의 높이는 <code>z</code> 의 절반으로 줄여 그렸습니다).
-  <b>회전</b>으로 보는 방향을, <b>평면 높이</b>로 가르는 평면의 <code>c</code> 를 바꿉니다. 점선은 점에서 바닥으로 내린 수선, 바닥의 점선 원과 평면 위의 실선 원은 <code>x₁² + x₂² = c</code> 입니다.</p>
+  <p>결론은 위에 적었습니다. 위젯은 이것을 확인하는 도구입니다. <b>올리기</b> 슬라이더가 0 이면 모든 점이 바닥(원래의 평면)에 놓여 있고, 1 이면 각 점이 \(z = x_{1}^{2} + x_{2}^{2}\) 높이까지 올라갑니다(그림의 높이는 \(z\) 의 절반으로 줄여 그렸습니다).
+  <b>회전</b>으로 보는 방향을, <b>평면 높이</b>로 가르는 평면의 \(c\) 를 바꿉니다. 점선은 점에서 바닥으로 내린 수선, 바닥의 점선 원과 평면 위의 실선 원은 \(x_{1}^{2} + x_{2}^{2} = c\) 입니다.</p>
 
   <figure class="fig">
     <svg id="l-svg" viewBox="0 0 460 340" role="img" aria-label="원형 데이터를 z = x1² + x2² 높이로 올려 3차원에 놓고, 수평한 평면 z = c 가 안쪽 파란 점과 바깥 빨간 점을 가르는지 보는 의사 3차원 그림" style="max-width:34rem">
@@ -171,7 +172,7 @@
       <g id="l-plane"></g>
       <g id="l-above"></g>
     </svg>
-    <figcaption>파란 원은 +1, 빨간 네모는 −1 입니다. 반투명한 판이 <code>z = c</code> 평면, 실선 원이 그 평면과 같은 높이에서 그린 반지름 <code>√c</code> 의 원, 바닥의 점선 원이 그 원을 평면으로 되돌린 결정경계입니다.</figcaption>
+    <figcaption>파란 원은 +1, 빨간 네모는 −1 입니다. 반투명한 판이 \(z = c\) 평면, 실선 원이 그 평면과 같은 높이에서 그린 반지름 \(\sqrt{c}\) 의 원, 바닥의 점선 원이 그 원을 평면으로 되돌린 결정경계입니다.</figcaption>
   </figure>
 
   <div style="display:flex;gap:.7rem;align-items:center;justify-content:center;font-size:.9rem;flex-wrap:wrap;margin-bottom:.4rem">
@@ -299,33 +300,33 @@
     <ol>
       <li><b>올리기 0.</b> 모든 점이 바닥에 놓여 화면 1 의 그림과 같습니다. 어떤 높이의 평면을 놓아도 점이 한 높이에 있으니 가를 수 없다고 안내가 나옵니다.</li>
       <li><b>올리기를 1 로.</b> 안쪽 점은 낮게, 바깥 점은 높게 올라갑니다. <b>회전</b>을 돌려 옆에서 보면 두 무리 사이에 높이 틈이 보입니다.</li>
-      <li><b><code>c = 3</code>.</b> 안쪽 6 점이 모두 평면 아래, 바깥 6 점이 모두 평면 위라 갈립니다. 평면 위의 실선 원이 바닥의 점선 원과 위아래로 겹칩니다.</li>
-      <li><b><code>c = 1</code>.</b> 안쪽의 <code>x⁽⁵⁾</code>(<code>z = 1.16</code>)와 <code>x⁽⁶⁾</code>(<code>z = 1.09</code>)가 평면 위로 올라가 갈리지 않습니다. 2차원으로 되돌리면 반지름 1 인 원이 이 두 점을 밖에 두는 것입니다.</li>
-      <li><b><code>c = 5.5</code>.</b> 바깥의 <code>x⁽⁷⁾, x⁽⁸⁾</code>(<code>z = 5</code>)와 <code>x⁽¹¹⁾</code>(<code>z = 5.48</code>)가 평면 아래로 내려옵니다. 원이 너무 커서 이 세 점이 원 안에 들어온 것입니다.</li>
+      <li><b>\(c = 3\).</b> 안쪽 6 점이 모두 평면 아래, 바깥 6 점이 모두 평면 위라 갈립니다. 평면 위의 실선 원이 바닥의 점선 원과 위아래로 겹칩니다.</li>
+      <li><b>\(c = 1\).</b> 안쪽의 \(x^{(5)}\)(\(z = 1.16\))와 \(x^{(6)}\)(\(z = 1.09\))가 평면 위로 올라가 갈리지 않습니다. 2차원으로 되돌리면 반지름 1 인 원이 이 두 점을 밖에 두는 것입니다.</li>
+      <li><b>\(c = 5.5\).</b> 바깥의 \(x^{(7)}, x^{(8)}\)(\(z = 5\))와 \(x^{(11)}\)(\(z = 5.48\))가 평면 아래로 내려옵니다. 원이 너무 커서 이 세 점이 원 안에 들어온 것입니다.</li>
     </ol>
   </div>
 
   <div class="box warn">
     <p class="box-t">한계 — 수평 평면이 곧 SVM 의 답은 아닙니다</p>
     <p>위젯은 수평한 평면만 보여 줍니다. 1.16 과 5 사이의 어느 높이든 갈리지만, SVM 은 그중에서도 마진이 가장 넓은 평면을 고릅니다. 그 평면이 수평이라는 보장은 없습니다. 이 화면에서 확인한 것은 &ldquo;3차원에서는 평면으로 가를 수 있다&rdquo;는 사실까지입니다.
-    그리고 <code>z = x₁² + x₂²</code> 는 이 데이터가 원형이라는 것을 알고 있기에 고른 것입니다. 모양을 모르는 데이터에서는 어떤 좌표를 더해야 할지부터가 문제입니다. 화면 3 에서 그 이야기를 이어 갑니다.</p>
+    그리고 \(z = x_{1}^{2} + x_{2}^{2}\) 는 이 데이터가 원형이라는 것을 알고 있기에 고른 것입니다. 모양을 모르는 데이터에서는 어떤 좌표를 더해야 할지부터가 문제입니다. 화면 3 에서 그 이야기를 이어 갑니다.</p>
   </div>
 </section>
 
 <!-- ─────────────────────────────────────────── 화면 3 -->
 <section class="screen" data-title="특징 맵 φ 와 비용">
   <p class="kicker">6장 · 화면 3</p>
-  <h2>특징 맵 <code>φ</code> — 올리는 일에 이름을 붙이고, 값을 센다</h2>
+  <h2>특징 맵 \(\varphi \) — 올리는 일에 이름을 붙이고, 값을 센다</h2>
 
   <p>화면 2 에서 한 일은 점 하나를 받아 새 좌표 묶음으로 바꾸는 <b>규칙</b>이었습니다. 이 규칙에 이름과 기호를 붙입니다.</p>
 
   <div class="box good">
-    <p class="box-t">정의 — 특징 맵 <code>φ</code></p>
-    <p style="text-align:center;font-size:1.05rem"><code>φ(x₁, x₂) = (x₁, x₂, x₁² + x₂²)</code></p>
+    <p class="box-t">정의 — 특징 맵 \(\varphi \)</p>
+    <p style="text-align:center;font-size:1.05rem">\[\varphi (x_{1}, x_{2}) = (x_{1}, x_{2}, x_{1}^{2} + x_{2}^{2})\]</p>
     <ul>
-      <li><span class="term" data-term="featuremap">φ</span> (파이) — 점 <code>x</code> 를 받아 새 좌표 묶음 <code>φ(x)</code> 를 내놓는 함수. 이 이름이 <b>특징 맵</b>(feature map)입니다. 위의 예는 2차원 점을 3차원 점으로 바꿉니다.</li>
-      <li><span class="term" data-term="featurespace">특징 공간</span> — <code>φ(x)</code> 들이 놓이는 공간. 원래 점이 사는 공간(입력 공간)과 구분하려는 이름입니다.</li>
-      <li>1장에서 <b>특성</b>은 점 하나를 설명하는 숫자 하나하나(<code>x₁, x₂</code>)였습니다. <code>φ(x)</code> 의 각 좌표도 같은 뜻의 숫자이고, 새로 만든 특성들의 묶음을 가리킬 때 영어의 feature 를 &lsquo;특징&rsquo;으로 옮겨 이렇게 부르는 것뿐입니다. 같은 개념의 두 번역입니다.</li>
+      <li><span class="term" data-term="featuremap">φ</span> (파이) — 점 \(x\) 를 받아 새 좌표 묶음 \(\varphi (x)\) 를 내놓는 함수. 이 이름이 <b>특징 맵</b>(feature map)입니다. 위의 예는 2차원 점을 3차원 점으로 바꿉니다.</li>
+      <li><span class="term" data-term="featurespace">특징 공간</span> — \(\varphi (x)\) 들이 놓이는 공간. 원래 점이 사는 공간(입력 공간)과 구분하려는 이름입니다.</li>
+      <li>1장에서 <b>특성</b>은 점 하나를 설명하는 숫자 하나하나(\(x_{1}, x_{2}\))였습니다. \(\varphi (x)\) 의 각 좌표도 같은 뜻의 숫자이고, 새로 만든 특성들의 묶음을 가리킬 때 영어의 feature 를 &lsquo;특징&rsquo;으로 옮겨 이렇게 부르는 것뿐입니다. 같은 개념의 두 번역입니다.</li>
     </ul>
   </div>
 
@@ -347,35 +348,35 @@
         <text x="165" y="48">φ</text><text x="355" y="48">SVM</text><text x="530" y="48">되돌림</text>
       </g>
     </svg>
-    <figcaption>전체 흐름: 점을 <code>φ</code> 로 올리고, 올라간 점들에 4·5장의 SVM 을 그대로 쓴 뒤, 그 경계를 원래 평면으로 되돌립니다.</figcaption>
+    <figcaption>전체 흐름: 점을 \(\varphi \) 로 올리고, 올라간 점들에 4·5장의 SVM 을 그대로 쓴 뒤, 그 경계를 원래 평면으로 되돌립니다.</figcaption>
   </figure>
 
-  <p>4·5장의 SVM 은 점이 무엇인지 모릅니다. 숫자 묶음(벡터)이면 됩니다. 그러니 <code>x⁽ⁱ⁾</code> 자리에 <code>φ(x⁽ⁱ⁾)</code> 를 넣어도 마진 최대화·쌍대문제·<code>C</code> 의 유도는 한 줄도 바뀌지 않습니다. 직선으로 가르던 도구가 특징 공간에서는 평면으로 가르고, 입력 공간으로 되돌리면 곡선 경계가 됩니다.</p>
+  <p>4·5장의 SVM 은 점이 무엇인지 모릅니다. 숫자 묶음(벡터)이면 됩니다. 그러니 \(x^{(i)}\) 자리에 \(\varphi (x^{(i)})\) 를 넣어도 마진 최대화·쌍대문제·\(C\) 의 유도는 한 줄도 바뀌지 않습니다. 직선으로 가르던 도구가 특징 공간에서는 평면으로 가르고, 입력 공간으로 되돌리면 곡선 경계가 됩니다.</p>
 
   <h3>좌표를 더 넣고 싶어지면</h3>
 
-  <p>화면 2 의 <code>z</code> 하나는 &ldquo;원형&rdquo;이라는 것을 미리 알고 고른 좌표였습니다. 모양을 모를 때는 후보를 넉넉히 넣고 SVM 이 필요한 것을 쓰게 하고 싶습니다. 가장 흔한 후보는 <b>다항식 항</b>입니다. 2차원에서 차수가 2 이하인 모든 항은 6개입니다.</p>
+  <p>화면 2 의 \(z\) 하나는 &ldquo;원형&rdquo;이라는 것을 미리 알고 고른 좌표였습니다. 모양을 모를 때는 후보를 넉넉히 넣고 SVM 이 필요한 것을 쓰게 하고 싶습니다. 가장 흔한 후보는 <b>다항식 항</b>입니다. 2차원에서 차수가 2 이하인 모든 항은 6개입니다.</p>
 
-  <p style="text-align:center"><code>φ(x₁, x₂) = (1, &nbsp;x₁, &nbsp;x₂, &nbsp;x₁², &nbsp;x₁x₂, &nbsp;x₂²)</code></p>
+  <p style="text-align:center">\[\varphi (x_{1}, x_{2}) = (1, \; x_{1}, \; x_{2}, \; x_{1}^{2}, \; x_{1}x_{2}, \; x_{2}^{2})\]</p>
 
-  <p>(<code>x₁x₂</code> 는 두 좌표의 곱으로, 타원이 기울어져 있거나 두 좌표가 얽힌 모양을 만드는 데 필요합니다.) 점이 <code>p</code> 차원(좌표가 <code>p</code> 개, 점의 개수 <code>n</code> 과 구분하려고 <code>p</code> 라 씁니다)이면 몇 개일까요. 차수 2 이하만 세면 이렇습니다.</p>
+  <p>(\(x_{1}x_{2}\) 는 두 좌표의 곱으로, 타원이 기울어져 있거나 두 좌표가 얽힌 모양을 만드는 데 필요합니다.) 점이 \(p\) 차원(좌표가 \(p\) 개, 점의 개수 \(n\) 과 구분하려고 \(p\) 라 씁니다)이면 몇 개일까요. 차수 2 이하만 세면 이렇습니다.</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th>항의 종류</th><th>개수</th><th><code>p = 2</code> 일 때</th></tr>
-      <tr><td>상수 <code>1</code></td><td>1</td><td>1</td></tr>
-      <tr><td>1차 <code>x₁, …, x<sub>p</sub></code></td><td><code>p</code></td><td>2</td></tr>
-      <tr><td>제곱 <code>x₁², …, x<sub>p</sub>²</code></td><td><code>p</code></td><td>2</td></tr>
-      <tr><td>서로 다른 두 좌표의 곱 <code>xᵢxⱼ</code> (<code>i &lt; j</code>)</td><td><code>p(p − 1)/2</code></td><td>1</td></tr>
-      <tr><td><b>합계</b></td><td><code>1 + 2p + p(p − 1)/2 = (p + 1)(p + 2)/2</code></td><td><b>6</b></td></tr>
+      <tr><th>항의 종류</th><th>개수</th><th>\(p = 2\) 일 때</th></tr>
+      <tr><td>상수 \(1\)</td><td>1</td><td>1</td></tr>
+      <tr><td>1차 \(x_{1}, \ldots , x_{p}\)</td><td>\(p\)</td><td>2</td></tr>
+      <tr><td>제곱 \(x_{1}^{2}, \ldots , x_{p}^{2}\)</td><td>\(p\)</td><td>2</td></tr>
+      <tr><td>서로 다른 두 좌표의 곱 \(x_{i}x_{j}\) (\(i &lt; j\))</td><td>\(p(p - 1)/2\)</td><td>1</td></tr>
+      <tr><td><b>합계</b></td><td>\(1 + 2p + p(p - 1)/2 = (p + 1)(p + 2)/2\)</td><td><b>6</b></td></tr>
     </table>
   </div>
 
-  <p>차수 <code>d</code> 이하로 일반화하면 개수는 <code>(p+d)! / (d! · p!)</code> 입니다(<code>!</code> 은 팩토리얼, <code>3! = 3·2·1 = 6</code>. 이 값을 &ldquo;<code>p+d</code> 개 중 <code>d</code> 개 고르기&rdquo;, 영어로 <code>(p+d) choose d</code> 라고 읽고 <code>C(p+d, d)</code> 로 씁니다). <code>d = 2</code> 이면 위의 <code>(p+1)(p+2)/2</code> 와 같습니다. 일반 <code>d</code> 의 증명은 생략하고 <code>p = 2</code>, <code>d = 3</code> 만 세 봅니다: 위 6개에 3차항 <code>x₁³, x₁²x₂, x₁x₂², x₂³</code> 넷이 더해져 <code>10 = C(5, 3)</code> 입니다.</p>
+  <p>차수 \(d\) 이하로 일반화하면 개수는 \((p+d)! / (d! \cdot  p!)\) 입니다(\(!\) 은 팩토리얼, \(3! = 3\cdot 2\cdot 1 = 6\). 이 값을 &ldquo;\(p+d\) 개 중 \(d\) 개 고르기&rdquo;, 영어로 \((p+d) choose d\) 라고 읽고 \(C(p+d, d)\) 로 씁니다). \(d = 2\) 이면 위의 \((p+1)(p+2)/2\) 와 같습니다. 일반 \(d\) 의 증명은 생략하고 \(p = 2\), \(d = 3\) 만 세 봅니다: 위 6개에 3차항 \(x_{1}^{3}, x_{1}^{2}x_{2}, x_{1}x_{2}^{2}, x_{2}^{3}\) 넷이 더해져 \(10 = C(5, 3)\) 입니다.</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th>점의 차원 <code>p</code></th><th>2차 <code>d = 2</code></th><th>3차 <code>d = 3</code></th><th>5차 <code>d = 5</code></th></tr>
+      <tr><th>점의 차원 \(p\)</th><th>2차 \(d = 2\)</th><th>3차 \(d = 3\)</th><th>5차 \(d = 5\)</th></tr>
       <tr><td>2</td><td>6</td><td>10</td><td>21</td></tr>
       <tr><td>10</td><td>66</td><td>286</td><td>3,003</td></tr>
       <tr><td>100</td><td>5,151</td><td>176,851</td><td>96,560,646</td></tr>
@@ -383,44 +384,44 @@
     </table>
   </div>
 
-  <p>점의 차원이 늘고 차수가 오르면 특징 수가 폭발합니다. 숫자 하나를 8 바이트로 저장한다고 하면 <code>p = 100</code>, <code>d = 5</code> 의 <code>φ(x)</code> 한 점이 약 772 MB 이고, <code>p = 784</code>, <code>d = 5</code> 는 <b>한 점이 약 20 TB</b> 입니다. 점이 수천 개이면 저장은커녕 계산도 안 됩니다.</p>
+  <p>점의 차원이 늘고 차수가 오르면 특징 수가 폭발합니다. 숫자 하나를 8 바이트로 저장한다고 하면 \(p = 100\), \(d = 5\) 의 \(\varphi (x)\) 한 점이 약 772 MB 이고, \(p = 784\), \(d = 5\) 는 <b>한 점이 약 20 TB</b> 입니다. 점이 수천 개이면 저장은커녕 계산도 안 됩니다.</p>
 
   <div class="box warn">
     <p class="box-t">비용은 저장만이 아닙니다</p>
-    <p>쌍대문제(4장)가 필요로 하는 것은 점 쌍마다의 내적 <code>φ(x⁽ⁱ⁾)·φ(x⁽ʲ⁾)</code> 입니다. <code>m</code> 차원 벡터의 내적은 곱셈 <code>m</code> 번이고, 점이 <code>n</code> 개이면 쌍은 약 <code>n²</code> 개입니다. <code>p = 784</code>, <code>d = 2</code>(<code>m = 308,505</code>)에서 점 <code>n = 1,000</code> 개이면 <code>10⁶ × 308,505 ≈ 3.1 × 10¹¹</code> 번의 곱셈입니다(대칭성으로 반을 아껴도 같은 규모). 작은 <code>m</code> 에서는(화면 2 의 <code>m = 3</code>) 직접 해도 되지만 규모가 커지면 불가능합니다.
-    게다가 화면 6 에서 볼 것처럼 <code>φ</code> 의 좌표 수가 <b>무한</b>인 경우도 있습니다.</p>
+    <p>쌍대문제(4장)가 필요로 하는 것은 점 쌍마다의 내적 \(\varphi (x^{(i)})\cdot \varphi (x^{(j)})\) 입니다. \(m\) 차원 벡터의 내적은 곱셈 \(m\) 번이고, 점이 \(n\) 개이면 쌍은 약 \(n^{2}\) 개입니다. \(p = 784\), \(d = 2\)(\(m = 308,505\))에서 점 \(n = 1,000\) 개이면 \(10^{6} \times  308,505 \approx  3.1 \times  10^{11}\) 번의 곱셈입니다(대칭성으로 반을 아껴도 같은 규모). 작은 \(m\) 에서는(화면 2 의 \(m = 3\)) 직접 해도 되지만 규모가 커지면 불가능합니다.
+    게다가 화면 6 에서 볼 것처럼 \(\varphi \) 의 좌표 수가 <b>무한</b>인 경우도 있습니다.</p>
   </div>
 
-  <p>정리하면 &ldquo;차원을 올리면 갈린다&rdquo;는 아이디어는 맞지만 <code>φ(x)</code> 를 정말 만들어 계산하는 길은 비쌉니다. 그런데 4장 화면 5 에서 남겨 둔 사실이 이 문제를 풀 열쇠입니다. 다음 화면에서 그 약속을 갚습니다.</p>
+  <p>정리하면 &ldquo;차원을 올리면 갈린다&rdquo;는 아이디어는 맞지만 \(\varphi (x)\) 를 정말 만들어 계산하는 길은 비쌉니다. 그런데 4장 화면 5 에서 남겨 둔 사실이 이 문제를 풀 열쇠입니다. 다음 화면에서 그 약속을 갚습니다.</p>
 </section>
 
 <!-- ─────────────────────────────────────────── 화면 4 -->
 <section class="screen" data-title="내적만 남았다: 커널 함수">
   <p class="kicker">6장 · 화면 4</p>
-  <h2>쌍대문제에 내적만 남았다 — 그래서 <code>K(x, z)</code> 한 줄로</h2>
+  <h2>쌍대문제에 내적만 남았다 — 그래서 \(K(x, z)\) 한 줄로</h2>
 
-  <p>4장 화면 5 에서 쌍대 목적함수를 보며, 점의 좌표가 오직 두 점의 내적 <code>x⁽ⁱ⁾·x⁽ʲ⁾</code> 의 형태로만 들어 있다고 적고 &lsquo;6장에서 다룸&rsquo;이라고 미뤄 두었습니다. 그 약속을 갚는 화면입니다. 먼저 <code>x</code> 자리에 <code>φ(x)</code> 를 넣은 모습입니다(소프트 마진이므로 <code>0 ≤ α ≤ C</code>).</p>
+  <p>4장 화면 5 에서 쌍대 목적함수를 보며, 점의 좌표가 오직 두 점의 내적 \(x^{(i)}\cdot x^{(j)}\) 의 형태로만 들어 있다고 적고 &lsquo;6장에서 다룸&rsquo;이라고 미뤄 두었습니다. 그 약속을 갚는 화면입니다. 먼저 \(x\) 자리에 \(\varphi (x)\) 를 넣은 모습입니다(소프트 마진이므로 \(0 \le  \alpha  \le  C\)).</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th></th><th>입력 공간에서 (4·5장)</th><th>특징 공간에서 (<code>x → φ(x)</code>)</th></tr>
-      <tr><td>쌍대 목적 <code>D(α)</code></td><td><code>Σα⁽ⁱ⁾ − ½ΣΣ α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾ (x⁽ⁱ⁾·x⁽ʲ⁾)</code></td><td><code>Σα⁽ⁱ⁾ − ½ΣΣ α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾ (φ(x⁽ⁱ⁾)·φ(x⁽ʲ⁾))</code></td></tr>
-      <tr><td>제약</td><td colspan="2" style="text-align:center"><code>0 ≤ α⁽ⁱ⁾ ≤ C</code>, &nbsp;<code>Σα⁽ⁱ⁾y⁽ⁱ⁾ = 0</code> (같음)</td></tr>
-      <tr><td>새 점 <code>x</code> 의 판정</td><td><code>f(x) = Σα⁽ⁱ⁾y⁽ⁱ⁾ (x⁽ⁱ⁾·x) + b</code></td><td><code>f(x) = Σα⁽ⁱ⁾y⁽ⁱ⁾ (φ(x⁽ⁱ⁾)·φ(x)) + b</code></td></tr>
+      <tr><th></th><th>입력 공간에서 (4·5장)</th><th>특징 공간에서 (\(x \to  \varphi (x)\))</th></tr>
+      <tr><td>쌍대 목적 \(D(\alpha )\)</td><td>\(\sum \alpha ^{(i)} - \tfrac12 \sum \sum  \alpha ^{(i)}\alpha ^{(j)}y^{(i)}y^{(j)} (x^{(i)}\cdot x^{(j)})\)</td><td>\(\sum \alpha ^{(i)} - \tfrac12 \sum \sum  \alpha ^{(i)}\alpha ^{(j)}y^{(i)}y^{(j)} (\varphi (x^{(i)})\cdot \varphi (x^{(j)}))\)</td></tr>
+      <tr><td>제약</td><td colspan="2" style="text-align:center">\(0 \le  \alpha ^{(i)} \le  C\), &nbsp;\(\sum \alpha ^{(i)}y^{(i)} = 0\) (같음)</td></tr>
+      <tr><td>새 점 \(x\) 의 판정</td><td>\(f(x) = \sum \alpha ^{(i)}y^{(i)} (x^{(i)}\cdot x) + b\)</td><td>\(f(x) = \sum \alpha ^{(i)}y^{(i)} (\varphi (x^{(i)})\cdot \varphi (x)) + b\)</td></tr>
     </table>
   </div>
 
-  <p>아래쪽 판정식은 4장 화면 6 끝에서 본 <code>w·q + b = Σα⁽ⁱ⁾y⁽ⁱ⁾(x⁽ⁱ⁾·q) + b</code> 에 <code>φ</code> 를 씌운 것입니다. <code>w = Σα⁽ⁱ⁾y⁽ⁱ⁾φ(x⁽ⁱ⁾)</code> 는 특징 공간의 벡터라서 좌표가 수백만 개일 수도 있지만, <b>판정에는 <code>w</code> 가 따로 필요 없습니다.</b> 합 안의 내적만 알면 됩니다.</p>
+  <p>아래쪽 판정식은 4장 화면 6 끝에서 본 \(w\cdot q + b = \sum \alpha ^{(i)}y^{(i)}(x^{(i)}\cdot q) + b\) 에 \(\varphi \) 를 씌운 것입니다. \(w = \sum \alpha ^{(i)}y^{(i)}\varphi (x^{(i)})\) 는 특징 공간의 벡터라서 좌표가 수백만 개일 수도 있지만, <b>판정에는 \(w\) 가 따로 필요 없습니다.</b> 합 안의 내적만 알면 됩니다.</p>
 
-  <p>두 식을 보면 <code>φ(x)</code> 의 좌표가 어디에도 따로 나오지 않습니다. 등장하는 것은 항상 <b>두 점의 <code>φ</code> 내적 값</b> 하나뿐입니다. 그렇다면 좌표를 만들지 않고 <b>그 값만</b> 바로 돌려주는 함수가 있으면 됩니다. 이 함수에 이름을 붙입니다.</p>
+  <p>두 식을 보면 \(\varphi (x)\) 의 좌표가 어디에도 따로 나오지 않습니다. 등장하는 것은 항상 <b>두 점의 \(\varphi \) 내적 값</b> 하나뿐입니다. 그렇다면 좌표를 만들지 않고 <b>그 값만</b> 바로 돌려주는 함수가 있으면 됩니다. 이 함수에 이름을 붙입니다.</p>
 
   <div class="box good">
-    <p class="box-t">정의 — 커널 함수 <code>K</code></p>
-    <p style="text-align:center;font-size:1.05rem"><code>K(x, z) = φ(x)·φ(z)</code></p>
+    <p class="box-t">정의 — 커널 함수 \(K\)</p>
+    <p style="text-align:center;font-size:1.05rem">\[K(x, z) = \varphi (x)\cdot \varphi (z)\]</p>
     <ul>
-      <li><span class="term" data-term="kernel">커널 함수</span> <code>K(x, z)</code> — 두 점 <code>x, z</code> 를 받아 특징 공간에서의 내적 값(숫자 하나)을 돌려주는 함수입니다.</li>
-      <li>핵심은 <b><code>K</code> 를 <code>φ</code> 를 거치지 않고 <code>x, z</code> 로 바로 계산할 수 있으면 된다</b>는 것입니다. 그런 <code>K</code> 가 실제로 있는지는 다음 화면에서 손으로 확인합니다.</li>
-      <li>4·5장의 SVM 은 <code>φ(x) = x</code>, 곧 <code>K(x, z) = x·z</code> 인 특수한 경우입니다(<b>선형 커널</b>).</li>
+      <li><span class="term" data-term="kernel">커널 함수</span> \(K(x, z)\) — 두 점 \(x, z\) 를 받아 특징 공간에서의 내적 값(숫자 하나)을 돌려주는 함수입니다.</li>
+      <li>핵심은 <b>\(K\) 를 \(\varphi \) 를 거치지 않고 \(x, z\) 로 바로 계산할 수 있으면 된다</b>는 것입니다. 그런 \(K\) 가 실제로 있는지는 다음 화면에서 손으로 확인합니다.</li>
+      <li>4·5장의 SVM 은 \(\varphi (x) = x\), 곧 \(K(x, z) = x\cdot z\) 인 특수한 경우입니다(<b>선형 커널</b>).</li>
     </ul>
   </div>
 
@@ -448,100 +449,100 @@
     <figcaption>같은 숫자를 얻는 두 길. 위쪽 길이 화면 3 의 비싼 길이고, 아래쪽 길이 커널 함수입니다.</figcaption>
   </figure>
 
-  <h3>쌍대문제를 <code>K</code> 로 다시 쓰기</h3>
+  <h3>쌍대문제를 \(K\) 로 다시 쓰기</h3>
 
-  <p><code>φ(x⁽ⁱ⁾)·φ(x⁽ʲ⁾)</code> 를 <code>K(x⁽ⁱ⁾, x⁽ʲ⁾)</code> 로 바꿔 쓰기만 하면 됩니다.</p>
+  <p>\(\varphi (x^{(i)})\cdot \varphi (x^{(j)})\) 를 \(K(x^{(i)}, x^{(j)})\) 로 바꿔 쓰기만 하면 됩니다.</p>
 
   <div class="box good">
     <p class="box-t">커널을 쓴 소프트 마진 쌍대문제</p>
-    <p style="text-align:center;font-size:1.05rem"><code>max<sub>α</sub> &nbsp; D(α) = Σα⁽ⁱ⁾ − ½ Σ<sub>i</sub>Σ<sub>j</sub> α⁽ⁱ⁾α⁽ʲ⁾ y⁽ⁱ⁾y⁽ʲ⁾ K(x⁽ⁱ⁾, x⁽ʲ⁾)</code></p>
-    <p style="text-align:center;font-size:1.05rem"><code>s.t. &nbsp; 0 ≤ α⁽ⁱ⁾ ≤ C &nbsp;(모든 i), &nbsp;&nbsp; Σ α⁽ⁱ⁾y⁽ⁱ⁾ = 0</code></p>
-    <p style="text-align:center;font-size:1.05rem">판정: &nbsp;<code>f(x) = Σα⁽ⁱ⁾y⁽ⁱ⁾ K(x⁽ⁱ⁾, x) + b</code>, &nbsp;<code>sign f(x)</code> 가 분류</p>
+    <p style="text-align:center;font-size:1.05rem">\[\max _{\alpha } \;  D(\alpha ) = \sum \alpha ^{(i)} - \tfrac12  \sum _{i}\sum _{j} \alpha ^{(i)}\alpha ^{(j)} y^{(i)}y^{(j)} K(x^{(i)}, x^{(j)})\]</p>
+    <p style="text-align:center;font-size:1.05rem">\[\text{s.t.} \;  0 \le  \alpha ^{(i)} \le  C \; (\text{모든} i), \; \;  \sum  \alpha ^{(i)}y^{(i)} = 0\]</p>
+    <p style="text-align:center;font-size:1.05rem">판정: &nbsp;\(f(x) = \sum \alpha ^{(i)}y^{(i)} K(x^{(i)}, x) + b\), &nbsp;\(\operatorname{sign} f(x)\) 가 분류</p>
   </div>
 
-  <p>달라진 것은 내적 자리의 <code>K</code> 하나뿐입니다. 4장과 5장에서 한 일(서포트 벡터 = <code>α &gt; 0</code>, <code>0 &lt; α &lt; C</code> 인 점으로 <code>b</code> 구하기 등)이 그대로 성립합니다. 이 문제를 컴퓨터가 어떻게 푸는지는 7장에서 구현합니다. <span class="later">7장에서 구현</span></p>
+  <p>달라진 것은 내적 자리의 \(K\) 하나뿐입니다. 4장과 5장에서 한 일(서포트 벡터 = \(\alpha  > 0\), \(0 &lt; \alpha  &lt; C\) 인 점으로 \(b\) 구하기 등)이 그대로 성립합니다. 이 문제를 컴퓨터가 어떻게 푸는지는 7장에서 구현합니다. <span class="later">7장에서 구현</span></p>
 
   <h3>그램 행렬 — 데이터가 이 표로만 들어옵니다</h3>
 
-  <p>점이 <code>n</code> 개이면 <code>D(α)</code> 가 쓰는 값은 모든 쌍의 <code>K</code> 값, 곧 <code>n × n</code> 표 하나입니다. 이 표를 <span class="term" data-term="gram">그램 행렬</span> <code>K</code> 라 부르고, <code>i</code> 행 <code>j</code> 열의 값을 <code>K<sub>ij</sub> = K(x⁽ⁱ⁾, x⁽ʲ⁾)</code> 로 씁니다.
-  4장의 세 점(<code>x⁽¹⁾ = (3, 3)</code>, <code>x⁽²⁾ = (4, 3)</code>, <code>x⁽³⁾ = (1, 1)</code>)에서 선형 커널 <code>K = x·z</code> 로 만든 표는 4장 화면 7 의 내적 표와 같습니다.</p>
+  <p>점이 \(n\) 개이면 \(D(\alpha )\) 가 쓰는 값은 모든 쌍의 \(K\) 값, 곧 \(n \times  n\) 표 하나입니다. 이 표를 <span class="term" data-term="gram">그램 행렬</span> \(K\) 라 부르고, \(i\) 행 \(j\) 열의 값을 \(K_{ij} = K(x^{(i)}, x^{(j)})\) 로 씁니다.
+  4장의 세 점(\(x^{(1)} = (3, 3)\), \(x^{(2)} = (4, 3)\), \(x^{(3)} = (1, 1)\))에서 선형 커널 \(K = x\cdot z\) 로 만든 표는 4장 화면 7 의 내적 표와 같습니다.</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th><code>K<sub>ij</sub></code></th><th><code>j = 1</code></th><th><code>j = 2</code></th><th><code>j = 3</code></th></tr>
-      <tr><td><code>i = 1</code></td><td>18</td><td>21</td><td>6</td></tr>
-      <tr><td><code>i = 2</code></td><td>21</td><td>25</td><td>7</td></tr>
-      <tr><td><code>i = 3</code></td><td>6</td><td>7</td><td>2</td></tr>
+      <tr><th>\(K_{ij}\)</th><th>\(j = 1\)</th><th>\(j = 2\)</th><th>\(j = 3\)</th></tr>
+      <tr><td>\(i = 1\)</td><td>18</td><td>21</td><td>6</td></tr>
+      <tr><td>\(i = 2\)</td><td>21</td><td>25</td><td>7</td></tr>
+      <tr><td>\(i = 3\)</td><td>6</td><td>7</td><td>2</td></tr>
     </table>
   </div>
 
-  <p>예를 들어 <code>K₁₂ = x⁽¹⁾·x⁽²⁾ = 3·4 + 3·3 = 21</code> 입니다. 표가 대칭인 것(<code>K₁₂ = K₂₁</code>)은 4장 화면 4 에서 본, 내적은 순서를 바꿔도 같다는 성질입니다. 점이 2차원이든 백만 차원이든 쌍대문제가 보는 것은 이 <code>n × n</code> 표뿐이고, 표의 칸 하나를 채우는 비용이 <code>K</code> 를 한 번 계산하는 비용입니다.
-  그러니 <b><code>K</code> 를 싸게 계산할 수 있으면 특징 공간이 아무리 커도 비용이 커지지 않습니다.</b> 그런 <code>K</code> 가 있을까요? 다음 화면에서 손으로 확인합니다.</p>
+  <p>예를 들어 \(K_{12} = x^{(1)}\cdot x^{(2)} = 3\cdot 4 + 3\cdot 3 = 21\) 입니다. 표가 대칭인 것(\(K_{12} = K_{21}\))은 4장 화면 4 에서 본, 내적은 순서를 바꿔도 같다는 성질입니다. 점이 2차원이든 백만 차원이든 쌍대문제가 보는 것은 이 \(n \times  n\) 표뿐이고, 표의 칸 하나를 채우는 비용이 \(K\) 를 한 번 계산하는 비용입니다.
+  그러니 <b>\(K\) 를 싸게 계산할 수 있으면 특징 공간이 아무리 커도 비용이 커지지 않습니다.</b> 그런 \(K\) 가 있을까요? 다음 화면에서 손으로 확인합니다.</p>
 </section>
 
 <!-- ─────────────────────────────────────────── 화면 5 -->
 <section class="screen" data-title="손으로 확인: (x·z)²">
   <p class="kicker">6장 · 화면 5</p>
-  <h2>손으로 확인 — <code>φ(x)·φ(z)</code> 가 <code>(x·z)²</code> 와 같다</h2>
+  <h2>손으로 확인 — \(\varphi (x)\cdot \varphi (z)\) 가 \((x\cdot z)^{2}\) 와 같다</h2>
 
-  <p>2차원 점에서 2차항 세 개만 모은 특징 맵을 하나 잡습니다. 가운데 항에 <code>√2</code> 가 붙은 이유는 아래 전개에서 드러납니다.</p>
+  <p>2차원 점에서 2차항 세 개만 모은 특징 맵을 하나 잡습니다. 가운데 항에 \(\sqrt{2}\) 가 붙은 이유는 아래 전개에서 드러납니다.</p>
 
-  <p style="text-align:center;font-size:1.05rem"><code>φ(x₁, x₂) = ( x₁², &nbsp;√2·x₁x₂, &nbsp;x₂² )</code></p>
+  <p style="text-align:center;font-size:1.05rem">\[\varphi (x_{1}, x_{2}) = ( x_{1}^{2}, \; \sqrt{2}\cdot x_{1}x_{2}, \; x_{2}^{2} )\]</p>
 
-  <p><code>x = (x₁, x₂)</code>, <code>z = (z₁, z₂)</code> 에 대해 <code>φ(x)·φ(z)</code> 를 한 줄씩 전개합니다.</p>
+  <p>\(x = (x_{1}, x_{2})\), \(z = (z_{1}, z_{2})\) 에 대해 \(\varphi (x)\cdot \varphi (z)\) 를 한 줄씩 전개합니다.</p>
 
   <div class="table-wrap">
     <table>
       <tr><th style="width:2.2rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
-      <tr><td>1</td><td><code>φ(x)·φ(z) = x₁²z₁² + (√2 x₁x₂)(√2 z₁z₂) + x₂²z₂²</code></td><td>내적은 같은 자리끼리 곱해 더한 값입니다.</td></tr>
-      <tr><td>2</td><td><code>= x₁²z₁² + 2 x₁x₂z₁z₂ + x₂²z₂²</code></td><td><code>√2 · √2 = 2</code> 입니다.</td></tr>
-      <tr><td>3</td><td><code>= (x₁z₁)² + 2 (x₁z₁)(x₂z₂) + (x₂z₂)²</code></td><td>같은 숫자를 <code>x₁z₁</code> 과 <code>x₂z₂</code> 로 묶어 다시 썼습니다.</td></tr>
-      <tr><td>4</td><td><code>= (x₁z₁ + x₂z₂)²</code></td><td><code>a² + 2ab + b² = (a + b)²</code> 에서 <code>a = x₁z₁</code>, <code>b = x₂z₂</code>.</td></tr>
-      <tr><td>5</td><td><code>= (x·z)²</code></td><td><code>x₁z₁ + x₂z₂</code> 가 <code>x·z</code> 입니다.</td></tr>
+      <tr><td>1</td><td>\(\varphi (x)\cdot \varphi (z) = x_{1}^{2}z_{1}^{2} + (\sqrt{2} x_{1}x_{2})(\sqrt{2} z_{1}z_{2}) + x_{2}^{2}z_{2}^{2}\)</td><td>내적은 같은 자리끼리 곱해 더한 값입니다.</td></tr>
+      <tr><td>2</td><td>\(= x_{1}^{2}z_{1}^{2} + 2 x_{1}x_{2}z_{1}z_{2} + x_{2}^{2}z_{2}^{2}\)</td><td>\(\sqrt{2} \cdot  \sqrt{2} = 2\) 입니다.</td></tr>
+      <tr><td>3</td><td>\(= (x_{1}z_{1})^{2} + 2 (x_{1}z_{1})(x_{2}z_{2}) + (x_{2}z_{2})^{2}\)</td><td>같은 숫자를 \(x_{1}z_{1}\) 과 \(x_{2}z_{2}\) 로 묶어 다시 썼습니다.</td></tr>
+      <tr><td>4</td><td>\(= (x_{1}z_{1} + x_{2}z_{2})^{2}\)</td><td>\(a^{2} + 2ab + b^{2} = (a + b)^{2}\) 에서 \(a = x_{1}z_{1}\), \(b = x_{2}z_{2}\).</td></tr>
+      <tr><td>5</td><td>\(= (x\cdot z)^{2}\)</td><td>\(x_{1}z_{1} + x_{2}z_{2}\) 가 \(x\cdot z\) 입니다.</td></tr>
     </table>
   </div>
 
-  <p>2 줄의 <code>2</code> 가 4 줄의 <code>(a + b)²</code> 의 가운데 항 <code>2ab</code> 와 맞아떨어지도록 <code>√2</code> 를 붙인 것입니다.</p>
+  <p>2 줄의 \(2\) 가 4 줄의 \((a + b)^{2}\) 의 가운데 항 \(2ab\) 와 맞아떨어지도록 \(\sqrt{2}\) 를 붙인 것입니다.</p>
 
   <h3>숫자로 두 길을 비교</h3>
 
-  <p><code>x = (1, 2)</code>, <code>z = (3, 1)</code> 로 같은 값이 나오는지 봅니다.</p>
+  <p>\(x = (1, 2)\), \(z = (3, 1)\) 로 같은 값이 나오는지 봅니다.</p>
 
   <div class="table-wrap">
     <table>
       <tr><th>길</th><th>계산</th><th>값</th></tr>
-      <tr><td>A. <code>φ</code> 로 올린 뒤 내적</td><td><code>φ(x) = (1, 2√2, 4)</code>, &nbsp;<code>φ(z) = (9, 3√2, 1)</code><br><code>φ(x)·φ(z) = 1·9 + 2√2·3√2 + 4·1 = 9 + 12 + 4</code></td><td><b>25</b></td></tr>
-      <tr><td>B. <code>K(x, z) = (x·z)²</code></td><td><code>x·z = 1·3 + 2·1 = 5</code>, &nbsp;<code>5² </code></td><td><b>25</b></td></tr>
+      <tr><td>A. \(\varphi \) 로 올린 뒤 내적</td><td>\(\varphi (x) = (1, 2\sqrt{2}, 4)\), &nbsp;\(\varphi (z) = (9, 3\sqrt{2}, 1)\)<br>\(\varphi (x)\cdot \varphi (z) = 1\cdot 9 + 2\sqrt{2}\cdot 3\sqrt{2} + 4\cdot 1 = 9 + 12 + 4\)</td><td><b>25</b></td></tr>
+      <tr><td>B. \(K(x, z) = (x\cdot z)^{2}\)</td><td>\(x\cdot z = 1\cdot 3 + 2\cdot 1 = 5\), &nbsp;\(5^{2} \)</td><td><b>25</b></td></tr>
     </table>
   </div>
 
-  <p>(<code>2√2 · 3√2 = 6 · 2 = 12</code> 입니다.) 같은 값입니다. A 는 세 좌표를 만들어 곱하고, B 는 원래 2차원에서 내적 하나를 구해 제곱했습니다.</p>
+  <p>(\(2\sqrt{2} \cdot  3\sqrt{2} = 6 \cdot  2 = 12\) 입니다.) 같은 값입니다. A 는 세 좌표를 만들어 곱하고, B 는 원래 2차원에서 내적 하나를 구해 제곱했습니다.</p>
 
-  <p>이 이득은 차원이 커질수록 벌어집니다. <code>p</code> 차원에서 같은 식의 <code>φ</code>(2차항만 모은 것)는 <code>p(p+1)/2</code> 개의 좌표를 갖습니다(<code>p = 2</code> 이면 3). <code>p = 784</code> 이면 307,720 개이지만 <code>(x·z)²</code> 는 길이 784 의 내적 하나(곱셈 784 번)와 제곱 한 번입니다.</p>
+  <p>이 이득은 차원이 커질수록 벌어집니다. \(p\) 차원에서 같은 식의 \(\varphi \)(2차항만 모은 것)는 \(p(p+1)/2\) 개의 좌표를 갖습니다(\(p = 2\) 이면 3). \(p = 784\) 이면 307,720 개이지만 \((x\cdot z)^{2}\) 는 길이 784 의 내적 하나(곱셈 784 번)와 제곱 한 번입니다.</p>
 
   <div class="box good">
     <p class="box-t">이름 — 커널 트릭</p>
-    <p>이처럼 <code>φ(x)·φ(z)</code> 를 <code>φ</code> 를 만들지 않고 <code>K(x, z)</code> 공식으로 바로 구하는 방법을 <span class="term" data-term="kerneltrick">커널 트릭</span>(kernel trick)이라 부릅니다. 쌍대문제와 판정식에 데이터가 내적으로만 들어 있었기에(4장 화면 5) 가능한 일입니다.
+    <p>이처럼 \(\varphi (x)\cdot \varphi (z)\) 를 \(\varphi \) 를 만들지 않고 \(K(x, z)\) 공식으로 바로 구하는 방법을 <span class="term" data-term="kerneltrick">커널 트릭</span>(kernel trick)이라 부릅니다. 쌍대문제와 판정식에 데이터가 내적으로만 들어 있었기에(4장 화면 5) 가능한 일입니다.
     고차원으로 &lsquo;가는 일&rsquo;은 하지 않으면서 &lsquo;간 것과 같은 답&rsquo;을 얻는다는 점에서 trick 입니다.</p>
   </div>
 
   <h3>화면 3 의 6 이 돌아옵니다</h3>
 
-  <p>상수 1 을 더한 <code>K(x, z) = (x·z + 1)²</code> 도 같은 방식으로 전개되고, 그 <code>φ</code> 는 화면 3 의 6 개 항 전부입니다.</p>
+  <p>상수 1 을 더한 \(K(x, z) = (x\cdot z + 1)^{2}\) 도 같은 방식으로 전개되고, 그 \(\varphi \) 는 화면 3 의 6 개 항 전부입니다.</p>
 
-  <p style="text-align:center"><code>φ(x) = ( 1, &nbsp;√2 x₁, &nbsp;√2 x₂, &nbsp;x₁², &nbsp;√2 x₁x₂, &nbsp;x₂² )</code></p>
+  <p style="text-align:center">\[\varphi (x) = ( 1, \; \sqrt{2} x_{1}, \; \sqrt{2} x_{2}, \; x_{1}^{2}, \; \sqrt{2} x_{1}x_{2}, \; x_{2}^{2} )\]</p>
 
-  <p>같은 <code>x = (1, 2)</code>, <code>z = (3, 1)</code> 로 확인하면 <code>φ(x) = (1, √2, 2√2, 1, 2√2, 4)</code>, <code>φ(z) = (1, 3√2, √2, 9, 3√2, 1)</code> 이고 내적은 <code>1 + 6 + 4 + 9 + 12 + 4 = 36</code> 입니다. <code>(x·z + 1)² = (5 + 1)² = 36</code> 으로 같습니다. 일반 <code>d</code> 의 <code>(x·z + 1)^d</code> 는 차수 <code>d</code> 이하 모든 항(화면 3 의 <code>C(p+d, d)</code> 개)에 대응합니다(증명 생략). 화면 3 의 표에서 &ldquo;2.5 조&rdquo;였던 <code>p = 784</code>, <code>d = 5</code> 도 <code>(x·z + 1)⁵</code> 로는 내적 한 번과 거듭제곱 한 번입니다.</p>
+  <p>같은 \(x = (1, 2)\), \(z = (3, 1)\) 로 확인하면 \(\varphi (x) = (1, \sqrt{2}, 2\sqrt{2}, 1, 2\sqrt{2}, 4)\), \(\varphi (z) = (1, 3\sqrt{2}, \sqrt{2}, 9, 3\sqrt{2}, 1)\) 이고 내적은 \(1 + 6 + 4 + 9 + 12 + 4 = 36\) 입니다. \((x\cdot z + 1)^{2} = (5 + 1)^{2} = 36\) 으로 같습니다. 일반 \(d\) 의 \((x\cdot z + 1)^d\) 는 차수 \(d\) 이하 모든 항(화면 3 의 \(C(p+d, d)\) 개)에 대응합니다(증명 생략). 화면 3 의 표에서 &ldquo;2.5 조&rdquo;였던 \(p = 784\), \(d = 5\) 도 \((x\cdot z + 1)^{5}\) 로는 내적 한 번과 거듭제곱 한 번입니다.</p>
 
   <div class="box note">
     <p class="box-t">원형 데이터는 이 커널로 갈립니다</p>
-    <p>이 장의 <code>z = x₁² + x₂²</code> 는 위의 <code>φ</code> 의 첫째와 셋째 좌표의 합, <code>φ₁ + φ₃</code> 입니다. 그래서 화면 2 의 수평 평면 <code>z = c</code> 는 이 특징 공간에서 <code>w = (−1, 0, −1)</code>, <code>b = c</code> 인 평면(<code>f = c − φ₁ − φ₃</code>)입니다. 곧 <code>K(x, z) = (x·z)²</code> 로 만든 SVM 에서 이 12 점은 갈립니다. 화면 2 에서 <code>z</code> 에 제곱근을 씌우지 않은 이유도 여기 있습니다. <code>x₁² + x₂²</code> 는 다항식 항의 합이라 이런 커널로 다룰 수 있습니다.
+    <p>이 장의 \(z = x_{1}^{2} + x_{2}^{2}\) 는 위의 \(\varphi \) 의 첫째와 셋째 좌표의 합, \(\varphi _{1} + \varphi _{3}\) 입니다. 그래서 화면 2 의 수평 평면 \(z = c\) 는 이 특징 공간에서 \(w = (-1, 0, -1)\), \(b = c\) 인 평면(\(f = c - \varphi _{1} - \varphi _{3}\))입니다. 곧 \(K(x, z) = (x\cdot z)^{2}\) 로 만든 SVM 에서 이 12 점은 갈립니다. 화면 2 에서 \(z\) 에 제곱근을 씌우지 않은 이유도 여기 있습니다. \(x_{1}^{2} + x_{2}^{2}\) 는 다항식 항의 합이라 이런 커널로 다룰 수 있습니다.
     SVM 이 실제로 고르는 평면은 마진이 가장 큰 것이라 이 평면과 다를 수 있습니다. 갈린다는 것까지가 이 화면에서 확인한 사실입니다.</p>
   </div>
 
   <div class="box warn">
-    <p class="box-t">한계 — <code>φ</code> 는 하나로 정해지지 않습니다</p>
-    <p><code>φ′(x) = (x₁², x₁x₂, x₂x₁, x₂²)</code> 처럼 4 개 좌표로 만들어도 <code>φ′(x)·φ′(z) = x₁²z₁² + 2x₁x₂z₁z₂ + x₂²z₂² = (x·z)²</code> 로 같은 <code>K</code> 가 나옵니다. 쌍대문제와 판정식은 <code>K</code> 만 보므로, 본체는 <code>φ</code> 가 아니라 <code>K</code> 입니다. 어떤 <code>φ</code> 를 쓰든 답은 같습니다.</p>
+    <p class="box-t">한계 — \(\varphi \) 는 하나로 정해지지 않습니다</p>
+    <p>\(\varphi '(x) = (x_{1}^{2}, x_{1}x_{2}, x_{2}x_{1}, x_{2}^{2})\) 처럼 4 개 좌표로 만들어도 \(\varphi '(x)\cdot \varphi '(z) = x_{1}^{2}z_{1}^{2} + 2x_{1}x_{2}z_{1}z_{2} + x_{2}^{2}z_{2}^{2} = (x\cdot z)^{2}\) 로 같은 \(K\) 가 나옵니다. 쌍대문제와 판정식은 \(K\) 만 보므로, 본체는 \(\varphi \) 가 아니라 \(K\) 입니다. 어떤 \(\varphi \) 를 쓰든 답은 같습니다.</p>
   </div>
 </section>
 
@@ -554,79 +555,79 @@
 
   <div class="table-wrap">
     <table>
-      <tr><th>이름</th><th><code>K(x, z)</code></th><th>대응하는 <code>φ</code></th><th>조절 장치</th></tr>
-      <tr><td>선형</td><td><code>x·z</code></td><td><code>φ(x) = x</code> (4·5장)</td><td>없음</td></tr>
-      <tr><td>다항</td><td><code>(x·z + 1)<sup>d</sup></code></td><td>차수 <code>d</code> 이하 모든 항 (화면 5)</td><td>차수 <code>d</code></td></tr>
-      <tr><td><b>RBF</b> (가우시안)</td><td><code>exp(−γ ‖x − z‖²)</code></td><td><b>무한 차원</b> (아래)</td><td><code>γ</code> (그리고 <code>C</code>)</td></tr>
+      <tr><th>이름</th><th>\(K(x, z)\)</th><th>대응하는 \(\varphi \)</th><th>조절 장치</th></tr>
+      <tr><td>선형</td><td>\(x\cdot z\)</td><td>\(\varphi (x) = x\) (4·5장)</td><td>없음</td></tr>
+      <tr><td>다항</td><td>\((x\cdot z + 1)^{d}\)</td><td>차수 \(d\) 이하 모든 항 (화면 5)</td><td>차수 \(d\)</td></tr>
+      <tr><td><b>RBF</b> (가우시안)</td><td>\(\exp (-\gamma  \lVert x - z\rVert ^{2})\)</td><td><b>무한 차원</b> (아래)</td><td>\(\gamma \) (그리고 \(C\))</td></tr>
     </table>
   </div>
 
   <h3>RBF 커널 읽기</h3>
 
-  <p><span class="term" data-term="rbf">RBF 커널</span>(Radial Basis Function, 가우시안 커널이라고도 합니다)은 <code>K(x, z) = exp(−γ‖x − z‖²)</code> 입니다. 기호를 하나씩 봅니다.</p>
+  <p><span class="term" data-term="rbf">RBF 커널</span>(Radial Basis Function, 가우시안 커널이라고도 합니다)은 \(K(x, z) = \exp (-\gamma \lVert x - z\rVert ^{2})\) 입니다. 기호를 하나씩 봅니다.</p>
   <ul>
-    <li><code>‖x − z‖²</code> — 두 점 사이 거리의 제곱입니다. 2차원이면 <code>(x₁ − z₁)² + (x₂ − z₂)²</code> 로, 화면 2 에서 원점까지 거리의 제곱을 쓴 것과 같은 계산입니다(<code>‖·‖</code> 는 1장 화면 3 의 노름, 곧 길이).</li>
-    <li><code>exp(u)</code> — <code>e<sup>u</sup></code> 입니다(<code>e ≈ 2.718</code>). <code>u = 0</code> 이면 1 이고, <code>u</code> 가 음수로 클수록 0 에 가깝습니다.</li>
-    <li><span class="term" data-term="gamma">γ</span> (감마) — 0 보다 큰 상수입니다. <code>C</code> 처럼 학습 전에 사람이 정하는 하이퍼파라미터입니다.</li>
+    <li>\(\lVert x - z\rVert ^{2}\) — 두 점 사이 거리의 제곱입니다. 2차원이면 \((x_{1} - z_{1})^{2} + (x_{2} - z_{2})^{2}\) 로, 화면 2 에서 원점까지 거리의 제곱을 쓴 것과 같은 계산입니다(\(\lVert \cdot \rVert \) 는 1장 화면 3 의 노름, 곧 길이).</li>
+    <li>\(\exp (u)\) — \(e^{u}\) 입니다(\(e \approx  2.718\)). \(u = 0\) 이면 1 이고, \(u\) 가 음수로 클수록 0 에 가깝습니다.</li>
+    <li><span class="term" data-term="gamma">γ</span> (감마) — 0 보다 큰 상수입니다. \(C\) 처럼 학습 전에 사람이 정하는 하이퍼파라미터입니다.</li>
   </ul>
 
-  <p>그래서 <code>K</code> 는 두 점이 같으면 <code>exp(0) = 1</code> 이고, 멀어질수록 0 에 가까워지는 <b>&ldquo;닮은 정도&rdquo; 점수</b>입니다. <code>γ</code> 가 점수가 떨어지는 속도를 정합니다.</p>
+  <p>그래서 \(K\) 는 두 점이 같으면 \(\exp (0) = 1\) 이고, 멀어질수록 0 에 가까워지는 <b>&ldquo;닮은 정도&rdquo; 점수</b>입니다. \(\gamma \) 가 점수가 떨어지는 속도를 정합니다.</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th>거리 <code>‖x − z‖</code></th><th><code>γ = 0.1</code></th><th><code>γ = 1</code></th><th><code>γ = 10</code></th></tr>
+      <tr><th>거리 \(\lVert x - z\rVert \)</th><th>\(\gamma  = 0.1\)</th><th>\(\gamma  = 1\)</th><th>\(\gamma  = 10\)</th></tr>
       <tr><td>0.5</td><td>0.975</td><td>0.779</td><td>0.082</td></tr>
       <tr><td>1</td><td>0.905</td><td>0.368</td><td>4.5 × 10⁻⁵</td></tr>
       <tr><td>2</td><td>0.670</td><td>0.018</td><td>4.2 × 10⁻¹⁸</td></tr>
     </table>
   </div>
 
-  <p><code>γ</code> 가 작으면 멀리 떨어진 점도 꽤 닮았다고 보고(<code>γ = 0.1</code>, 거리 2 에서도 0.67), 크면 조금만 떨어져도 거의 남남으로 봅니다(<code>γ = 10</code>, 거리 1 에서 <code>10⁻⁵</code>). 대략 <b>거리 <code>1/√γ</code></b> 에서 점수가 <code>e⁻¹ ≈ 0.37</code> 로 떨어집니다. 판정식 <code>f(x) = Σα⁽ⁱ⁾y⁽ⁱ⁾K(x⁽ⁱ⁾, x) + b</code> 에서 <code>K</code> 는 서포트 벡터 <code>x⁽ⁱ⁾</code> 가 새 점 <code>x</code> 에 미치는 영향력이니,
-  <b><code>γ</code> 는 서포트 벡터 하나의 영향 범위(대략 <code>1/√γ</code>)를 정합니다.</b> 작으면 넓고 완만하게, 크면 좁고 뾰족하게 영향을 줍니다.</p>
+  <p>\(\gamma \) 가 작으면 멀리 떨어진 점도 꽤 닮았다고 보고(\(\gamma  = 0.1\), 거리 2 에서도 0.67), 크면 조금만 떨어져도 거의 남남으로 봅니다(\(\gamma  = 10\), 거리 1 에서 \(10^{-5}\)). 대략 <b>거리 \(1/\sqrt{\gamma }\)</b> 에서 점수가 \(e^{-1} \approx  0.37\) 로 떨어집니다. 판정식 \(f(x) = \sum \alpha ^{(i)}y^{(i)}K(x^{(i)}, x) + b\) 에서 \(K\) 는 서포트 벡터 \(x^{(i)}\) 가 새 점 \(x\) 에 미치는 영향력이니,
+  <b>\(\gamma \) 는 서포트 벡터 하나의 영향 범위(대략 \(1/\sqrt{\gamma }\))를 정합니다.</b> 작으면 넓고 완만하게, 크면 좁고 뾰족하게 영향을 줍니다.</p>
 
   <h3>&ldquo;무한 차원&rdquo;이라는 말의 뜻</h3>
 
-  <p>RBF 의 <code>φ</code> 는 좌표가 무한히 많다고 합니다. 점이 1차원(<code>x, z</code> 가 숫자)인 경우로 그 이유를 직관으로 따라가 봅니다.</p>
+  <p>RBF 의 \(\varphi \) 는 좌표가 무한히 많다고 합니다. 점이 1차원(\(x, z\) 가 숫자)인 경우로 그 이유를 직관으로 따라가 봅니다.</p>
 
   <div class="table-wrap">
     <table>
       <tr><th style="width:2.2rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
-      <tr><td>1</td><td><code>exp(−γ(x − z)²) = e<sup>−γx²</sup> · e<sup>−γz²</sup> · e<sup>2γxz</sup></code></td><td><code>(x − z)² = x² − 2xz + z²</code> 이고 <code>e<sup>a+b+c</sup> = e<sup>a</sup>e<sup>b</sup>e<sup>c</sup></code>.</td></tr>
-      <tr><td>2</td><td><code>e<sup>2γxz</sup> = Σ<sub>k=0</sub><sup>∞</sup> (2γ)<sup>k</sup> x<sup>k</sup> z<sup>k</sup> / k!</code></td><td><span class="term" data-term="taylor">테일러 전개</span> <code>e<sup>u</sup> = 1 + u + u²/2! + u³/3! + …</code> 에 <code>u = 2γxz</code> 를 넣었습니다. 이 식은 증명 없이 씁니다.</td></tr>
-      <tr><td>3</td><td><code>K(x, z) = Σ<sub>k</sub> φ<sub>k</sub>(x) φ<sub>k</sub>(z)</code>, &nbsp; <code>φ<sub>k</sub>(x) = e<sup>−γx²</sup> √((2γ)<sup>k</sup>/k!) · x<sup>k</sup></code></td><td>2 줄의 각 항을 <code>x</code> 몫과 <code>z</code> 몫으로 나눴습니다. <code>x<sup>k</sup>z<sup>k</sup> = x<sup>k</sup> · z<sup>k</sup></code> 이고 계수는 <code>√</code> 로 반씩 나눠 가집니다.</td></tr>
+      <tr><td>1</td><td>\(\exp (-\gamma (x - z)^{2}) = e^{-\gamma x^{2}} \cdot  e^{-\gamma z^{2}} \cdot  e^{2\gamma xz}\)</td><td>\((x - z)^{2} = x^{2} - 2xz + z^{2}\) 이고 \(e^{a+b+c} = e^{a}e^{b}e^{c}\).</td></tr>
+      <tr><td>2</td><td>\(e^{2\gamma xz} = \sum _{k=0}^{\infty } (2\gamma )^{k} x^{k} z^{k} / k!\)</td><td><span class="term" data-term="taylor">테일러 전개</span> \(e^{u} = 1 + u + u^{2}/2! + u^{3}/3! + \ldots \) 에 \(u = 2\gamma xz\) 를 넣었습니다. 이 식은 증명 없이 씁니다.</td></tr>
+      <tr><td>3</td><td>\(K(x, z) = \sum _{k} \varphi _{k}(x) \varphi _{k}(z)\), &nbsp; \(\varphi _{k}(x) = e^{-\gamma x^{2}} \sqrt{(2\gamma )^{k}/k!} \cdot  x^{k}\)</td><td>2 줄의 각 항을 \(x\) 몫과 \(z\) 몫으로 나눴습니다. \(x^{k}z^{k} = x^{k} \cdot  z^{k}\) 이고 계수는 \(\surd \) 로 반씩 나눠 가집니다.</td></tr>
     </table>
   </div>
 
-  <p>3 줄은 <code>K(x, z) = φ(x)·φ(z)</code> 이고, <code>φ(x) = (φ₀(x), φ₁(x), φ₂(x), …)</code> 에 <b><code>k</code> 가 0, 1, 2, … 로 끝없이 이어지는 좌표</b>가 있습니다. 각 <code>φ<sub>k</sub></code> 는 가우시안 인자 <code>e<sup>−γx²</sup></code> 에 <code>x</code> 의 <code>k</code> 차 항을 곱한 꼴이라, <code>φ₀</code> 는 <code>e<sup>−γx²</sup></code>, <code>φ₁</code> 은 여기에 <code>x</code> 의 1차 항, <code>φ₂</code> 는 2차 항을 곱한 식…으로 가우시안 인자가 붙은 모든 차수의 항이 들어 있는 셈입니다. 2차원 이상에서는 <code>x<sup>k</sup>z<sup>k</sup></code> 자리에 <code>(x·z)<sup>k</sup></code> 가 들어가 모든 차수의 항이 들어갑니다. 이것이 &ldquo;무한 차원&rdquo;입니다.</p>
+  <p>3 줄은 \(K(x, z) = \varphi (x)\cdot \varphi (z)\) 이고, \(\varphi (x) = (\varphi _{0}(x), \varphi _{1}(x), \varphi _{2}(x), \ldots )\) 에 <b>\(k\) 가 0, 1, 2, … 로 끝없이 이어지는 좌표</b>가 있습니다. 각 \(\varphi _{k}\) 는 가우시안 인자 \(e^{-\gamma x^{2}}\) 에 \(x\) 의 \(k\) 차 항을 곱한 꼴이라, \(\varphi _{0}\) 는 \(e^{-\gamma x^{2}}\), \(\varphi _{1}\) 은 여기에 \(x\) 의 1차 항, \(\varphi _{2}\) 는 2차 항을 곱한 식…으로 가우시안 인자가 붙은 모든 차수의 항이 들어 있는 셈입니다. 2차원 이상에서는 \(x^{k}z^{k}\) 자리에 \((x\cdot z)^{k}\) 가 들어가 모든 차수의 항이 들어갑니다. 이것이 &ldquo;무한 차원&rdquo;입니다.</p>
 
-  <p>끝없는 합이 정말 <code>K</code> 로 모이는지 숫자로 봅니다. <code>γ = ½</code>, <code>x = 1</code>, <code>z = 2</code> 에서 <code>K = exp(−½·1) = 0.6065</code> 이고, 앞에서부터 <code>k</code> 항까지만 더하면 이렇습니다.</p>
+  <p>끝없는 합이 정말 \(K\) 로 모이는지 숫자로 봅니다. \(\gamma  = \tfrac12 \), \(x = 1\), \(z = 2\) 에서 \(K = \exp (-\tfrac12 \cdot 1) = 0.6065\) 이고, 앞에서부터 \(k\) 항까지만 더하면 이렇습니다.</p>
 
   <div class="table-wrap">
     <table>
-      <tr><th>더한 항 (<code>k ≤</code>)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>∞</th></tr>
-      <tr><td>합 <code>Σ φ<sub>k</sub>(x)φ<sub>k</sub>(z)</code></td><td>0.082</td><td>0.246</td><td>0.410</td><td>0.520</td><td>0.575</td><td>0.596</td><td>0.604</td><td>0.606</td><td><b>0.6065</b></td></tr>
+      <tr><th>더한 항 (\(k \le \))</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>∞</th></tr>
+      <tr><td>합 \(\sum  \varphi _{k}(x)\varphi _{k}(z)\)</td><td>0.082</td><td>0.246</td><td>0.410</td><td>0.520</td><td>0.575</td><td>0.596</td><td>0.604</td><td>0.606</td><td><b>0.6065</b></td></tr>
     </table>
   </div>
 
-  <p>앞의 몇 항만으로도 거의 같아지지만 정확히는 무한 개가 필요합니다. 그런데도 우리가 할 계산은 <code>exp</code> 한 번입니다. <b>좌표를 하나도 만들지 않으니 무한이어도 상관없습니다.</b> 이것이 커널 트릭의 힘입니다.</p>
+  <p>앞의 몇 항만으로도 거의 같아지지만 정확히는 무한 개가 필요합니다. 그런데도 우리가 할 계산은 \(\exp \) 한 번입니다. <b>좌표를 하나도 만들지 않으니 무한이어도 상관없습니다.</b> 이것이 커널 트릭의 힘입니다.</p>
 
   <div class="box note">
     <p class="box-t">이 말이 뜻하는 것과 뜻하지 않는 것</p>
     <ul>
-      <li>서로 다른 점들에 대해 RBF 그램 행렬은 가역(역행렬이 있음)임이 알려져 있어서(증명 생략), <b>점이 서로 다르기만 하면 레이블을 어떻게 붙여도 가를 수 있는 특징 공간</b>입니다. 힘이 센 만큼 <code>γ</code> 가 크면 점 하나하나를 외우는 과적합이 쉽습니다. 아래 위젯에서 볼 수 있습니다.</li>
-      <li>가를 수 있다는 것과 새 점을 잘 맞힌다는 것은 다릅니다. 새 점에서의 성능은 <code>γ</code> 와 <code>C</code> 로 조절합니다.</li>
+      <li>서로 다른 점들에 대해 RBF 그램 행렬은 가역(역행렬이 있음)임이 알려져 있어서(증명 생략), <b>점이 서로 다르기만 하면 레이블을 어떻게 붙여도 가를 수 있는 특징 공간</b>입니다. 힘이 센 만큼 \(\gamma \) 가 크면 점 하나하나를 외우는 과적합이 쉽습니다. 아래 위젯에서 볼 수 있습니다.</li>
+      <li>가를 수 있다는 것과 새 점을 잘 맞힌다는 것은 다릅니다. 새 점에서의 성능은 \(\gamma \) 와 \(C\) 로 조절합니다.</li>
     </ul>
   </div>
 
-  <h3>직접 움직여 보기 — RBF 의 <code>γ</code> 와 <code>C</code></h3>
+  <h3>직접 움직여 보기 — RBF 의 \(\gamma \) 와 \(C\)</h3>
 
-  <p>결론은 위에 적었습니다(<code>γ</code> 가 작으면 완만, 크면 뾰족). 위젯은 이를 확인하는 도구입니다. 슬라이더를 움직일 때마다 화면 4 의 <b>커널 소프트 마진 쌍대문제</b>(<code>K</code> 는 RBF)를 풀어 <code>α</code> 와 <code>b</code> 를 구하고, 격자의 모든 점에서 <code>f(x) = Σα⁽ⁱ⁾y⁽ⁱ⁾K(x⁽ⁱ⁾, x) + b</code> 를 계산해 영역을 칠합니다. 풀이 코드는 5장 위젯의 <code>solveSoft</code> 에서 내적 <code>x·x</code> 를 <code>K</code> 로 바꾼 것입니다.</p>
+  <p>결론은 위에 적었습니다(\(\gamma \) 가 작으면 완만, 크면 뾰족). 위젯은 이를 확인하는 도구입니다. 슬라이더를 움직일 때마다 화면 4 의 <b>커널 소프트 마진 쌍대문제</b>(\(K\) 는 RBF)를 풀어 \(\alpha \) 와 \(b\) 를 구하고, 격자의 모든 점에서 \(f(x) = \sum \alpha ^{(i)}y^{(i)}K(x^{(i)}, x) + b\) 를 계산해 영역을 칠합니다. 풀이 코드는 5장 위젯의 \(solveSoft\) 에서 내적 \(x\cdot x\) 를 \(K\) 로 바꾼 것입니다.</p>
 
-  <p>5장 위젯과 다른 점이 하나 있습니다. 5장에서는 풀이가 <code>w</code> 를 돌려줘서 직선을 바로 그렸습니다. RBF 에서는 <code>w</code> 가 무한 차원 벡터라 적을 수가 없고, 판정도 <code>b</code> 를 구하는 것도 전부 커널 합으로 합니다(<code>b = y⁽ᵏ⁾ − Σα⁽ⁱ⁾y⁽ⁱ⁾K(x⁽ⁱ⁾, x⁽ᵏ⁾)</code>, <code>0 &lt; α⁽ᵏ⁾ &lt; C</code> 인 점 <code>k</code> 들의 평균). 그래서 결정경계(<code>f = 0</code>)는 선이 아니라 <code>f</code> 값의 <b>등고선</b>으로 그립니다.</p>
+  <p>5장 위젯과 다른 점이 하나 있습니다. 5장에서는 풀이가 \(w\) 를 돌려줘서 직선을 바로 그렸습니다. RBF 에서는 \(w\) 가 무한 차원 벡터라 적을 수가 없고, 판정도 \(b\) 를 구하는 것도 전부 커널 합으로 합니다(\(b = y^{(k)} - \sum \alpha ^{(i)}y^{(i)}K(x^{(i)}, x^{(k)})\), \(0 &lt; \alpha ^{(k)} &lt; C\) 인 점 \(k\) 들의 평균). 그래서 결정경계(\(f = 0\))는 선이 아니라 \(f\) 값의 <b>등고선</b>으로 그립니다.</p>
 
   <figure class="fig">
     <canvas id="k-cv" width="480" height="480" role="img" aria-label="RBF 커널 SVM 의 결정경계. 파란 영역은 +1 로, 붉은 영역은 -1 로 분류되는 곳이고, 굵은 선이 f 가 0 인 결정경계, 가는 점선이 f 가 +1 과 -1 인 마진 경계이다. 점 위의 동그란 테두리는 서포트 벡터" style="width:100%;max-width:27rem;height:auto;border:1px solid var(--rule);border-radius:6px;background:var(--card)"></canvas>
-    <figcaption>파란 영역은 <code>f &gt; 0</code>(+1 로 분류), 붉은 영역은 <code>f &lt; 0</code>(−1)이고 색이 진할수록 <code>|f|</code> 가 큽니다. 굵은 선이 <code>f = 0</code>(결정경계), 가는 점선이 <code>f = +1</code>(파랑), <code>f = −1</code>(빨강)입니다. 점 둘레의 동그란 테두리는 서포트 벡터(<code>α &gt; 0</code>)입니다. 좌표는 −3 에서 3 까지입니다.</figcaption>
+    <figcaption>파란 영역은 \(f > 0\)(+1 로 분류), 붉은 영역은 \(f &lt; 0\)(−1)이고 색이 진할수록 \(|f|\) 가 큽니다. 굵은 선이 \(f = 0\)(결정경계), 가는 점선이 \(f = +1\)(파랑), \(f = -1\)(빨강)입니다. 점 둘레의 동그란 테두리는 서포트 벡터(\(\alpha  > 0\))입니다. 좌표는 −3 에서 3 까지입니다.</figcaption>
   </figure>
 
   <div style="display:flex;gap:.45rem;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.86rem;margin-bottom:.6rem">
@@ -656,7 +657,7 @@
     <button type="button" data-n="1" data-lg="2" data-lc="1" style="font:inherit;font-size:.82rem;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">잡음 · γ=100, C=10</button>
   </div>
 
-  <p style="text-align:center;font-size:.86rem;color:var(--muted);margin:.2rem 0 .8rem">조작 방법: 두 슬라이더를 끌거나 화살표 키로 움직이면 <code>γ</code>(0.01~100)와 <code>C</code>(0.1~1000)가 로그 눈금(한 칸에 약 1.12 배)으로 바뀝니다. 버튼으로 데이터와 값을 한꺼번에 정할 수도 있습니다.</p>
+  <p style="text-align:center;font-size:.86rem;color:var(--muted);margin:.2rem 0 .8rem">조작 방법: 두 슬라이더를 끌거나 화살표 키로 움직이면 \(\gamma \)(0.01~100)와 \(C\)(0.1~1000)가 로그 눈금(한 칸에 약 1.12 배)으로 바뀝니다. 버튼으로 데이터와 값을 한꺼번에 정할 수도 있습니다.</p>
 
   <p id="k-sol" style="text-align:center;font-weight:700;margin:.5rem 0 .2rem"></p>
   <p id="k-obj" style="text-align:center;margin:.2rem 0 .2rem"></p>
@@ -843,12 +844,12 @@
   <div class="box note">
     <p class="box-t">이렇게 움직여 보세요 (값은 위젯을 직접 돌려 얻은 것입니다)</p>
     <ol>
-      <li><b>원형 데이터, <code>γ = 1</code>, <code>C = 10</code>.</b> 서포트 벡터 11개이고 12 점을 모두 맞힙니다. 안쪽을 감싸는 닫힌 곡선이 결정경계입니다. 새 점 시험은 100% 입니다. 화면 1 에서 직선이 최선 3 점을 틀리던 데이터를 곡선이 가릅니다.</li>
-      <li><b><code>γ = 0.01</code>, <code>C = 1</code>.</b> 영향 범위가 <code>1/√γ = 10</code> 으로 데이터 전체보다 넓어서, 경계가 반지름이 아주 큰 완만한 호 하나로 나옵니다(그림에서 안쪽 점 일부가 경계 밖에 놓입니다). 12 점 중 3 점을 틀리고(직선이 할 수 있는 최선과 같은 수), 새 점 시험은 64% 로 떨어집니다. 이 설정에서는 <code>b</code> 도 구간으로만 정해지고 서포트 벡터 12개가 전부 <code>α = C</code> 라 과소적합입니다.</li>
-      <li><b>같은 <code>γ = 0.01</code> 에서 <code>C = 100</code>.</b> 틀린 점이 0 이고 새 점 시험은 100% 입니다. <code>γ</code> 가 작아서 휘기 어려워도 <code>C</code> 를 키워 침범을 비싸게 하면 경계를 억지로 꺾을 수 있습니다. 두 값은 따로 놀지 않고 함께 작용합니다.</li>
-      <li><b>잡음 한 점, <code>γ = 1</code>, <code>C = 1</code>.</b> 레이블이 뒤집힌 <code>x⁽¹⁾</code> 은 틀리게 두고 나머지 11 점을 맞힙니다(틀린 점 1개). 새 점 시험은 100% 입니다. 잡음을 포기해서 모양이 깨끗하게 남았습니다.</li>
-      <li><b>같은 데이터에서 <code>C = 10</code>.</b> 틀린 점이 0 이 되었지만 새 점 시험은 92% 로 내려갑니다. 경계가 잡음 한 점을 맞히려고 중앙에 작은 섬을 만들어, 그 섬 안으로 들어오는 새 점을 틀리게 만듭니다. 5장의 과적합과 같은 일입니다.</li>
-      <li><b><code>γ = 100</code>, <code>C = 10</code>.</b> 영향 범위 0.1 이라 점마다 작은 섬이 생기고 학습 점은 모두 맞히지만 새 점 시험은 68% 입니다. 새 점 시험 격자 1317 점 중 바깥 고리(거리 2.0~2.6)의 876 점(안쪽은 441 점)이 모두 −1 이니 &ldquo;전부 −1&rdquo;이라고 답해도 66.5% 이므로 사실상 아무것도 배우지 못한 것에 가깝습니다. 학습 점을 맞히는 것과 새 점을 맞히는 것이 다르다는 가장 선명한 예입니다.</li>
+      <li><b>원형 데이터, \(\gamma  = 1\), \(C = 10\).</b> 서포트 벡터 11개이고 12 점을 모두 맞힙니다. 안쪽을 감싸는 닫힌 곡선이 결정경계입니다. 새 점 시험은 100% 입니다. 화면 1 에서 직선이 최선 3 점을 틀리던 데이터를 곡선이 가릅니다.</li>
+      <li><b>\(\gamma  = 0.01\), \(C = 1\).</b> 영향 범위가 \(1/\sqrt{\gamma } = 10\) 으로 데이터 전체보다 넓어서, 경계가 반지름이 아주 큰 완만한 호 하나로 나옵니다(그림에서 안쪽 점 일부가 경계 밖에 놓입니다). 12 점 중 3 점을 틀리고(직선이 할 수 있는 최선과 같은 수), 새 점 시험은 64% 로 떨어집니다. 이 설정에서는 \(b\) 도 구간으로만 정해지고 서포트 벡터 12개가 전부 \(\alpha  = C\) 라 과소적합입니다.</li>
+      <li><b>같은 \(\gamma  = 0.01\) 에서 \(C = 100\).</b> 틀린 점이 0 이고 새 점 시험은 100% 입니다. \(\gamma \) 가 작아서 휘기 어려워도 \(C\) 를 키워 침범을 비싸게 하면 경계를 억지로 꺾을 수 있습니다. 두 값은 따로 놀지 않고 함께 작용합니다.</li>
+      <li><b>잡음 한 점, \(\gamma  = 1\), \(C = 1\).</b> 레이블이 뒤집힌 \(x^{(1)}\) 은 틀리게 두고 나머지 11 점을 맞힙니다(틀린 점 1개). 새 점 시험은 100% 입니다. 잡음을 포기해서 모양이 깨끗하게 남았습니다.</li>
+      <li><b>같은 데이터에서 \(C = 10\).</b> 틀린 점이 0 이 되었지만 새 점 시험은 92% 로 내려갑니다. 경계가 잡음 한 점을 맞히려고 중앙에 작은 섬을 만들어, 그 섬 안으로 들어오는 새 점을 틀리게 만듭니다. 5장의 과적합과 같은 일입니다.</li>
+      <li><b>\(\gamma  = 100\), \(C = 10\).</b> 영향 범위 0.1 이라 점마다 작은 섬이 생기고 학습 점은 모두 맞히지만 새 점 시험은 68% 입니다. 새 점 시험 격자 1317 점 중 바깥 고리(거리 2.0~2.6)의 876 점(안쪽은 441 점)이 모두 −1 이니 &ldquo;전부 −1&rdquo;이라고 답해도 66.5% 이므로 사실상 아무것도 배우지 못한 것에 가깝습니다. 학습 점을 맞히는 것과 새 점을 맞히는 것이 다르다는 가장 선명한 예입니다.</li>
     </ol>
   </div>
 </section>
@@ -860,46 +861,46 @@
 
   <h3>커널이 되려면</h3>
 
-  <p>화면 4 에서 <code>K</code> 는 <code>φ(x)·φ(z)</code> 였습니다. 거꾸로 임의의 함수 <code>K(x, z)</code> 를 가져와 쌍대문제의 내적 자리에 끼우면 정말 그런 <code>φ</code> 가 있다는 보장이 있을까요? 없습니다. <code>K</code> 가 진짜 커널이면 <b>어떤 점 <code>n</code> 개를 골라 그램 행렬을 만들어도 만족해야 하는 성질</b>이 하나 있습니다.</p>
+  <p>화면 4 에서 \(K\) 는 \(\varphi (x)\cdot \varphi (z)\) 였습니다. 거꾸로 임의의 함수 \(K(x, z)\) 를 가져와 쌍대문제의 내적 자리에 끼우면 정말 그런 \(\varphi \) 가 있다는 보장이 있을까요? 없습니다. \(K\) 가 진짜 커널이면 <b>어떤 점 \(n\) 개를 골라 그램 행렬을 만들어도 만족해야 하는 성질</b>이 하나 있습니다.</p>
 
   <div class="box good">
     <p class="box-t">조건 — 그램 행렬이 양의 준정부호</p>
-    <p style="text-align:center;font-size:1.05rem"><code>ΣΣ c<sub>i</sub> c<sub>j</sub> K<sub>ij</sub> ≥ 0</code> &nbsp;&nbsp;(어떤 수 <code>c₁, …, cₙ</code> 을 잡아도)</p>
+    <p style="text-align:center;font-size:1.05rem">\(\sum \sum  c_{i} c_{j} K_{ij} \ge  0\) &nbsp;&nbsp;(어떤 수 \(c_{1}, \ldots , c_{n}\) 을 잡아도)</p>
     <ul>
-      <li><code>c₁, …, cₙ</code> — 우리가 마음대로 고르는 실수들(음수 가능)입니다. 점마다 하나씩 붙이는 가중치라고 보면 됩니다.</li>
-      <li>이 성질을 <span class="term" data-term="psd">양의 준정부호</span>라 부릅니다. 그램 행렬이 대칭이라는 것(<code>K<sub>ij</sub> = K<sub>ji</sub></code>)과 함께 요구됩니다.</li>
+      <li>\(c_{1}, \ldots , c_{n}\) — 우리가 마음대로 고르는 실수들(음수 가능)입니다. 점마다 하나씩 붙이는 가중치라고 보면 됩니다.</li>
+      <li>이 성질을 <span class="term" data-term="psd">양의 준정부호</span>라 부릅니다. 그램 행렬이 대칭이라는 것(\(K_{ij} = K_{ji}\))과 함께 요구됩니다.</li>
     </ul>
   </div>
 
-  <p>진짜 커널은 이 조건을 항상 만족합니다. <code>K<sub>ij</sub> = φ(x⁽ⁱ⁾)·φ(x⁽ʲ⁾)</code> 이므로 내적의 분배법칙(4장 화면 3~4 에서 쓴 것)에 의해</p>
+  <p>진짜 커널은 이 조건을 항상 만족합니다. \(K_{ij} = \varphi (x^{(i)})\cdot \varphi (x^{(j)})\) 이므로 내적의 분배법칙(4장 화면 3~4 에서 쓴 것)에 의해</p>
 
-  <p style="text-align:center"><code>ΣΣ c<sub>i</sub> c<sub>j</sub> K<sub>ij</sub> = ( Σ c<sub>i</sub>φ(x⁽ⁱ⁾) ) · ( Σ c<sub>j</sub>φ(x⁽ʲ⁾) ) = ‖ Σ c<sub>i</sub>φ(x⁽ⁱ⁾) ‖² ≥ 0</code></p>
+  <p style="text-align:center">\[\sum \sum  c_{i} c_{j} K_{ij} = ( \sum  c_{i}\varphi (x^{(i)}) ) \cdot  ( \sum  c_{j}\varphi (x^{(j)}) ) = \lVert  \sum  c_{i}\varphi (x^{(i)}) \rVert ^{2} \ge  0\]</p>
 
-  <p>이기 때문입니다(벡터를 자기 자신과 내적하면 길이의 제곱). 반대 방향도 알려져 있습니다. <b><code>K</code> 가 대칭이고 어떤 점들을 골라도 이 조건을 만족하면(이를 <span class="term" data-term="mercer">Mercer 조건</span>이라 부릅니다) <code>K = φ·φ</code> 인 <code>φ</code> 가 존재합니다.</b> 이 방향의 증명과 엄밀한 서술(Mercer 정리)은 이 교재에서 생략합니다. 선형, 다항(<code>(x·z + 1)^d</code>), RBF 는 모두 이 조건을 만족하는 커널입니다.</p>
+  <p>이기 때문입니다(벡터를 자기 자신과 내적하면 길이의 제곱). 반대 방향도 알려져 있습니다. <b>\(K\) 가 대칭이고 어떤 점들을 골라도 이 조건을 만족하면(이를 <span class="term" data-term="mercer">Mercer 조건</span>이라 부릅니다) \(K = \varphi \cdot \varphi \) 인 \(\varphi \) 가 존재합니다.</b> 이 방향의 증명과 엄밀한 서술(Mercer 정리)은 이 교재에서 생략합니다. 선형, 다항(\((x\cdot z + 1)^d\)), RBF 는 모두 이 조건을 만족하는 커널입니다.</p>
 
   <div class="box warn">
     <p class="box-t">반례 — 두 점 사이 거리의 제곱은 커널이 아닙니다</p>
-    <p>1차원에서 <code>K(x, z) = (x − z)²</code> 라 하고 두 점 <code>x⁽¹⁾ = 0</code>, <code>x⁽²⁾ = 1</code> 을 잡습니다. 그램 행렬은 <code>K₁₁ = K₂₂ = 0</code>, <code>K₁₂ = K₂₁ = 1</code> 입니다. <code>c = (1, −1)</code> 로 조건을 계산하면</p>
-    <p style="text-align:center"><code>ΣΣ c<sub>i</sub>c<sub>j</sub>K<sub>ij</sub> = 2·(1)(−1)·1 = −2 &lt; 0</code></p>
-    <p>조건을 어깁니다. 제곱의 합인 <code>‖·‖²</code> 가 음수일 수는 없으니 이런 <code>K</code> 는 어떤 <code>φ</code> 로도 <code>φ(x)·φ(z)</code> 가 될 수 없습니다. 이런 <code>K</code> 를 쌍대문제에 끼우면 문제가 생길 수 있습니다. 위의 두 점에 레이블을 <code>+1, −1</code> 로 주면 <code>Σαy = 0</code> 에서 <code>α⁽¹⁾ = α⁽²⁾ = a</code> 이고 <code>D = 2a + a²</code> 입니다. 상한 <code>C</code> 가 없다면 <code>a</code> 를 키울수록 끝없이 커져 최댓값이 없습니다.</p>
+    <p>1차원에서 \(K(x, z) = (x - z)^{2}\) 라 하고 두 점 \(x^{(1)} = 0\), \(x^{(2)} = 1\) 을 잡습니다. 그램 행렬은 \(K_{11} = K_{22} = 0\), \(K_{12} = K_{21} = 1\) 입니다. \(c = (1, -1)\) 로 조건을 계산하면</p>
+    <p style="text-align:center">\[\sum \sum  c_{i}c_{j}K_{ij} = 2\cdot (1)(-1)\cdot 1 = -2 &lt; 0\]</p>
+    <p>조건을 어깁니다. 제곱의 합인 \(\lVert \cdot \rVert ^{2}\) 가 음수일 수는 없으니 이런 \(K\) 는 어떤 \(\varphi \) 로도 \(\varphi (x)\cdot \varphi (z)\) 가 될 수 없습니다. 이런 \(K\) 를 쌍대문제에 끼우면 문제가 생길 수 있습니다. 위의 두 점에 레이블을 \(+1, -1\) 로 주면 \(\sum \alpha y = 0\) 에서 \(\alpha ^{(1)} = \alpha ^{(2)} = a\) 이고 \(D = 2a + a^{2}\) 입니다. 상한 \(C\) 가 없다면 \(a\) 를 키울수록 끝없이 커져 최댓값이 없습니다.</p>
   </div>
 
-  <p>재미있는 점은 <code>(x − z)²</code> 는 안 되는데 그것을 지수 안에 넣은 <code>exp(−γ(x − z)²)</code> (RBF)는 된다는 것입니다. 커널이 되는지는 식의 모양만 보고는 직관으로 알기 어려워서, 새 커널을 만들 때는 이 조건으로 확인합니다.</p>
+  <p>재미있는 점은 \((x - z)^{2}\) 는 안 되는데 그것을 지수 안에 넣은 \(\exp (-\gamma (x - z)^{2})\) (RBF)는 된다는 것입니다. 커널이 되는지는 식의 모양만 보고는 직관으로 알기 어려워서, 새 커널을 만들 때는 이 조건으로 확인합니다.</p>
 
   <h3>커널 SVM 의 예측식</h3>
 
   <p>화면 4 에서 이미 적은 판정식이 최종 형태입니다. 한 번 더 정리합니다.</p>
 
   <div class="box good">
-    <p class="box-t">커널 SVM 의 예측식과 <code>b</code></p>
-    <p style="text-align:center;font-size:1.05rem"><code>f(x) = Σ<sub>i</sub> α⁽ⁱ⁾ y⁽ⁱ⁾ K(x⁽ⁱ⁾, x) + b</code>, &nbsp;&nbsp;새 점의 분류는 <code>sign f(x)</code></p>
-    <p style="text-align:center;font-size:1.05rem"><code>b = y⁽ᵏ⁾ − Σ<sub>i</sub> α⁽ⁱ⁾ y⁽ⁱ⁾ K(x⁽ⁱ⁾, x⁽ᵏ⁾)</code> &nbsp;&nbsp;(<code>0 &lt; α⁽ᵏ⁾ &lt; C</code> 인 점 <code>k</code>)</p>
+    <p class="box-t">커널 SVM 의 예측식과 \(b\)</p>
+    <p style="text-align:center;font-size:1.05rem">\(f(x) = \sum _{i} \alpha ^{(i)} y^{(i)} K(x^{(i)}, x) + b\), &nbsp;&nbsp;새 점의 분류는 \(\operatorname{sign} f(x)\)</p>
+    <p style="text-align:center;font-size:1.05rem">\(b = y^{(k)} - \sum _{i} \alpha ^{(i)} y^{(i)} K(x^{(i)}, x^{(k)})\) &nbsp;&nbsp;(\(0 &lt; \alpha ^{(k)} &lt; C\) 인 점 \(k\))</p>
   </div>
 
   <ul>
-    <li><b>합에 기여하는 것은 서포트 벡터뿐입니다.</b> <code>α⁽ⁱ⁾ = 0</code> 인 점의 항은 0 이라, 학습이 끝난 뒤에는 서포트 벡터와 그 <code>α</code>, <code>y</code>, <code>b</code> 만 보관하면 됩니다. 위젯의 <code>decision</code> 함수가 정확히 이 식입니다.</li>
-    <li><b><code>b</code> 도 커널로 구합니다.</b> 5장 화면 4 의 <code>b = y − w·x</code> 에서 <code>w·x</code> 가 <code>Σα y K</code> 로 바뀐 것입니다. <code>0 &lt; α &lt; C</code> 인 점이 하나도 없으면 5장처럼 <code>b</code> 가 구간으로만 정해집니다(위젯에서 <code>γ = 0.01</code>, <code>C = 1</code> 로 확인).</li>
-    <li>선형 커널이면 <code>Σα y (x⁽ⁱ⁾·x) = w·x</code> 로 한 번 합쳐 둘 수 있어서 판정에 <code>w</code> 하나면 됩니다. RBF 에서는 합칠 <code>w</code> 가 없어 서포트 벡터마다 <code>K</code> 를 계산해야 합니다.</li>
+    <li><b>합에 기여하는 것은 서포트 벡터뿐입니다.</b> \(\alpha ^{(i)} = 0\) 인 점의 항은 0 이라, 학습이 끝난 뒤에는 서포트 벡터와 그 \(\alpha \), \(y\), \(b\) 만 보관하면 됩니다. 위젯의 \(decision\) 함수가 정확히 이 식입니다.</li>
+    <li><b>\(b\) 도 커널로 구합니다.</b> 5장 화면 4 의 \(b = y - w\cdot x\) 에서 \(w\cdot x\) 가 \(\sum \alpha  y K\) 로 바뀐 것입니다. \(0 &lt; \alpha  &lt; C\) 인 점이 하나도 없으면 5장처럼 \(b\) 가 구간으로만 정해집니다(위젯에서 \(\gamma  = 0.01\), \(C = 1\) 로 확인).</li>
+    <li>선형 커널이면 \(\sum \alpha  y (x^{(i)}\cdot x) = w\cdot x\) 로 한 번 합쳐 둘 수 있어서 판정에 \(w\) 하나면 됩니다. RBF 에서는 합칠 \(w\) 가 없어 서포트 벡터마다 \(K\) 를 계산해야 합니다.</li>
   </ul>
 
   <h3>한계 — 공짜가 아닙니다</h3>
@@ -907,16 +908,16 @@
   <div class="box warn">
     <p class="box-t">커널 SVM 을 쓸 때의 한계</p>
     <ul>
-      <li><b>점이 많을수록 급격히 느려집니다.</b> 그램 행렬이 <code>n × n</code> 이라 <code>n = 10,000</code> 이면 값 <code>10⁸</code> 개(8 바이트씩이면 800 MB), <code>n = 100,000</code> 이면 <code>10¹⁰</code> 개(80 GB)입니다. 구현에 따라 행렬 전체를 두지 않는 요령도 쓰지만, 학습 시간이 점의 수보다 훨씬 빠르게 늘어난다는 점은 남습니다(경험적으로 점 수의 제곱 이상으로 늘어나 수만 개를 넘으면 힘들어진다고 알려져 있습니다).</li>
-      <li><b>예측 비용은 서포트 벡터 수에 비례합니다.</b> 새 점 하나마다 서포트 벡터 개수만큼 <code>K</code> 를 계산합니다.</li>
-      <li><b><code>γ</code> 와 <code>C</code> 가 과적합·과소적합을 정합니다.</b> 위젯에서 본 것처럼 <code>γ</code> 가 너무 작으면 곡선이 휘지 못하고, 너무 크면 점마다 섬이 생깁니다. 정답은 데이터마다 달라 실전에서는 시험해서 고릅니다.</li>
+      <li><b>점이 많을수록 급격히 느려집니다.</b> 그램 행렬이 \(n \times  n\) 이라 \(n = 10,000\) 이면 값 \(10^{8}\) 개(8 바이트씩이면 800 MB), \(n = 100,000\) 이면 \(10^{10}\) 개(80 GB)입니다. 구현에 따라 행렬 전체를 두지 않는 요령도 쓰지만, 학습 시간이 점의 수보다 훨씬 빠르게 늘어난다는 점은 남습니다(경험적으로 점 수의 제곱 이상으로 늘어나 수만 개를 넘으면 힘들어진다고 알려져 있습니다).</li>
+      <li><b>예측 비용은 서포트 벡터 수에 비례합니다.</b> 새 점 하나마다 서포트 벡터 개수만큼 \(K\) 를 계산합니다.</li>
+      <li><b>\(\gamma \) 와 \(C\) 가 과적합·과소적합을 정합니다.</b> 위젯에서 본 것처럼 \(\gamma \) 가 너무 작으면 곡선이 휘지 못하고, 너무 크면 점마다 섬이 생깁니다. 정답은 데이터마다 달라 실전에서는 시험해서 고릅니다.</li>
       <li><b>커널 선택에 정답이 없습니다.</b> 선형, 다항, RBF 중 무엇이 맞는지는 데이터의 모양에 달려 있고, 미리 알 방법이 마땅치 않아 비교해 봐야 합니다.</li>
-      <li><b>RBF 는 거리를 재므로 특성의 크기에 민감합니다.</b> 한 특성이 다른 특성보다 값이 수백 배 크면 <code>‖x − z‖²</code> 가 그 특성 하나로 거의 결정됩니다.</li>
-      <li><b><code>f(x)</code> 는 점수일 뿐 확률이 아닙니다.</b> 마진 기준의 부호 있는 값이라 &ldquo;+1 일 확률 0.9&rdquo; 같은 해석을 바로 붙일 수 없습니다.</li>
+      <li><b>RBF 는 거리를 재므로 특성의 크기에 민감합니다.</b> 한 특성이 다른 특성보다 값이 수백 배 크면 \(\lVert x - z\rVert ^{2}\) 가 그 특성 하나로 거의 결정됩니다.</li>
+      <li><b>\(f(x)\) 는 점수일 뿐 확률이 아닙니다.</b> 마진 기준의 부호 있는 값이라 &ldquo;+1 일 확률 0.9&rdquo; 같은 해석을 바로 붙일 수 없습니다.</li>
     </ul>
   </div>
 
-  <p>커널 트릭은 &ldquo;직선밖에 못 긋는 도구&rdquo;를 &ldquo;곡선도 긋는 도구&rdquo;로 바꾸는 대신, 점이 많아지면 비싼 값을 치르게 합니다. 이 장에서 얻은 것은 쌍대문제의 <code>x·x</code> 자리에 <code>K</code> 를 끼우는 한 줄의 변화로 모양의 한계를 넘는다는 사실입니다.</p>
+  <p>커널 트릭은 &ldquo;직선밖에 못 긋는 도구&rdquo;를 &ldquo;곡선도 긋는 도구&rdquo;로 바꾸는 대신, 점이 많아지면 비싼 값을 치르게 합니다. 이 장에서 얻은 것은 쌍대문제의 \(x\cdot x\) 자리에 \(K\) 를 끼우는 한 줄의 변화로 모양의 한계를 넘는다는 사실입니다.</p>
 </section>
 
 <!-- ─────────────────────────────────────────── 화면 8 -->
@@ -927,11 +928,11 @@
   <div class="summary">
     <h3>핵심 요약</h3>
     <ol>
-      <li>원형으로 둘러싼 데이터는 직선으로 못 가르고(12 점 중 3 점은 틀림), <code>C</code> 로도 고쳐지지 않습니다. 모양의 문제이기 때문입니다. 점에 <code>z = x₁² + x₂²</code> 를 새 좌표로 붙이면 3차원에서 평면으로 갈리고, 평면을 되돌리면 원이 됩니다.</li>
-      <li>점을 새 좌표로 바꾸는 규칙이 특징 맵 <code>φ</code> 입니다. 직접 계산하면 특징 수가 <code>C(p+d, d)</code>(<code>p</code> 는 점의 차원)로 폭발하고, <code>p = 784</code>, <code>d = 5</code> 면 한 점이 2.5 조 개의 숫자입니다.</li>
-      <li>쌍대문제와 판정식에는 점이 내적으로만 들어 있어서 <code>φ(x)·φ(z)</code> 만 구하면 됩니다. 이 값을 돌려주는 함수가 커널 <code>K(x, z)</code> 이고, <code>x⁽ⁱ⁾·x⁽ʲ⁾</code> 를 <code>K(x⁽ⁱ⁾, x⁽ʲ⁾)</code> 로 바꿔 쓰면 끝입니다. 예: <code>φ = (x₁², √2x₁x₂, x₂²)</code> 이면 <code>φ(x)·φ(z) = (x·z)²</code>. 이것이 커널 트릭입니다.</li>
-      <li>대표 커널은 선형, 다항 <code>(x·z+1)^d</code>, RBF <code>exp(−γ‖x−z‖²)</code> 입니다. RBF 는 무한 차원 특징 공간에 해당하고, <code>γ</code> 는 서포트 벡터 하나의 영향 범위(대략 <code>1/√γ</code>)를 정합니다. 너무 작으면 곡선이 안 휘고 너무 크면 점마다 섬이 생기며, <code>C</code> 와 함께 조절합니다.</li>
-      <li>커널이 되려면 그램 행렬이 대칭이고 양의 준정부호여야 합니다(Mercer 조건). 예측식은 <code>f(x) = Σα⁽ⁱ⁾y⁽ⁱ⁾K(x⁽ⁱ⁾, x) + b</code> 로 서포트 벡터만 기여합니다. 점이 많아지면 <code>n × n</code> 표 때문에 느려지고, <code>f</code> 는 확률이 아닙니다.</li>
+      <li>원형으로 둘러싼 데이터는 직선으로 못 가르고(12 점 중 3 점은 틀림), \(C\) 로도 고쳐지지 않습니다. 모양의 문제이기 때문입니다. 점에 \(z = x_{1}^{2} + x_{2}^{2}\) 를 새 좌표로 붙이면 3차원에서 평면으로 갈리고, 평면을 되돌리면 원이 됩니다.</li>
+      <li>점을 새 좌표로 바꾸는 규칙이 특징 맵 \(\varphi \) 입니다. 직접 계산하면 특징 수가 \(C(p+d, d)\)(\(p\) 는 점의 차원)로 폭발하고, \(p = 784\), \(d = 5\) 면 한 점이 2.5 조 개의 숫자입니다.</li>
+      <li>쌍대문제와 판정식에는 점이 내적으로만 들어 있어서 \(\varphi (x)\cdot \varphi (z)\) 만 구하면 됩니다. 이 값을 돌려주는 함수가 커널 \(K(x, z)\) 이고, \(x^{(i)}\cdot x^{(j)}\) 를 \(K(x^{(i)}, x^{(j)})\) 로 바꿔 쓰면 끝입니다. 예: \(\varphi  = (x_{1}^{2}, \sqrt{2}x_{1}x_{2}, x_{2}^{2})\) 이면 \(\varphi (x)\cdot \varphi (z) = (x\cdot z)^{2}\). 이것이 커널 트릭입니다.</li>
+      <li>대표 커널은 선형, 다항 \((x\cdot z+1)^d\), RBF \(\exp (-\gamma \lVert x-z\rVert ^{2})\) 입니다. RBF 는 무한 차원 특징 공간에 해당하고, \(\gamma \) 는 서포트 벡터 하나의 영향 범위(대략 \(1/\sqrt{\gamma }\))를 정합니다. 너무 작으면 곡선이 안 휘고 너무 크면 점마다 섬이 생기며, \(C\) 와 함께 조절합니다.</li>
+      <li>커널이 되려면 그램 행렬이 대칭이고 양의 준정부호여야 합니다(Mercer 조건). 예측식은 \(f(x) = \sum \alpha ^{(i)}y^{(i)}K(x^{(i)}, x) + b\) 로 서포트 벡터만 기여합니다. 점이 많아지면 \(n \times  n\) 표 때문에 느려지고, \(f\) 는 확률이 아닙니다.</li>
     </ol>
   </div>
 
@@ -943,57 +944,57 @@
       <li data-why="틀렸습니다. 커널 트릭은 학습 점의 수를 줄이지 않습니다. 오히려 n × n 그램 행렬 때문에 점이 많아질수록 비용이 크게 늘어납니다(화면 7 의 한계).">필요한 학습 점의 수</li>
     </ol>
     <div class="explain">
-      <p>한 가지 더. 커널 트릭은 SVM 만의 것이 아니라 <b>데이터가 내적으로만 들어 있는 모든 알고리즘</b>에 쓸 수 있는 요령입니다. SVM 에서는 4장의 쌍대문제가 데이터를 내적으로만 쓰게 만들었기 때문에 가능했습니다. 원문제 <code>w·x</code> 꼴에서는 <code>w</code> 라는 좌표 묶음이 필요해서 쓸 수 없었습니다. 쌍대로 푸는 이유가 여기서 하나 더 드러난 셈입니다.</p>
+      <p>한 가지 더. 커널 트릭은 SVM 만의 것이 아니라 <b>데이터가 내적으로만 들어 있는 모든 알고리즘</b>에 쓸 수 있는 요령입니다. SVM 에서는 4장의 쌍대문제가 데이터를 내적으로만 쓰게 만들었기 때문에 가능했습니다. 원문제 \(w\cdot x\) 꼴에서는 \(w\) 라는 좌표 묶음이 필요해서 쓸 수 없었습니다. 쌍대로 푸는 이유가 여기서 하나 더 드러난 셈입니다.</p>
     </div>
   </div>
 
   <div class="quiz" data-answer="1">
-    <p class="q">화면 6 의 위젯에서 잡음 한 점이 있는 데이터를 <code>γ = 100</code>, <code>C = 10</code> 으로 학습했습니다. 어떤 모습일까요?</p>
+    <p class="q">화면 6 의 위젯에서 잡음 한 점이 있는 데이터를 \(\gamma  = 100\), \(C = 10\) 으로 학습했습니다. 어떤 모습일까요?</p>
     <ol class="options">
       <li data-why="맞습니다. γ = 100 이면 영향 범위가 0.1 정도라 점 하나하나 둘레에만 작은 영역이 생깁니다. 학습 점 12개를 모두 맞히지만 새 점 시험은 68% 로, 바깥 고리가 전부 −1 이니 전부 −1 이라고 답해도 66.5% 인 것과 거의 같습니다.">학습 점은 모두 맞히지만 점마다 작은 섬이 생겨 새 점은 잘 못 맞힌다</li>
       <li data-why="이것은 γ 가 아주 작을 때의 모습입니다. γ = 0.01 이면 영향 범위가 10 으로 넓어 경계가 거의 휘지 못합니다. γ 를 키우면 반대로 점 근처에서만 값이 바뀌는 뾰족한 경계가 됩니다.">경계가 거의 직선에 가까워지고 틀리는 점이 늘어난다</li>
       <li data-why="틀렸습니다. 이 설정에서는 12 점이 모두 서포트 벡터(α > 0)였습니다. γ 가 크면 점마다 독립적인 영역이 필요해서 서포트 벡터가 많아지는 경향이 있습니다.">서포트 벡터가 거의 없어지고 경계가 매끄러워진다</li>
     </ol>
     <div class="explain">
-      <p>학습 점을 모두 맞히는 것은 RBF 에서 어렵지 않습니다. <code>γ</code> 가 크면 점 하나하나를 외우기 쉽기 때문입니다(화면 6). 그래서 학습 점의 정확도만으로는 <code>γ</code> 를 고를 수 없고, 학습에 쓰지 않은 점으로 시험해야 합니다. 위젯의 &lsquo;새 점 시험&rsquo; 줄이 그 역할을 흉내 낸 것입니다.</p>
+      <p>학습 점을 모두 맞히는 것은 RBF 에서 어렵지 않습니다. \(\gamma \) 가 크면 점 하나하나를 외우기 쉽기 때문입니다(화면 6). 그래서 학습 점의 정확도만으로는 \(\gamma \) 를 고를 수 없고, 학습에 쓰지 않은 점으로 시험해야 합니다. 위젯의 &lsquo;새 점 시험&rsquo; 줄이 그 역할을 흉내 낸 것입니다.</p>
     </div>
   </div>
 
   <div class="quiz" data-answer="3">
-    <p class="q"><code>K(x, z) = (x − z)²</code> 를 1차원에서 커널로 쓸 수 있을까요?</p>
+    <p class="q">\(K(x, z) = (x - z)^{2}\) 를 1차원에서 커널로 쓸 수 있을까요?</p>
     <ol class="options">
       <li data-why="틀렸습니다. 거리와 닮음의 정도는 방향이 반대입니다. 가까울수록 K 가 커야 닮은 정도인데 이 K 는 멀수록 큽니다. 더 결정적으로는 아래의 조건을 어깁니다.">쓸 수 있다. 두 점 사이의 거리를 재는 자연스러운 함수이기 때문이다</li>
       <li data-why="틀렸습니다. 대칭은 커널의 필요조건일 뿐 충분하지 않습니다. 이 K 는 K(x, z) = K(z, x) 로 대칭이지만 그램 행렬이 양의 준정부호가 아닙니다.">쓸 수 있다. K(x, z) = K(z, x) 로 대칭이기 때문이다</li>
       <li data-why="맞습니다. x = 0, 1 에서 그램 행렬이 [[0, 1], [1, 0]] 이고 c = (1, −1) 이면 ΣΣ cᵢcⱼKᵢⱼ = −2 < 0 입니다. 진짜 커널이라면 이 값은 어떤 벡터의 길이의 제곱이라 음수일 수 없습니다.">쓸 수 없다. 그램 행렬이 양의 준정부호 조건을 어기는 점 선택이 있다</li>
     </ol>
     <div class="explain">
-      <p>같은 거리 제곱을 부호를 바꿔 지수 안에 넣은 <code>exp(−γ(x − z)²)</code> 가 RBF 이고 이것은 커널입니다. 그래서 &ldquo;거리를 재는 함수라서&rdquo;도 &ldquo;대칭이라서&rdquo;도 커널의 이유가 되지 못하고, 조건은 그램 행렬로 확인합니다. 아무 거리 함수나 SVM 에 끼우면 쌍대문제가 최댓값 없이 발산할 수 있습니다(화면 7 의 <code>D = 2a + a²</code>).</p>
+      <p>같은 거리 제곱을 부호를 바꿔 지수 안에 넣은 \(\exp (-\gamma (x - z)^{2})\) 가 RBF 이고 이것은 커널입니다. 그래서 &ldquo;거리를 재는 함수라서&rdquo;도 &ldquo;대칭이라서&rdquo;도 커널의 이유가 되지 못하고, 조건은 그램 행렬로 확인합니다. 아무 거리 함수나 SVM 에 끼우면 쌍대문제가 최댓값 없이 발산할 수 있습니다(화면 7 의 \(D = 2a + a^{2}\)).</p>
     </div>
   </div>
 
   <div class="box note">
     <h3>직접 해보기</h3>
-    <p>XOR 모양의 네 점입니다. <code>x⁽¹⁾ = (1, 1)</code>(+1), <code>x⁽²⁾ = (−1, −1)</code>(+1), <code>x⁽³⁾ = (1, −1)</code>(−1), <code>x⁽⁴⁾ = (−1, 1)</code>(−1). 커널은 <code>K(x, z) = (x·z + 1)²</code> 입니다(<code>C</code> 는 충분히 크다고 합니다).</p>
+    <p>XOR 모양의 네 점입니다. \(x^{(1)} = (1, 1)\)(+1), \(x^{(2)} = (-1, -1)\)(+1), \(x^{(3)} = (1, -1)\)(−1), \(x^{(4)} = (-1, 1)\)(−1). 커널은 \(K(x, z) = (x\cdot z + 1)^{2}\) 입니다(\(C\) 는 충분히 크다고 합니다).</p>
     <ol>
       <li>직선(선형 커널)으로 이 네 점이 갈리지 않는 이유를 이 장 화면 1 의 방법으로 설명하세요.</li>
-      <li>그램 행렬 <code>K<sub>ij</sub></code> (4 × 4)를 구하세요. 예: <code>K₁₁ = (x⁽¹⁾·x⁽¹⁾ + 1)² = 9</code>.</li>
-      <li>대칭성으로 <code>α⁽¹⁾ = α⁽²⁾ = α⁽³⁾ = α⁽⁴⁾ = a</code> 라고 <b>가정</b>합니다. <code>Σαy = 0</code> 이 성립하는지 확인하고 <code>D(a)</code> 를 <code>a</code> 의 식으로 쓴 뒤 최대가 되는 <code>a</code> 를 구하세요.</li>
-      <li><code>b = 0</code> 으로 놓고 <code>f(x) = Σα⁽ⁱ⁾y⁽ⁱ⁾K(x⁽ⁱ⁾, x) + b</code> 를 네 점에서 계산해 <code>y⁽ⁱ⁾f(x⁽ⁱ⁾)</code> 가 얼마인지 확인하고, 이것이 정말 답인지(3 번의 가정이 맞는지) 어떤 조건으로 검증할 수 있는지 말하세요.</li>
+      <li>그램 행렬 \(K_{ij}\) (4 × 4)를 구하세요. 예: \(K_{11} = (x^{(1)}\cdot x^{(1)} + 1)^{2} = 9\).</li>
+      <li>대칭성으로 \(\alpha ^{(1)} = \alpha ^{(2)} = \alpha ^{(3)} = \alpha ^{(4)} = a\) 라고 <b>가정</b>합니다. \(\sum \alpha y = 0\) 이 성립하는지 확인하고 \(D(a)\) 를 \(a\) 의 식으로 쓴 뒤 최대가 되는 \(a\) 를 구하세요.</li>
+      <li>\(b = 0\) 으로 놓고 \(f(x) = \sum \alpha ^{(i)}y^{(i)}K(x^{(i)}, x) + b\) 를 네 점에서 계산해 \(y^{(i)}f(x^{(i)})\) 가 얼마인지 확인하고, 이것이 정말 답인지(3 번의 가정이 맞는지) 어떤 조건으로 검증할 수 있는지 말하세요.</li>
     </ol>
   </div>
 
   <details class="fold answer">
     <summary>모범답안 — 그리고 흔한 실수가 왜 부족한지</summary>
     <div class="fold-body">
-      <p><b>1.</b> 두 +1 점의 한가운데 <code>½x⁽¹⁾ + ½x⁽²⁾ = (0, 0)</code> 과 두 −1 점의 한가운데 <code>½x⁽³⁾ + ½x⁽⁴⁾ = (0, 0)</code> 이 같은 점입니다. <code>f(0) = ½f(x⁽¹⁾) + ½f(x⁽²⁾) &gt; 0</code> (둘 다 +1 쪽이니), 동시에 <code>f(0) = ½f(x⁽³⁾) + ½f(x⁽⁴⁾) &lt; 0</code> 이라 모순입니다.</p>
-      <p><b>2.</b> <code>K<sub>ii</sub> = (2 + 1)² = 9</code>. 서로 다른 점의 내적은 <code>x⁽¹⁾·x⁽²⁾ = −2</code>, <code>x⁽¹⁾·x⁽³⁾ = 0</code>, <code>x⁽¹⁾·x⁽⁴⁾ = 0</code>, <code>x⁽²⁾·x⁽³⁾ = 0</code>, <code>x⁽²⁾·x⁽⁴⁾ = 0</code>, <code>x⁽³⁾·x⁽⁴⁾ = −2</code> 입니다. 그래서 <code>x⁽¹⁾x⁽²⁾</code> 쌍과 <code>x⁽³⁾x⁽⁴⁾</code> 쌍은 <code>(−2 + 1)² = 1</code>, 나머지 쌍은 <code>(0 + 1)² = 1</code> 이라 대각선은 9, 나머지 칸은 모두 1 입니다.</p>
-      <p><b>3.</b> <code>Σαy = a(+1 + 1 − 1 − 1) = 0</code> ✓. <code>y⁽ⁱ⁾y⁽ʲ⁾K<sub>ij</sub></code> 를 모두 더하면, 대각 4 칸은 <code>4 × 9 = 36</code>, 같은 레이블 쌍(<code>(1,2), (2,1), (3,4), (4,3)</code>)은 <code>y y = +1</code> 이고 <code>K = 1</code> 이라 4, 다른 레이블 쌍 8 칸은 <code>y y = −1</code> 이라 <code>−8</code> 이어서 합이 <code>36 + 4 − 8 = 32</code> 입니다. 따라서 <code>D(a) = 4a − ½·32·a² = 4a − 16a²</code>, 미분이 0 인 <code>4 − 32a = 0</code> 에서 <b><code>a = 1/8</code></b>, <code>D = ½ − ¼ = ¼</code>.</p>
-      <p><b>4.</b> <code>f(x) = ⅛[K(x⁽¹⁾, x) + K(x⁽²⁾, x) − K(x⁽³⁾, x) − K(x⁽⁴⁾, x)]</code>. <code>x = x⁽¹⁾</code> 이면 <code>⅛(9 + 1 − 1 − 1) = 1</code>, 나머지 세 점도 <code>y f = 1</code> 입니다(<code>y⁽ⁱ⁾f(x⁽ⁱ⁾) = 1</code> 네 개 모두). 정리하면 <code>f(x) = x₁x₂</code> 입니다(예: <code>f(0.5, 0.5) = 0.25</code>, <code>f(1, 2) = 2</code>). 검증은 KKT 로 합니다. 쌍대 가능성(<code>0 ≤ α ≤ C</code>, <code>Σαy = 0</code>) ✓, 원문제 가능성(<code>y f ≥ 1</code>) ✓, 상보 여유성(<code>α &gt; 0</code> 인 모든 점에서 <code>y f = 1</code>) ✓ 이므로 이 <code>α</code> 가 쌍대문제의 최적해입니다(3장·4장의 KKT 충분조건). <code>0 &lt; α &lt; C</code> 인 점이 있으니 <code>b</code> 도 <code>b = y⁽ᵏ⁾ − Σα y K = 1 − 1 = 0</code> 으로 확인됩니다.</p>
-      <p><b>덧붙임.</b> 이 <code>f</code> 는 화면 5 의 6 차원 <code>φ</code> 에서 <code>√2 x₁x₂</code> 좌표 하나만 쓰는 평면입니다(<code>w = (0, 0, 0, 0, 1/√2, 0)</code>, <code>½‖w‖² = ¼</code> 로 <code>D</code> 와 일치).</p>
-      <p><b>흔한 실수 1</b> — 3 번의 &ldquo;<code>α</code> 가 모두 같다&rdquo;를 사실로 두고 끝내기. 대칭성은 그럴듯한 가정일 뿐이고 4 번의 KKT 검증으로 최적임을 확인해야 합니다. 가정으로 얻은 값은 후보입니다.</p>
-      <p><b>흔한 실수 2</b> — <code>K</code> 를 <code>φ(x)·φ(z)</code> 가 아니라 &ldquo;<code>φ(x·z)</code>&rdquo; 로 읽기. <code>K(x, z) = (x·z + 1)²</code> 는 <code>x·z</code> 를 먼저 구한 값을 제곱한 것이고, 그 값이 두 점 각각의 <code>φ</code> 를 내적한 것과 같다는 것이 화면 5 의 내용입니다.</p>
+      <p><b>1.</b> 두 +1 점의 한가운데 \(\tfrac12 x^{(1)} + \tfrac12 x^{(2)} = (0, 0)\) 과 두 −1 점의 한가운데 \(\tfrac12 x^{(3)} + \tfrac12 x^{(4)} = (0, 0)\) 이 같은 점입니다. \(f(0) = \tfrac12 f(x^{(1)}) + \tfrac12 f(x^{(2)}) > 0\) (둘 다 +1 쪽이니), 동시에 \(f(0) = \tfrac12 f(x^{(3)}) + \tfrac12 f(x^{(4)}) &lt; 0\) 이라 모순입니다.</p>
+      <p><b>2.</b> \(K_{ii} = (2 + 1)^{2} = 9\). 서로 다른 점의 내적은 \(x^{(1)}\cdot x^{(2)} = -2\), \(x^{(1)}\cdot x^{(3)} = 0\), \(x^{(1)}\cdot x^{(4)} = 0\), \(x^{(2)}\cdot x^{(3)} = 0\), \(x^{(2)}\cdot x^{(4)} = 0\), \(x^{(3)}\cdot x^{(4)} = -2\) 입니다. 그래서 \(x^{(1)}x^{(2)}\) 쌍과 \(x^{(3)}x^{(4)}\) 쌍은 \((-2 + 1)^{2} = 1\), 나머지 쌍은 \((0 + 1)^{2} = 1\) 이라 대각선은 9, 나머지 칸은 모두 1 입니다.</p>
+      <p><b>3.</b> \(\sum \alpha y = a(+1 + 1 - 1 - 1) = 0\) ✓. \(y^{(i)}y^{(j)}K_{ij}\) 를 모두 더하면, 대각 4 칸은 \(4 \times  9 = 36\), 같은 레이블 쌍(\((1,2), (2,1), (3,4), (4,3)\))은 \(y y = +1\) 이고 \(K = 1\) 이라 4, 다른 레이블 쌍 8 칸은 \(y y = -1\) 이라 \(-8\) 이어서 합이 \(36 + 4 - 8 = 32\) 입니다. 따라서 \(D(a) = 4a - \tfrac12 \cdot 32\cdot a^{2} = 4a - 16a^{2}\), 미분이 0 인 \(4 - 32a = 0\) 에서 <b>\(a = 1/8\)</b>, \(D = \tfrac12  - \tfrac14  = \tfrac14 \).</p>
+      <p><b>4.</b> \(f(x) = \tfrac18\left[K(x^{(1)}, x) + K(x^{(2)}, x) - K(x^{(3)}, x) - K(x^{(4)}, x)\right]\). \(x = x^{(1)}\) 이면 \(\tfrac18 (9 + 1 - 1 - 1) = 1\), 나머지 세 점도 \(y f = 1\) 입니다(\(y^{(i)}f(x^{(i)}) = 1\) 네 개 모두). 정리하면 \(f(x) = x_{1}x_{2}\) 입니다(예: \(f(0.5, 0.5) = 0.25\), \(f(1, 2) = 2\)). 검증은 KKT 로 합니다. 쌍대 가능성(\(0 \le  \alpha  \le  C\), \(\sum \alpha y = 0\)) ✓, 원문제 가능성(\(y f \ge  1\)) ✓, 상보 여유성(\(\alpha  > 0\) 인 모든 점에서 \(y f = 1\)) ✓ 이므로 이 \(\alpha \) 가 쌍대문제의 최적해입니다(3장·4장의 KKT 충분조건). \(0 &lt; \alpha  &lt; C\) 인 점이 있으니 \(b\) 도 \(b = y^{(k)} - \sum \alpha  y K = 1 - 1 = 0\) 으로 확인됩니다.</p>
+      <p><b>덧붙임.</b> 이 \(f\) 는 화면 5 의 6 차원 \(\varphi \) 에서 \(\sqrt{2} x_{1}x_{2}\) 좌표 하나만 쓰는 평면입니다(\(w = (0, 0, 0, 0, 1/\sqrt{2}, 0)\), \(\tfrac12 \lVert w\rVert ^{2} = \tfrac14 \) 로 \(D\) 와 일치).</p>
+      <p><b>흔한 실수 1</b> — 3 번의 &ldquo;\(\alpha \) 가 모두 같다&rdquo;를 사실로 두고 끝내기. 대칭성은 그럴듯한 가정일 뿐이고 4 번의 KKT 검증으로 최적임을 확인해야 합니다. 가정으로 얻은 값은 후보입니다.</p>
+      <p><b>흔한 실수 2</b> — \(K\) 를 \(\varphi (x)\cdot \varphi (z)\) 가 아니라 &ldquo;\(\varphi (x\cdot z)\)&rdquo; 로 읽기. \(K(x, z) = (x\cdot z + 1)^{2}\) 는 \(x\cdot z\) 를 먼저 구한 값을 제곱한 것이고, 그 값이 두 점 각각의 \(\varphi \) 를 내적한 것과 같다는 것이 화면 5 의 내용입니다.</p>
       <p><b>흔한 실수 3</b> — 선형 커널로는 못 가르니 점이 부족하다고 결론 내리기. 점을 늘려도 이 배치의 한가운데 일치는 사라지지 않습니다. 모양의 문제이지 점의 수의 문제가 아닙니다.</p>
-      <p><b>이 교재가 가는 길</b> — 이 장에서 쌍대문제의 내적 자리에 <code>K</code> 를 끼운 커널 쌍대문제까지 왔습니다. 이 문제를 컴퓨터가 어떻게 푸는지가 7장입니다.</p>
+      <p><b>이 교재가 가는 길</b> — 이 장에서 쌍대문제의 내적 자리에 \(K\) 를 끼운 커널 쌍대문제까지 왔습니다. 이 문제를 컴퓨터가 어떻게 푸는지가 7장입니다.</p>
     </div>
   </details>
 
@@ -1005,6 +1006,9 @@
 
 </div></main>
 
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/katex/auto-render.min.js"></script>
+<script src="assets/math.js"></script>
 <script src="assets/book.js"></script>
 </body>
 </html>
