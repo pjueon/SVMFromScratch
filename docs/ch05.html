@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko" data-chapter="ch05">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5장 · 소프트 마진 — SVM 밑바닥부터</title>
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+
+<main id="book"><div class="inner">
+
+<!-- ─────────────────────────────────────────── 화면 1 -->
+<section class="screen" data-title="이상치가 끼면">
+  <p class="kicker">5장 · 화면 1</p>
+  <h1>소프트 마진</h1>
+
+  <p class="lead">지금까지 다룬 데이터는 직선 하나로 깔끔하게 갈리는 운 좋은 경우였습니다. 현실의 데이터는 그렇지 않습니다. 측정이 잘못되었거나, 레이블이 잘못 붙었거나, 정말로 드문 사례이거나 해서
+  <b>다른 점들의 규칙에서 벗어난 점 하나</b>가 끼어 있기 마련입니다. 이 장은 그런 점이 하나 끼었을 때 지금까지 만든 SVM(하드 마진)이 어떻게 무너지는지 눈으로 보고, 어떻게 고치는지를 다룹니다.</p>
+
+  <p>이렇게 홀로 떨어진 점을 <span class="term" data-term="outlier">이상치</span>(outlier)라 부릅니다. 이 화면에서는 우리의 세 점
+  <code>x⁽¹⁾ = (3, 3)</code>(+1), <code>x⁽²⁾ = (4, 3)</code>(+1), <code>x⁽³⁾ = (1, 1)</code>(−1)에 <b>파란 점(+1) 하나 <code>x⁽⁴⁾</code></b> 를 더 놓습니다.
+  놓는 자리에 따라 하드 마진이 무너지는 방식이 두 가지로 갈립니다.</p>
+
+  <h2>두 가지 무너짐</h2>
+
+  <figure class="fig">
+    <svg viewBox="0 0 660 300" role="img" aria-label="왼쪽 그림은 파란 점 x4 를 (0.5, 0.5) 에 놓으면 빨간 점 x3 이 파란 두 점 x4 와 x1 을 잇는 선분 위에 놓여 어떤 직선으로도 가를 수 없음을 보인다. 오른쪽 그림은 x4 를 (1.5, 1.5) 에 놓으면 가를 수는 있지만 직선이 빨간 점 쪽으로 바싹 붙어 마진 띠가 매우 좁아짐을 보이고, 이상치가 없을 때의 직선을 회색 점선으로 함께 그린다">
+      <g text-anchor="middle" font-size="12.5" font-weight="700" class="svg-fg">
+        <text x="160" y="14">(가) x⁽⁴⁾ = (0.5, 0.5)</text>
+        <text x="490" y="14">(나) x⁽⁴⁾ = (1.5, 1.5)</text>
+      </g>
+      <!-- 축 -->
+      <g fill="none" stroke-width="1.4" style="stroke:var(--muted)">
+        <path d="M40 260 H290"/><path d="M40 260 V20"/>
+        <path d="M370 260 H620"/><path d="M370 260 V20"/>
+      </g>
+      <g class="svg-muted" font-size="10" text-anchor="middle">
+        <text x="40" y="274">0</text><text x="80" y="274">1</text><text x="120" y="274">2</text><text x="160" y="274">3</text><text x="200" y="274">4</text><text x="240" y="274">5</text><text x="280" y="274">6</text>
+        <text x="370" y="274">0</text><text x="410" y="274">1</text><text x="450" y="274">2</text><text x="490" y="274">3</text><text x="530" y="274">4</text><text x="570" y="274">5</text><text x="610" y="274">6</text>
+        <text x="300" y="264" font-size="12" class="svg-fg">x₁</text><text x="630" y="264" font-size="12" class="svg-fg">x₁</text>
+        <text x="52" y="26" font-size="12" class="svg-fg">x₂</text><text x="382" y="26" font-size="12" class="svg-fg">x₂</text>
+      </g>
+      <g class="svg-muted" font-size="10" text-anchor="end">
+        <text x="33" y="223">1</text><text x="33" y="183">2</text><text x="33" y="143">3</text><text x="33" y="103">4</text><text x="33" y="63">5</text><text x="33" y="23">6</text>
+        <text x="363" y="223">1</text><text x="363" y="183">2</text><text x="363" y="143">3</text><text x="363" y="103">4</text><text x="363" y="63">5</text><text x="363" y="23">6</text>
+      </g>
+
+      <!-- (가): x4 - x1 선분 -->
+      <path d="M60 240 L160 140" fill="none" stroke-width="2" style="stroke:var(--muted);stroke-dasharray:6 4"/>
+      <!-- (나): 원래 직선 x1+x2=4, 새 직선 x1+x2=2.5 와 띠 -->
+      <path d="M370 100 L530 260" fill="none" stroke-width="2" style="stroke:var(--muted);stroke-dasharray:8 5"/>
+      <path d="M370 180 L450 260" fill="none" stroke-width="1.3" style="stroke:var(--bad);stroke-dasharray:3 3"/>
+      <path d="M370 140 L490 260" fill="none" stroke-width="1.3" style="stroke:var(--accent);stroke-dasharray:3 3"/>
+      <path d="M370 160 L470 260" fill="none" stroke-width="2.4" style="stroke:var(--fg)"/>
+
+      <!-- 점: (가) -->
+      <circle cx="160" cy="140" r="7" style="fill:var(--accent)"/>
+      <circle cx="200" cy="140" r="7" style="fill:var(--accent)"/>
+      <rect x="73.5" y="213.5" width="13" height="13" style="fill:var(--bad)"/>
+      <circle cx="60" cy="240" r="7" style="fill:var(--accent)"/>
+      <circle cx="60" cy="240" r="12" fill="none" stroke-width="1.6" style="stroke:var(--fg)"/>
+      <!-- 점: (나) -->
+      <circle cx="490" cy="140" r="7" style="fill:var(--accent)"/>
+      <circle cx="530" cy="140" r="7" style="fill:var(--accent)"/>
+      <rect x="403.5" y="213.5" width="13" height="13" style="fill:var(--bad)"/>
+      <circle cx="430" cy="200" r="7" style="fill:var(--accent)"/>
+      <circle cx="430" cy="200" r="12" fill="none" stroke-width="1.6" style="stroke:var(--fg)"/>
+
+      <g text-anchor="middle" font-size="12" class="svg-fg">
+        <text x="160" y="125">x⁽¹⁾</text><text x="200" y="125">x⁽²⁾</text>
+        <text x="490" y="125">x⁽¹⁾</text><text x="530" y="125">x⁽²⁾</text>
+      </g>
+      <g font-size="12" class="svg-fg">
+        <text x="96" y="226">x⁽³⁾</text><text x="76" y="252">x⁽⁴⁾</text>
+        <text x="440" y="236">x⁽³⁾</text><text x="445" y="192">x⁽⁴⁾</text>
+      </g>
+      <g font-size="10.5" class="svg-muted">
+        <text x="160" y="292" text-anchor="middle">x⁽³⁾ 이 선분 위에 있어 가를 수 없음</text>
+        <text x="548" y="180">실선: 하드 마진 직선</text>
+        <text x="548" y="196">(마진 폭 0.71)</text>
+        <text x="548" y="224">회색 점선:</text>
+        <text x="548" y="240">이상치 없을 때 (2.83)</text>
+      </g>
+    </svg>
+    <figcaption>파란 원은 +1, 빨간 네모는 −1 이고, 겹친 동그란 테두리가 이상치 <code>x⁽⁴⁾</code> 입니다. (가) 점선은 <code>x⁽⁴⁾</code> 와 <code>x⁽¹⁾</code> 를 잇는 선분이고 빨간 <code>x⁽³⁾</code> 이 그 위에 놓여 있습니다.
+    (나) 실선이 새로 얻은 하드 마진 직선, 그 양옆 점선이 마진 띠의 가장자리, 긴 회색 점선이 <code>x⁽⁴⁾</code> 가 없을 때의 직선(2장의 답)입니다.</figcaption>
+  </figure>
+
+  <h3>(가) <code>x⁽⁴⁾ = (0.5, 0.5)</code> — 해가 없습니다</h3>
+
+  <p>빨간 점 <code>x⁽³⁾ = (1, 1)</code> 이 파란 두 점 <code>x⁽⁴⁾</code> 와 <code>x⁽¹⁾</code> 를 잇는 선분 위에 정확히 놓입니다.
+  <code>0.8·(0.5, 0.5) + 0.2·(3, 3) = (0.4 + 0.6, 0.4 + 0.6) = (1, 1)</code> 이기 때문입니다. 이것이 왜 막다른 길인지 식으로 보입니다.
+  <code>f(x) = w·x + b</code> 라 두면(1장 화면 3) <code>0.8 + 0.2 = 1</code> 이라 <code>b</code> 도 같은 비율로 섞여서</p>
+
+  <p style="text-align:center"><code>f(x⁽³⁾) = 0.8·f(x⁽⁴⁾) + 0.2·f(x⁽¹⁾)</code></p>
+
+  <p>가 어떤 <code>(w, b)</code> 에서도 성립합니다(<code>0.8(w·p + b) + 0.2(w·q + b) = w·(0.8p + 0.2q) + b</code>).</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th style="width:2.2rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
+      <tr><td>1</td><td><code>f(x⁽⁴⁾) ≥ 1</code>, &nbsp; <code>f(x⁽¹⁾) ≥ 1</code></td><td>하드 마진 제약(2장 화면 4): 파란 점(<code>y = +1</code>) 두 개이니 <code>y·f ≥ 1</code> 은 <code>f ≥ 1</code> 입니다.</td></tr>
+      <tr><td>2</td><td><code>f(x⁽³⁾) = 0.8 f(x⁽⁴⁾) + 0.2 f(x⁽¹⁾) ≥ 0.8 + 0.2 = 1</code></td><td>위의 섞기 식에 1 줄을 넣었습니다.</td></tr>
+      <tr><td>3</td><td><code>y⁽³⁾ f(x⁽³⁾) = −f(x⁽³⁾) ≤ −1</code></td><td><code>x⁽³⁾</code> 은 빨간 점(<code>y = −1</code>)이라 부호가 뒤집힙니다.</td></tr>
+      <tr><td>4</td><td>그런데 제약은 <code>y⁽³⁾ f(x⁽³⁾) ≥ 1</code></td><td>3 줄은 <code>≤ −1</code>, 제약은 <code>≥ 1</code> 이라 <b>동시에 만족할 수 없습니다.</b> 어떤 <code>(w, b)</code> 도 가능해가 아닙니다.</td></tr>
+    </table>
+  </div>
+
+  <p>2장 화면 4 의 한계 상자에서 &ldquo;가를 수 없으면 답이 없다&rdquo;고 한 것이 이것이고, 4장 화면 6 위젯의 &lsquo;못 가르는 배치&rsquo; 버튼이 안내만 하고 넘어간 것도 이것입니다. 이 장이 그 약속을 갚습니다.
+  (그 위젯의 배치는 <code>x⁽³⁾</code> 를 옮겨 만든 다른 모양이지만, 파란 두 점의 선분 위에 빨간 점이 놓이는 같은 현상입니다.)</p>
+
+  <h3>(나) <code>x⁽⁴⁾ = (1.5, 1.5)</code> — 해는 있지만 마진이 4분의 1 로</h3>
+
+  <p>이번에는 가를 수 있습니다. 빨간 <code>x⁽³⁾ = (1, 1)</code> 이 선분의 바깥쪽에 있기 때문입니다. 그런데 두 점 <code>x⁽³⁾</code> 과 <code>x⁽⁴⁾</code> 의 거리는
+  <code>‖(0.5, 0.5)‖ = √0.5 ≈ 0.71</code> 로 아주 가깝고, 하드 마진 직선은 이 가까운 한 쌍 때문에 크게 제약받습니다. 얼마나 좁아지는지 한계부터 잡아 봅시다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th style="width:2.2rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
+      <tr><td>1</td><td><code>w·x⁽⁴⁾ + b ≥ 1</code> , &nbsp; <code>−(w·x⁽³⁾ + b) ≥ 1</code></td><td>두 점의 하드 마진 제약입니다.</td></tr>
+      <tr><td>2</td><td><code>w·(x⁽⁴⁾ − x⁽³⁾) ≥ 2</code></td><td>두 식을 더하면 <code>b</code> 가 지워집니다.</td></tr>
+      <tr><td>3</td><td><code>w·(x⁽⁴⁾ − x⁽³⁾) ≤ ‖w‖ · ‖x⁽⁴⁾ − x⁽³⁾‖ = 0.71 ‖w‖</code></td><td>1장 화면 3 의 <code>a·c = ‖a‖‖c‖cos θ</code> 에서 <code>cos θ ≤ 1</code> 입니다. 내적은 두 길이의 곱을 넘지 못합니다.</td></tr>
+      <tr><td>4</td><td><code>0.71 ‖w‖ ≥ 2</code> → <code>‖w‖ ≥ 2.83</code> → 마진 <code>2/‖w‖ ≤ 0.71</code></td><td>2 줄과 3 줄을 이었습니다. 마진은 두 점 사이 거리를 넘을 수 없다는 뜻입니다.</td></tr>
+    </table>
+  </div>
+
+  <p>이 한계에 실제로 닿는 직선이 있습니다. 두 점의 한가운데를 수직으로 가르는 직선, <code>w = (2, 2)</code>, <code>b = −5</code> 입니다(<code>x₁ + x₂ = 2.5</code>).
+  네 점 모두 제약을 지키는지 확인합니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>점</th><th><code>y(w·x + b) = y(2x₁ + 2x₂ − 5)</code></th><th>≥ 1 ?</th></tr>
+      <tr><td><code>x⁽¹⁾ = (3, 3)</code>, +1</td><td><code>6 + 6 − 5 = 7</code></td><td>예 (여유 있음)</td></tr>
+      <tr><td><code>x⁽²⁾ = (4, 3)</code>, +1</td><td><code>8 + 6 − 5 = 9</code></td><td>예 (여유 있음)</td></tr>
+      <tr><td><code>x⁽³⁾ = (1, 1)</code>, −1</td><td><code>−(2 + 2 − 5) = 1</code></td><td>예 (딱 닿음)</td></tr>
+      <tr><td><code>x⁽⁴⁾ = (1.5, 1.5)</code>, +1</td><td><code>3 + 3 − 5 = 1</code></td><td>예 (딱 닿음)</td></tr>
+    </table>
+  </div>
+
+  <p>마진은 <code>2/‖w‖ = 2/(2√2) = √2/2 ≈ 0.71</code>, 한계와 같으니 이것이 하드 마진의 답입니다. 이상치가 없을 때의 마진 <code>2√2 ≈ 2.83</code> 의 <b>정확히 4분의 1</b> 입니다.
+  이상치가 없을 때의 직선(회색 점선, <code>w = (½, ½)</code>, <code>b = −2</code>)은 이 점을 어떻게 보는지 계산해 보면 <code>½·1.5 + ½·1.5 − 2 = −½</code>, 곧 <code>x⁽⁴⁾</code> 를 빨간 쪽으로 분류합니다.
+  하드 마진은 이 한 점을 맞히려고 직선을 빨간 점 쪽으로 바싹 끌어당긴 것입니다.</p>
+
+  <div class="box warn">
+    <p class="box-t">한 점이 해 전체를 좌우합니다</p>
+    <p>(가) 에서는 점 하나가 해를 없앴고, (나) 에서는 해를 남겨 두는 대신 마진을 4분의 1 로 만들었습니다. 이 위치에서는 직선이 기울지 않고 평행하게 옮겨 가지만, 위치가 다르면 직선이 크게 기울기도 합니다(2장 화면 4 의 한계 상자).
+    원인은 같습니다. 하드 마진의 요구는 <b>&ldquo;모든 점이 예외 없이&rdquo;</b> 입니다. 그러니 점 하나의 요구가 전체 답을 결정합니다. 이 점이 잡음이었다면 우리는 큰 손해를 본 셈입니다.</p>
+  </div>
+
+  <p>그렇다면 요구사항을 이렇게 바꾸고 싶어집니다. <b>&ldquo;점 하나쯤은 띠를 침범해도, 심지어 틀려도 봐주자. 단 침범한 만큼 대가를 치르게 하자.&rdquo;</b> 다음 화면에서 이 문장을 식으로 쓰고, 이름을 붙입니다.</p>
+
+  <div class="box note">
+    <p class="box-t">이 장의 진행</p>
+    <ol>
+      <li>이상치가 하드 마진을 무너뜨리는 두 방식을 본다 (이 화면).</li>
+      <li>&ldquo;봐주는 양&rdquo;을 변수 <code>ξ</code> 로 쓰고 목적함수에 벌점을 단다 (화면 2).</li>
+      <li>벌점의 비싼 정도 <code>C</code> 를 움직이며 직선이 어떻게 변하는지 본다 (화면 3, 위젯).</li>
+      <li>쌍대문제가 어떻게 달라지는지 확인하고, 같은 문제를 힌지 손실로 다시 본다 (화면 4).</li>
+    </ol>
+  </div>
+
+  <div class="box good">
+    <p class="box-t">이 장에서 갚는 빚</p>
+    <ul>
+      <li>이상치가 끼면 어떻게 하나 → 화면 2~4 (1장 화면 4)</li>
+      <li>하드 마진은 가를 수 없는 데이터에서 가능해가 없다 → 이 화면 (가) 에서 확인하고, 화면 2~3 에서 해결 (2장 화면 4, 4장 화면 6)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 2 -->
+<section class="screen" data-title="슬랙 변수 ξ">
+  <p class="kicker">5장 · 화면 2</p>
+  <h2>슬랙 변수 <code>ξ</code> — 조금은 침범해도 봐주자</h2>
+
+  <p>하드 마진의 제약은 점마다 하나씩 <code>y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) ≥ 1</code> 이었습니다. 이 제약을 점마다 조금씩 풀어 주는 방법은 간단합니다. 오른쪽의 1 에서 <b>점마다 따로 정한 양</b>을 빼 주는 것입니다.
+  그 양을 <code>ξ⁽ⁱ⁾</code> 라 쓰고, 문제가 알아서 정하는 변수로 둡니다. 다만 아무 때나 풀어 주면 안 되니 풀어 준 양만큼 목적함수에 벌점을 답니다.</p>
+
+  <div class="box good">
+    <p class="box-t">정의 — 소프트 마진 SVM (원문제)</p>
+    <p style="text-align:center;font-size:1.05rem"><code>min<sub>w, b, ξ</sub> &nbsp; ½‖w‖² + C Σ<sub>i=1</sub><sup>n</sup> ξ⁽ⁱ⁾</code></p>
+    <p style="text-align:center;font-size:1.05rem"><code>s.t. &nbsp; y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) ≥ 1 − ξ⁽ⁱ⁾ &nbsp;,&nbsp;&nbsp; ξ⁽ⁱ⁾ ≥ 0 &nbsp;&nbsp;(모든 i)</code></p>
+    <ul>
+      <li><span class="term" data-term="slack">ξ⁽ⁱ⁾</span> (크사이, <b>슬랙 변수</b>) — 점 <code>i</code> 가 요구된 여유(함수 마진 1)에 <b>모자란 양</b>. 점마다 하나씩이라 <code>n</code> 개이고, <code>w, b</code> 와 똑같이 문제가 정하는 변수입니다. 점이 <code>n</code> 개면 변수는 <code>w₁, w₂, b</code> 에 <code>ξ</code> 가 <code>n</code> 개 더해집니다.</li>
+      <li><code>y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) ≥ 1 − ξ⁽ⁱ⁾</code> — 하드 마진 제약에서 1 을 <code>1 − ξ⁽ⁱ⁾</code> 로 낮춘 것. <code>ξ⁽ⁱ⁾ = 0</code> 이면 원래 제약 그대로입니다.</li>
+      <li><code>ξ⁽ⁱ⁾ ≥ 0</code> — 봐주는 양은 음수가 될 수 없다는 조건. 음수를 허용하면 &ldquo;어긴 만큼 벌점&rdquo;이 아니라 &ldquo;여유가 클수록 상&rdquo;이 되어 문제의 뜻이 바뀝니다.</li>
+      <li><code>Σ ξ⁽ⁱ⁾</code> — 모든 점의 침범량을 더한 총량(Σ 읽는 법은 4장 화면 2). 이것이 벌점입니다.</li>
+      <li><code>C</code> — 벌점의 단가. <b>0 보다 큰 상수</b>이고 우리가 미리 정해 줍니다. 값의 의미는 다음 화면의 주제입니다.</li>
+      <li><code>½‖w‖²</code> — 2장의 목적함수 그대로. 마진을 넓히려는 항입니다.</li>
+    </ul>
+  </div>
+
+  <p>이 문제를 <span class="term" data-term="softmargin">소프트 마진</span> SVM 이라 부릅니다. 어김을 허용한다는 뜻에서 &lsquo;soft&rsquo; 이고, 지금까지의 것은 허용하지 않는다는 뜻에서 하드 마진이었습니다.</p>
+
+  <h3><code>ξ</code> 의 값은 점의 위치를 말해 줍니다</h3>
+
+  <p>함수 마진 <code>y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b)</code> 를 <code>z</code> 라 부르겠습니다(2장 화면 3). 제약은 <code>z ≥ 1 − ξ</code> 이고, 벌점을 줄이려면 <code>ξ</code> 는 작을수록 좋으니 제약이 허락하는 가장 작은 값, 곧 <code>1 − z</code> 와 0 중 큰 쪽이 됩니다. 곧 <code>ξ &gt; 0</code> 인 점에서는 <code>z = 1 − ξ</code> 로 읽을 수 있습니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th><code>ξ⁽ⁱ⁾</code></th><th><code>z = y(w·x+b)</code></th><th>점의 위치</th></tr>
+      <tr><td><code>0</code></td><td><code>z ≥ 1</code></td><td>제약을 그대로 지킴: 마진 경계 위이거나 띠 바깥</td></tr>
+      <tr><td><code>0 &lt; ξ &lt; 1</code></td><td><code>0 &lt; z &lt; 1</code></td><td>띠 안쪽으로 들어왔지만 <b>올바른 쪽</b></td></tr>
+      <tr><td><code>1</code></td><td><code>z = 0</code></td><td>직선 위</td></tr>
+      <tr><td><code>ξ &gt; 1</code></td><td><code>z &lt; 0</code></td><td><b>틀린 쪽</b>. 분류가 틀렸다</td></tr>
+    </table>
+  </div>
+
+  <p>그래서 <code>ξ</code> 는 오차 그 자체가 아니라 <b>마진 규칙에서 얼마나 벗어났는가</b>의 크기입니다. 1 을 넘어야 틀린 것입니다.</p>
+
+  <h3>이상치 예제에 대 보기</h3>
+
+  <p>화면 1 (나) 의 네 점(<code>x⁽⁴⁾ = (1.5, 1.5)</code>)으로 후보 직선 두 개의 값을 계산해 비교해 봅시다. 어느 쪽이 목적함수 <code>½‖w‖² + CΣξ</code> 가 작은지가 문제의 판정 기준입니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>점</th><th>후보 1: <code>w = (½, ½)</code>, <code>b = −2</code> 의 <code>z</code></th><th><code>ξ</code></th><th>후보 2: <code>w = (2, 2)</code>, <code>b = −5</code> 의 <code>z</code></th><th><code>ξ</code></th></tr>
+      <tr><td><code>x⁽¹⁾</code></td><td><code>½·6 − 2 = 1</code></td><td>0</td><td><code>12 − 5 = 7</code></td><td>0</td></tr>
+      <tr><td><code>x⁽²⁾</code></td><td><code>½·7 − 2 = 1.5</code></td><td>0</td><td><code>14 − 5 = 9</code></td><td>0</td></tr>
+      <tr><td><code>x⁽³⁾</code></td><td><code>−(½·2 − 2) = 1</code></td><td>0</td><td><code>−(4 − 5) = 1</code></td><td>0</td></tr>
+      <tr><td><code>x⁽⁴⁾</code></td><td><code>½·3 − 2 = −½</code></td><td><b>1.5</b> (1 − (−½), 틀린 쪽)</td><td><code>6 − 5 = 1</code></td><td>0</td></tr>
+      <tr><td><code>½‖w‖² + CΣξ</code></td><td colspan="2"><code>¼ + 1.5C</code></td><td colspan="2"><code>4 + 0</code></td></tr>
+    </table>
+  </div>
+
+  <p>후보 1 은 이상치를 포기하는 대신 마진이 넓은 직선이고 후보 2 는 이상치까지 맞히는 대신 마진이 좁은 하드 마진 직선입니다. 두 값이 같아지는 곳은 <code>¼ + 1.5C = 4</code>, 곧 <code>C = 2.5</code> 입니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th><code>C</code></th><th>후보 1 의 값 <code>¼ + 1.5C</code></th><th>후보 2 의 값</th><th>더 작은 쪽</th></tr>
+      <tr><td>1</td><td>1.75</td><td>4</td><td>후보 1 (이상치를 틀리게 둠)</td></tr>
+      <tr><td>2</td><td>3.25</td><td>4</td><td>후보 1</td></tr>
+      <tr><td>2.5</td><td>4</td><td>4</td><td>같음</td></tr>
+      <tr><td>3</td><td>4.75</td><td>4</td><td>후보 2 (이상치를 맞힘)</td></tr>
+    </table>
+  </div>
+
+  <p>벌점의 단가 <code>C</code> 가 싸면 이상치를 틀리게 두는 쪽이, 비싸면 맞히는 쪽이 이깁니다. 이것이 다음 화면의 주제 &ldquo;C 의 의미&rdquo;의 씨앗입니다.</p>
+
+  <div class="box note">
+    <p class="box-t">후보 둘만 비교했을 뿐입니다</p>
+    <p>소프트 마진은 이런 후보를 <b>모든</b> <code>(w, b)</code> 에 대해 비교해서 가장 작은 것을 고르는 문제입니다. 두 후보 사이에 더 나은 직선이 있을 수 있습니다.
+    예를 들어 <code>C = 2</code> 에서 <code>w = (1, 1)</code>, <code>b = −2.5</code> 를 계산하면 <code>x⁽³⁾</code> 의 <code>z = 0.5</code>, <code>x⁽⁴⁾</code> 의 <code>z = 0.5</code> 라 <code>ξ = 0.5, 0.5</code>, 값은 <code>½·2 + 2·1 = 3</code> 입니다.
+    후보 1(3.25), 후보 2(4) 보다 작습니다. 이 직선은 두 점을 모두 맞히면서 둘 다 띠 안쪽에 두었습니다.</p>
+  </div>
+
+  <div class="box warn">
+    <p class="box-t">한계 — 소프트 마진은 이상치를 알아보지 못합니다</p>
+    <p>소프트 마진은 어떤 점이 이상치인지 판별하지 않습니다. 그저 <b>어기는 비용이 싼 점</b>을 어깁니다. 이 예의 <code>x⁽⁴⁾</code> 가 잡음이 아니라 정말로 파란 영역이 거기까지 내려와 있다는 신호였다면,
+    후보 1(그리고 <code>C</code> 가 작을 때의 답)은 새로 오는 파란 점을 틀리게 분류할 수 있습니다. 잡음인지 신호인지는 데이터가 알려 주지 않고 우리가 <code>C</code> 로 정합니다.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 3 -->
+<section class="screen" data-title="C 의 의미와 위젯">
+  <p class="kicker">5장 · 화면 3</p>
+  <h2><code>C</code> 의 의미 — 엄격할 것인가, 관대할 것인가</h2>
+
+  <p>목적함수 <code>½‖w‖² + C Σξ⁽ⁱ⁾</code> 에는 서로 반대로 당기는 두 힘이 있습니다.</p>
+
+  <ul>
+    <li><code>½‖w‖²</code> 는 <code>w</code> 를 작게, 곧 마진 <code>2/‖w‖</code> 을 <b>넓게</b> 만들려 합니다. 이 힘만 있으면 점들을 아무리 많이 침범해도 상관하지 않습니다(<code>w</code> 를 0 에 가깝게).</li>
+    <li><code>CΣξ</code> 는 침범을 <b>줄이려</b> 합니다. 이 힘만 있으면 마진이 아무리 좁아져도 점을 전부 띠 밖에 두려 합니다.</li>
+  </ul>
+
+  <p>이 두 힘의 세기를 정하는 단가표가 <code>C</code> 입니다. 침범량 <code>ξ</code> 1 마다 목적함수에 <code>C</code> 가 얹힙니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th></th><th><code>C</code> 가 큼</th><th><code>C</code> 가 작음</th></tr>
+      <tr><td>침범의 값</td><td>비쌈</td><td>쌈</td></tr>
+      <tr><td>직선의 태도</td><td>엄격: 점을 띠 밖에 두려 애씀. 이상치 하나도 맞히러 끌려감</td><td>관대: 점 여러 개의 침범·오분류를 감수하고 마진을 넓힘</td></tr>
+      <tr><td>마진</td><td>좁아지기 쉬움</td><td>넓어지기 쉬움</td></tr>
+      <tr><td>지나치면</td><td><span class="term" data-term="overfit">과적합</span>: 잡음 하나에 직선이 휘둘림</td><td><span class="term" data-term="underfit">과소적합</span>: 점을 거의 안 보고 그은 직선</td></tr>
+    </table>
+  </div>
+
+  <p><code>C</code> 는 <code>w, b, α</code> 처럼 학습으로 구하는 값이 아니라 학습을 시작하기 전에 사람이 정해 주는 값이라 <span class="term" data-term="hyperparam">하이퍼파라미터</span>라 부릅니다.
+  모든 데이터에 맞는 정답 <code>C</code> 는 없고, 실전에서는 데이터로 시험해서 고릅니다.</p>
+
+  <div class="box note">
+    <p class="box-t">4점 예제의 전체 답 (손으로 푼 결과)</p>
+    <p>화면 2 의 네 점(<code>x⁽⁴⁾ = (1.5, 1.5)</code>)은 모든 <code>C</code> 에 대해 풀 수 있습니다(화면 4 에서 <code>C = 1</code> 일 때 맞는지 검증합니다). <code>C ≤ 4</code> 이면 답은 <code>w = (C/2, C/2)</code>, 마진은 <code>2√2/C</code>, 목적값은 <code>2C − C²/4</code>, <code>C ≥ 4</code> 이면 화면 1 의 하드 마진 답 <code>w = (2, 2)</code> 와 같습니다.</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th><code>C</code></th><th><code>w</code></th><th>마진 <code>2/‖w‖</code></th><th>목적값 <code>2C − C²/4</code></th></tr>
+        <tr><td>1</td><td>(0.5, 0.5)</td><td>2.83</td><td>1.75</td></tr>
+        <tr><td>2</td><td>(1, 1)</td><td>1.41</td><td>3</td></tr>
+        <tr><td>3</td><td>(1.5, 1.5)</td><td>0.94</td><td>3.75</td></tr>
+        <tr><td>4 이상</td><td>(2, 2) (하드 마진)</td><td>0.71</td><td>4</td></tr>
+      </table>
+    </div>
+    <p>C 가 1, 2, 3, 4 로 커지면서 직선이 이상치를 틀리게 두던 상태(<code>C = 1</code>, 화면 2 의 후보 1)에서 조금씩 마진을 포기하며 이상치를 맞히는 하드 마진으로 옮겨 가는 것이 보입니다.</p>
+  </div>
+
+  <h3>위젯에 쓰는 점 — 세 점을 더했습니다</h3>
+
+  <p>아래 위젯은 점을 일곱 개로 늘려 씁니다. 세 점 <code>x⁽¹⁾, x⁽²⁾, x⁽³⁾</code> 과 이상치 <code>x⁽⁴⁾</code> 에 <code>x⁽⁵⁾ = (3, 4.5)</code>(+1), <code>x⁽⁶⁾ = (0, 1.5)</code>(−1), <code>x⁽⁷⁾ = (1.5, 0)</code>(−1) 를 더한 것입니다. 이유는 두 가지입니다.</p>
+
+  <ol>
+    <li><b>점이 너무 적으면 소프트 마진이 직선을 포기합니다.</b> 세 점 + <code>x⁽⁴⁾ = (0.5, 0.5)</code> 에서는 <code>C</code> 가 얼마든 답이 <code>w = (0, 0)</code>(전부 +1 로 분류)입니다. 이유는 화면 1 의 섞기 식 <code>x⁽³⁾ = 0.8x⁽⁴⁾ + 0.2x⁽¹⁾</code> 에서 나옵니다.
+    <code>f(x⁽³⁾) = 0.8f(x⁽⁴⁾) + 0.2f(x⁽¹⁾)</code> 이므로 어떤 직선에서도 <code>ξ⁽³⁾ + 0.8ξ⁽⁴⁾ + 0.2ξ⁽¹⁾ ≥ (1 + f(x⁽³⁾)) + 0.8(1 − f(x⁽⁴⁾)) + 0.2(1 − f(x⁽¹⁾)) = 2</code> 이고, 따라서 <code>Σξ ≥ 2</code> 입니다.
+    <code>w = 0</code>, <code>b = 1</code> 은 <code>ξ⁽³⁾ = 2</code>, 나머지 0 으로 이 하한에 정확히 닿으면서 <code>½‖w‖² = 0</code> 이라, 어떤 <code>C</code> 에서도 이 &ldquo;전부 +1&rdquo; 이 가장 쌉니다.
+    파란 점이 셋이고 빨간 점이 하나뿐인 데이터에서는 빨간 점 하나를 포기하는 것이 가장 싸다는, 자연스럽지만 직선 그림에는 쓸모없는 결과입니다.</li>
+    <li><b>세 점의 답을 그대로 두면서 점 구름의 모양을 낼 수 있습니다.</b> 새 세 점은 모두 4장 화면 6 의 &lsquo;띠 바깥&rsquo;에 놓입니다(<code>w = (½, ½)</code>, <code>b = −2</code> 에서 <code>z = 1.75, 1.25, 1.25</code>, 모두 1 보다 큼). 그래서 이상치가 없을 때의 답은 4장과 똑같이 <code>w = (½, ½)</code>, <code>b = −2</code> 입니다.</li>
+  </ol>
+
+  <div class="box warn">
+    <p class="box-t">한계 — <code>C → ∞</code> 이면 하드 마진이라는 말의 조건</p>
+    <p><code>C</code> 를 키우면 <code>ξ</code> 는 점점 비싸져서 결국 모두 0 이 되고 하드 마진으로 돌아간다고 볼 수 있습니다. 이것은 <b>하드 마진의 가능해가 있을 때만</b> 맞습니다. 가를 수 없는 배치(화면 1 (가))에서는 돌아갈 하드 마진 자체가 없어서,
+    <code>C</code> 를 키워도 답은 &ldquo;침범의 총량이 가장 작은 직선&rdquo; 쪽에서 더 변하지 않습니다(위젯의 강한 이상치).
+    또한 점이 원형으로 안팎을 둘러싼 데이터는 이상치 몇 개가 아니라 모양 자체가 직선이 아니라서 <code>C</code> 를 어떻게 정해도 고쳐지지 않습니다. <span class="later">6장에서 다룸</span></p>
+  </div>
+
+  <h3>직접 움직여 보기</h3>
+
+  <p>결론은 위에 적었습니다. 위젯은 이를 확인하는 도구입니다. 슬라이더로 <code>C</code> 를 바꾸면 그때마다 소프트 마진 쌍대문제(4장 화면 5 의 문제에 <code>0 ≤ α ≤ C</code> 를 더한 것, 화면 4)를 풀어 직선(실선), 마진 경계(파란·빨간 점선), 점마다의 <code>α</code> 와 <code>ξ</code> 를 다시 그립니다.
+  파란 동그라미는 +1, 빨간 네모는 −1, 겹친 동그란 테두리는 <code>α &gt; 0</code> 인 점(4장의 서포트 벡터)이고, 점에서 뻗은 짧은 점선은 그 점이 제 마진 경계까지 가려면 가야 하는 거리 <code>ξ/‖w‖</code> 입니다.
+  회색 긴 점선은 이상치가 없을 때의 직선(4장의 답)입니다.</p>
+
+  <figure class="fig">
+    <svg id="c-svg" viewBox="0 0 380 356" role="img" aria-label="C 슬라이더로 소프트 마진 SVM 의 직선과 마진 띠, 서포트 벡터, 침범량을 확인하는 그림" style="max-width:28rem">
+      <defs><clipPath id="c-clip"><rect x="50" y="30" width="300" height="300"/></clipPath></defs>
+      <g class="svg-line" stroke-width=".6">
+      <path d="M100 30 V330"/><path d="M50 280 H350"/>
+      <path d="M150 30 V330"/><path d="M50 230 H350"/>
+      <path d="M200 30 V330"/><path d="M50 180 H350"/>
+      <path d="M250 30 V330"/><path d="M50 130 H350"/>
+      <path d="M300 30 V330"/><path d="M50 80 H350"/>
+      <path d="M350 30 V330"/><path d="M50 30 H350"/>
+      </g>
+      <g stroke-width="1.4" fill="none" style="stroke:var(--muted)"><path d="M50 330 H350"/><path d="M50 330 V30"/></g>
+      <g class="svg-muted" font-size="10" text-anchor="middle">
+      <text x="50" y="344">0</text>
+      <text x="100" y="344">1</text>
+      <text x="150" y="344">2</text>
+      <text x="200" y="344">3</text>
+      <text x="250" y="344">4</text>
+      <text x="300" y="344">5</text>
+      <text x="350" y="344">6</text>
+      <text x="364" y="334" font-size="12" class="svg-fg">x₁</text><text x="50" y="20" font-size="12" class="svg-fg">x₂</text>
+      </g><g class="svg-muted" font-size="10" text-anchor="end">
+      <text x="43" y="283">1</text>
+      <text x="43" y="233">2</text>
+      <text x="43" y="183">3</text>
+      <text x="43" y="133">4</text>
+      <text x="43" y="83">5</text>
+      <text x="43" y="33">6</text>
+      </g>
+      <g clip-path="url(#c-clip)" fill="none">
+        <path id="c-ref" d="" stroke-width="2.4" style="stroke:var(--muted);stroke-dasharray:7 5"/>
+        <path id="c-m1" d="" stroke-width="1.4" style="stroke:var(--accent);stroke-dasharray:3 3"/>
+        <path id="c-m2" d="" stroke-width="1.4" style="stroke:var(--bad);stroke-dasharray:3 3"/>
+        <path id="c-line" d="" stroke-width="2.4" style="stroke:var(--fg)"/>
+        <g id="c-slack" stroke-width="1.6" style="stroke:var(--fg);stroke-dasharray:2 2"></g>
+      </g>
+      <g id="c-pts"></g>
+    </svg>
+    <figcaption>실선이 지금의 답 <code>w·x+b = 0</code>, 파란 점선이 <code>= +1</code>, 빨간 점선이 <code>= −1</code> 입니다. <code>C</code> 가 작아 마진이 아주 넓으면 점선이 그림 밖으로 나갑니다.</figcaption>
+  </figure>
+
+  <div style="display:flex;gap:.45rem;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.86rem;margin-bottom:.6rem">
+    <span>이상치 <code>x⁽⁴⁾</code></span>
+    <button type="button" id="c-o1" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">약한 이상치 (1.5, 1.5)</button>
+    <button type="button" id="c-o2" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">강한 이상치 (0.5, 0.5)</button>
+    <button type="button" id="c-o0" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">이상치 없음</button>
+  </div>
+
+  <div style="display:flex;gap:.7rem;align-items:center;justify-content:center;font-size:.9rem;flex-wrap:wrap;margin-bottom:.4rem">
+    <label for="c-c">C (로그 눈금)</label>
+    <input id="c-c" type="range" min="-2" max="2" step="0.05" value="0" style="width:min(16rem,60vw)">
+    <b id="c-cv">1</b>
+  </div>
+
+  <div style="display:flex;gap:.45rem;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.86rem;margin-bottom:.6rem">
+    <span>C 바로 맞추기</span>
+    <button type="button" data-c="-2" style="font:inherit;font-size:.82rem;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">0.01</button>
+    <button type="button" data-c="-1" style="font:inherit;font-size:.82rem;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">0.1</button>
+    <button type="button" data-c="0" style="font:inherit;font-size:.82rem;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">1</button>
+    <button type="button" data-c="0.30103" style="font:inherit;font-size:.82rem;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">2</button>
+    <button type="button" data-c="1" style="font:inherit;font-size:.82rem;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">10</button>
+    <button type="button" data-c="2" style="font:inherit;font-size:.82rem;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">100</button>
+  </div>
+
+  <p style="text-align:center;font-size:.86rem;color:var(--muted);margin:.2rem 0 .8rem">조작 방법: 슬라이더를 끌거나 화살표 키로 움직이면 <code>C</code> 가 0.01 에서 100 까지 로그 눈금(한 칸에 약 1.12 배)으로 바뀝니다. 버튼으로 이상치의 위치와 <code>C</code> 를 바로 정할 수도 있습니다.</p>
+
+  <p id="c-sol" style="text-align:center;font-weight:700;margin:.5rem 0 .2rem"></p>
+  <p id="c-obj" style="text-align:center;margin:.2rem 0 .2rem"></p>
+  <p id="c-note" style="text-align:center;font-weight:700;margin:.2rem 0 .8rem"></p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>점</th><th>좌표, 레이블</th><th><code>z = y(w·x+b)</code></th><th><code>ξ</code></th><th><code>α</code></th><th>위치</th></tr>
+      <tbody id="c-rows"></tbody>
+    </table>
+  </div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var SUP = ['⁽¹⁾', '⁽²⁾', '⁽³⁾', '⁽⁴⁾', '⁽⁵⁾', '⁽⁶⁾', '⁽⁷⁾'];
+
+  /* 소프트 마진 쌍대문제 풀이 — 위반이 가장 큰 두 α 를 골라 함께 움직이는 좌표상승(SMO 꼴).
+     max Σα − ½ΣΣ α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾(x⁽ⁱ⁾·x⁽ʲ⁾)   s.t. 0 ≤ α ≤ C, Σαy = 0 */
+  function solveSoft(P, C) {
+    var n = P.length, a = [], G = [], Q = [], i, j, k, it, steps = 0, vi, vj, gi, gj;
+    for (i = 0; i < n; i++) {
+      a.push(0); G.push(-1); Q.push([]);                          // G = Qα − 1 (목적 −D 의 기울기)
+      for (j = 0; j < n; j++) Q[i].push(P[i].y * P[j].y * (P[i].x[0] * P[j].x[0] + P[i].x[1] * P[j].x[1]));
+    }
+    function canUp(k) { return (P[k].y > 0 && a[k] < C) || (P[k].y < 0 && a[k] > 0); }    // α⁽ᵏ⁾y⁽ᵏ⁾ 를 키울 수 있나
+    function canDown(k) { return (P[k].y > 0 && a[k] > 0) || (P[k].y < 0 && a[k] < C); }  // 줄일 수 있나
+    function pick() {
+      vi = -Infinity; vj = Infinity; gi = gj = -1;
+      for (k = 0; k < n; k++) {
+        var v = -P[k].y * G[k];
+        if (canUp(k) && v > vi) { vi = v; gi = k; }
+        if (canDown(k) && v < vj) { vj = v; gj = k; }
+      }
+    }
+    for (it = 0; it < 100000; it++) {
+      pick();
+      if (gi < 0 || gj < 0 || vi - vj < 1e-11) break;             // 더 개선할 쌍이 없으면 끝
+      var yi = P[gi].y, yj = P[gj].y;
+      var curv = Q[gi][gi] + Q[gj][gj] - 2 * yi * yj * Q[gi][gj];
+      var t = -(yi * G[gi] - yj * G[gj]) / Math.max(curv, 1e-12); // α⁽ⁱ⁾ += yᵢt, α⁽ʲ⁾ −= yⱼt (Σαy 유지)
+      var lo = Math.max(yi > 0 ? -a[gi] : a[gi] - C, yj > 0 ? a[gj] - C : -a[gj]);
+      var hi = Math.min(yi > 0 ? C - a[gi] : a[gi], yj > 0 ? a[gj] : C - a[gj]);
+      t = Math.min(hi, Math.max(lo, t));                          // 0 ≤ α ≤ C 안으로 자른다
+      a[gi] += yi * t; a[gj] -= yj * t;
+      for (k = 0; k < n; k++) G[k] += Q[k][gi] * yi * t - Q[k][gj] * yj * t;
+      steps++;
+    }
+    pick();
+    var w = [0, 0], sa = 0, b = 0, nf = 0;
+    for (i = 0; i < n; i++) { w[0] += a[i] * P[i].y * P[i].x[0]; w[1] += a[i] * P[i].y * P[i].x[1]; sa += a[i]; }
+    var wn = w[0] * w[0] + w[1] * w[1];
+    for (i = 0; i < n; i++) if (a[i] > 1e-8 && a[i] < C - 1e-8) { b += P[i].y - (w[0] * P[i].x[0] + w[1] * P[i].x[1]); nf++; }
+    var bLo = vi, bHi = Math.max(vi, vj);                         // 가능한 b 의 구간 [vi, vj]
+    if (nf) { b /= nf; bLo = bHi = b; } else b = (bLo + bHi) / 2;
+    return { a: a, w: w, b: b, D: sa - 0.5 * wn, wn: wn, nfree: nf, bLo: bLo, bHi: bHi, steps: steps };
+  }
+
+  var CLEAN = [
+    { x: [3, 3], y: 1, n: 0 }, { x: [4, 3], y: 1, n: 1 }, { x: [1, 1], y: -1, n: 2 },
+    { x: [3, 4.5], y: 1, n: 4 }, { x: [0, 1.5], y: -1, n: 5 }, { x: [1.5, 0], y: -1, n: 6 }
+  ];
+  var OUT = [null, { x: [1.5, 1.5], y: 1, n: 3 }, { x: [0.5, 0.5], y: 1, n: 3 }];
+  var mode = 1;
+  function dataset() {
+    var P = CLEAN.slice(0, 3);
+    if (OUT[mode]) P.push(OUT[mode]);
+    return P.concat(CLEAN.slice(3));
+  }
+  function X(x) { return 50 + 50 * x; }
+  function Y(y) { return 330 - 50 * y; }
+  function f(v, d) { var s = Math.abs(v) < 5e-4 ? '0' : v.toFixed(d === undefined ? 3 : d).replace(/0+$/, '').replace(/\.$/, ''); return s === '-0' ? '0' : s.replace('-', '−'); }
+  function linePath(w, b, c) {
+    var nn = w[0] * w[0] + w[1] * w[1];
+    if (nn < 1e-12) return '';
+    var p0 = [(c - b) * w[0] / nn, (c - b) * w[1] / nn], len = Math.sqrt(nn), dr = [-w[1] / len, w[0] / len];
+    return 'M' + X(p0[0] + 400 * dr[0]).toFixed(1) + ' ' + Y(p0[1] + 400 * dr[1]).toFixed(1) + ' L' + X(p0[0] - 400 * dr[0]).toFixed(1) + ' ' + Y(p0[1] - 400 * dr[1]).toFixed(1);
+  }
+  function fmtC(C) { return C >= 10 ? C.toFixed(1).replace(/\.0$/, '') : C >= 1 ? C.toFixed(2).replace(/0$/, '').replace(/\.$/, '') : C.toFixed(3).replace(/0+$/, '').replace(/\.$/, ''); }
+
+  var slider = $('c-c');
+  function getC() { return Math.pow(10, +slider.value); }
+
+  function draw() {
+    var P = dataset(), C = getC(), s = solveSoft(P, C), n = P.length, i, html = '', slack = '', rows = '';
+    var nn = s.wn, len = Math.sqrt(nn), mis = 0, sumxi = 0, nC = 0;
+    $('c-cv').textContent = fmtC(C);
+    $('c-ref').setAttribute('d', linePath([0.5, 0.5], -2, 0));
+    $('c-line').setAttribute('d', linePath(s.w, s.b, 0));
+    $('c-m1').setAttribute('d', linePath(s.w, s.b, 1));
+    $('c-m2').setAttribute('d', linePath(s.w, s.b, -1));
+    for (i = 0; i < n; i++) {
+      var p = P[i], z = p.y * (s.w[0] * p.x[0] + s.w[1] * p.x[1] + s.b), xi = Math.max(0, 1 - z), al = s.a[i];
+      var cls = al < 1e-8 ? 0 : (al > C - 1e-8 ? 2 : 1), px = X(p.x[0]), py = Y(p.x[1]);
+      sumxi += xi; if (z < -1e-9) mis++; if (cls === 2) nC++;
+      if (xi > 1e-6 && len > 1e-6) {                              // 제 마진 경계까지의 거리 ξ/‖w‖
+        var qx = p.x[0] + p.y * xi * s.w[0] / nn, qy = p.x[1] + p.y * xi * s.w[1] / nn;
+        slack += '<path d="M' + px.toFixed(1) + ' ' + py.toFixed(1) + ' L' + X(qx).toFixed(1) + ' ' + Y(qy).toFixed(1) + '"/>';
+      }
+      if (cls > 0) html += '<circle cx="' + px + '" cy="' + py + '" r="13" fill="none" stroke-width="2" style="stroke:var(--fg)"/>';
+      html += p.y > 0
+        ? '<circle cx="' + px + '" cy="' + py + '" r="7" style="fill:var(--accent)"/>'
+        : '<rect x="' + (px - 6.5) + '" y="' + (py - 6.5) + '" width="13" height="13" style="fill:var(--bad)"/>';
+      html += '<text x="' + px + '" y="' + (py - 17) + '" text-anchor="middle" font-size="12" class="svg-fg">x' + SUP[p.n] + '</text>';
+      var pos = z > 1 + 1e-6 ? '띠 바깥' : Math.abs(z - 1) <= 1e-6 ? '마진 경계 위' : z > 0 ? '띠 안, 올바른 쪽' : '<b>틀린 쪽</b>';
+      rows += '<tr><td>x' + SUP[p.n] + (p.n === 3 ? ' (이상치)' : '') + '</td><td>(' + f(p.x[0], 2) + ', ' + f(p.x[1], 2) + '), ' + (p.y > 0 ? '+1' : '−1') + '</td><td>' + f(z) + '</td><td>' + f(xi) + '</td><td>' +
+        (cls === 0 ? '0' : f(al) + (cls === 2 ? ' (= C)' : '')) + '</td><td>' + pos + '</td></tr>';
+    }
+    $('c-slack').innerHTML = slack;
+    $('c-pts').innerHTML = html;
+    $('c-rows').innerHTML = rows;
+    $('c-sol').textContent = 'w = (' + f(s.w[0]) + ', ' + f(s.w[1]) + '),  b = ' + f(s.b) + ',  마진 2/‖w‖ = ' + (len < 1e-6 ? '∞' : f(2 / len, 2));
+    var prim = 0.5 * nn + C * sumxi;
+    $('c-obj').innerHTML = 'Σξ = ' + f(sumxi) + ', &nbsp; ½‖w‖² + CΣξ = ' + f(prim, 4) + ' &nbsp;(쌍대 목적값 D = ' + f(s.D, 4) + ')';
+    var note = '틀리게 분류한 점 ' + mis + '개, α = C 인 점 ' + nC + '개.';
+    if (s.bHi - s.bLo > 1e-6) note += ' 이 C 에서는 0 &lt; α &lt; C 인 점이 없어 b 가 한 값으로 정해지지 않습니다. [' + f(s.bLo, 3) + ', ' + f(s.bHi, 3) + '] 안의 어떤 b 도 목적값이 같고, 그림과 표는 가운데 값입니다.';
+    $('c-note').innerHTML = note;
+    var ids = ['c-o0', 'c-o1', 'c-o2'];
+    ids.forEach(function (id, k) { $(id).style.outline = (k === mode ? '2px solid var(--accent)' : 'none'); });
+  }
+
+  $('c-o0').addEventListener('click', function () { mode = 0; draw(); });
+  $('c-o1').addEventListener('click', function () { mode = 1; draw(); });
+  $('c-o2').addEventListener('click', function () { mode = 2; draw(); });
+  slider.addEventListener('input', draw);
+  Array.prototype.forEach.call(document.querySelectorAll('button[data-c]'), function (btn) {
+    btn.addEventListener('click', function () { slider.value = this.getAttribute('data-c'); draw(); });
+  });
+  draw();
+})();
+</script>
+
+  <div class="box note">
+    <p class="box-t">이렇게 움직여 보세요</p>
+    <ol>
+      <li><b>약한 이상치, <code>C = 10</code>.</b> 하드 마진과 같은 답 <code>w = (2, 2)</code>, <code>b = −5</code>, 마진 0.71 이고 <code>ξ</code> 가 전부 0 입니다. 직선이 <code>x⁽⁴⁾</code> 를 맞히려고 빨간 점 쪽에 바싹 붙었습니다.</li>
+      <li><b><code>C = 1</code> 로 줄입니다.</b> <code>w = (½, ½)</code>, 마진 2.83 으로 이상치가 없을 때와 같은 방향·같은 마진입니다. <code>x⁽⁴⁾</code> 는 틀린 쪽에 남고 그 <code>ξ</code> 는 1 보다 큽니다. 이 <code>C</code> 에서는 <code>b</code> 가 구간으로만 정해진다는 안내가 뜹니다(화면 4).</li>
+      <li><b><code>C = 2</code>, <code>3</code>.</b> 위쪽 4점 예제의 표와 같이 <code>w = (1, 1)</code>, <code>(1.5, 1.5)</code> 로 마진이 1.41, 0.94 로 줄고 <code>x⁽⁴⁾</code> 가 올바른 쪽으로 넘어옵니다. 값이 이상치에 조금씩 끌려가는 중간 단계입니다.</li>
+      <li><b><code>C = 0.01</code>.</b> 마진이 25.6 으로 점선이 그림 밖에 나가고, 여섯 점의 <code>α</code> 가 <code>C</code> 에 닿으며 점 세 개를 틀리게 분류합니다. 침범이 너무 싸서 점들을 거의 보지 않는 과소적합입니다.</li>
+      <li><b>강한 이상치.</b> <code>C = 0.3</code> 이상에서는 <code>C</code> 를 100 까지 올려도 <code>w = (0.444, 0.444)</code>, <code>b = −1.667</code> 로 변하지 않습니다. <code>x⁽⁴⁾</code> 는 끝까지 틀린 쪽(<code>ξ ≈ 2.22</code>)에 남습니다. 맞힐 방법이 없기 때문입니다.</li>
+      <li><b>이상치 없음.</b> <code>C</code> 가 ¼ 이상이면(슬라이더에서는 0.251 부터) 4장의 답 <code>w = (½, ½)</code>, <code>b = −2</code>, 마진 2.83 그대로입니다. <code>C</code> 가 충분히 크면 소프트 마진이 하드 마진으로 돌아갑니다(4장 화면 7 의 <code>α = ¼</code> 가 <code>C</code> 아래에 들어오기 때문입니다). ¼ 보다 작아지면(<code>C = 0.1</code>) 서포트 벡터 두 점이 띠 안으로 들어옵니다.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 4 -->
+<section class="screen" data-title="쌍대문제와 힌지 손실">
+  <p class="kicker">5장 · 화면 4</p>
+  <h2>쌍대문제는 어떻게 바뀌나 — 한 줄 차이</h2>
+
+  <p>4장의 방법을 그대로 써 봅니다. 라그랑지안을 세우고 변수로 편미분해 0 으로 놓고 대입합니다. 새로 생긴 것은 제약이 하나 더 늘어난 것(<code>ξ ≥ 0</code>)과 변수가 하나 더 늘어난 것(<code>ξ</code>)뿐입니다.</p>
+
+  <h3>라그랑지안</h3>
+
+  <p>3장의 규약(<code>g ≥ 0</code> 꼴, <code>L = J − Σλg</code>)에 맞춥니다. 제약이 두 종류입니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>제약 (<code>g ≥ 0</code> 꼴)</th><th>승수</th></tr>
+      <tr><td><code>g⁽ⁱ⁾ = y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1 + ξ⁽ⁱ⁾ ≥ 0</code></td><td><code>α⁽ⁱ⁾ ≥ 0</code> (4장의 그 α)</td></tr>
+      <tr><td><code>ξ⁽ⁱ⁾ ≥ 0</code></td><td><code>μ⁽ⁱ⁾ ≥ 0</code> (새 승수. 이름만 <code>μ</code>(뮤)로 구분)</td></tr>
+    </table>
+  </div>
+
+  <p style="text-align:center"><code>L(w, b, ξ, α, μ) = ½‖w‖² + C Σ<sub>i</sub> ξ⁽ⁱ⁾ − Σ<sub>i</sub> α⁽ⁱ⁾ [ y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1 + ξ⁽ⁱ⁾ ] − Σ<sub>i</sub> μ⁽ⁱ⁾ ξ⁽ⁱ⁾</code></p>
+
+  <p>4장 화면 2 의 라그랑지안에 <code>CΣξ</code>, <code>−Σαξ</code>, <code>−Σμξ</code> 세 항이 더해진 모양입니다. 이제 변수 <code>w, b, ξ⁽ⁱ⁾</code> 로 편미분해 0 으로 놓습니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>편미분 = 0</th><th>결과</th><th>4장과 비교</th></tr>
+      <tr><td><code>∂L/∂w = w − Σ α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾ = 0</code></td><td><code>w = Σ α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾</code></td><td>같음. <code>ξ</code> 가 든 새 항들은 <code>w</code> 가 없어 미분하면 사라집니다.</td></tr>
+      <tr><td><code>∂L/∂b = −Σ α⁽ⁱ⁾y⁽ⁱ⁾ = 0</code></td><td><code>Σ α⁽ⁱ⁾y⁽ⁱ⁾ = 0</code></td><td>같음. 새 항들에 <code>b</code> 가 없습니다.</td></tr>
+      <tr><td><code>∂L/∂ξ⁽ⁱ⁾ = C − α⁽ⁱ⁾ − μ⁽ⁱ⁾ = 0</code></td><td><code>α⁽ⁱ⁾ = C − μ⁽ⁱ⁾</code></td><td><b>새 줄.</b> <code>ξ⁽ⁱ⁾</code> 가 든 항은 <code>Cξ</code>, <code>−αξ</code>, <code>−μξ</code> 셋이고 모두 <code>ξ</code> 에 곱해진 계수가 그대로 남습니다.</td></tr>
+    </table>
+  </div>
+
+  <p>새 줄에서 <code>μ⁽ⁱ⁾ ≥ 0</code> 이니 <code>α⁽ⁱ⁾ = C − μ⁽ⁱ⁾ ≤ C</code> 입니다. 원래부터 <code>α⁽ⁱ⁾ ≥ 0</code> 이었으니 <b><code>0 ≤ α⁽ⁱ⁾ ≤ C</code></b> 가 됩니다. 이 식들을 <code>L</code> 에 대입할 때,
+  <code>ξ</code> 가 들어 있는 항은 <code>CΣξ − Σαξ − Σμξ = Σ(C − α − μ)ξ</code> 로 묶이고 괄호가 방금 구한 새 줄에 의해 0 이라 <b><code>ξ</code> 가 통째로 사라집니다.</b> 남은 것은 4장 화면 4 의 줄과 똑같아서 쌍대 목적함수 <code>D(α)</code> 도 같습니다.</p>
+
+  <div class="box good">
+    <p class="box-t">소프트 마진의 쌍대문제</p>
+    <p style="text-align:center;font-size:1.05rem"><code>max<sub>α</sub> &nbsp; D(α) = Σα⁽ⁱ⁾ − ½ Σ<sub>i</sub>Σ<sub>j</sub> α⁽ⁱ⁾α⁽ʲ⁾ y⁽ⁱ⁾y⁽ʲ⁾ (x⁽ⁱ⁾·x⁽ʲ⁾)</code></p>
+    <p style="text-align:center;font-size:1.05rem"><code>s.t. &nbsp; <b>0 ≤ α⁽ⁱ⁾ ≤ C</b> &nbsp;(모든 i), &nbsp;&nbsp; Σ α⁽ⁱ⁾y⁽ⁱ⁾ = 0</code></p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th></th><th>하드 마진 (4장)</th><th>소프트 마진 (5장)</th></tr>
+      <tr><td>목적 <code>D(α)</code></td><td colspan="2" style="text-align:center">같음 (데이터는 여전히 내적 <code>x⁽ⁱ⁾·x⁽ʲ⁾</code> 로만 들어 있음)</td></tr>
+      <tr><td>등식 제약</td><td colspan="2" style="text-align:center"><code>Σ α⁽ⁱ⁾y⁽ⁱ⁾ = 0</code>, 같음</td></tr>
+      <tr><td>부호 제약</td><td><code>α⁽ⁱ⁾ ≥ 0</code></td><td><b><code>0 ≤ α⁽ⁱ⁾ ≤ C</code></b></td></tr>
+      <tr><td><code>w</code> 복원</td><td colspan="2" style="text-align:center"><code>w = Σ α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾</code>, 같음</td></tr>
+    </table>
+  </div>
+
+  <p>이 한 줄이 두 극단을 한꺼번에 설명합니다. <code>C</code> 가 아주 크면 <code>α ≤ C</code> 라는 울타리가 사라진 것과 같아 4장의 문제로 돌아갑니다. 정확히는 하드 마진 쌍대문제의 답 <code>α</code> 의 최댓값이 <code>C</code> 이하이기만 하면 울타리가 아무것도 건드리지 않아 같은 답이 나옵니다.
+  4장 화면 7 의 <code>α = (¼, 0, ¼)</code> 가 그 경우라 <code>C ≥ ¼</code> 이면 세 점의 답이 그대로이고, 화면 1 (나) 의 네 점은 하드 마진 답이 <code>α = (0, 0, 4, 4)</code> 이므로 <code>C ≥ 4</code> 일 때 화면 3 의 표가 하드 마진 <code>w = (2, 2)</code> 가 되는 것과 맞아떨어집니다.</p>
+
+  <h3>점의 세 부류</h3>
+
+  <p>3장의 상보 여유성(<code>승수 × 제약 = 0</code>)이 이번에는 두 줄입니다. 승수 <code>α</code>, <code>μ</code> 와 제약 <code>g⁽ⁱ⁾</code>, <code>ξ⁽ⁱ⁾</code> 에 각각 적용되고, <code>μ = C − α</code> 를 쓰면 다음과 같습니다.</p>
+
+  <p style="text-align:center"><code>α⁽ⁱ⁾ [ y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1 + ξ⁽ⁱ⁾ ] = 0 &nbsp;,&nbsp;&nbsp; (C − α⁽ⁱ⁾) ξ⁽ⁱ⁾ = 0</code></p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th><code>α⁽ⁱ⁾</code></th><th>두 줄에서 따라 나오는 것</th><th>점의 위치 (<code>z = y(w·x+b)</code>)</th></tr>
+      <tr><td><b><code>α = 0</code></b></td><td><code>C − α = C &gt; 0</code> 이라 둘째 줄에서 <code>ξ = 0</code>, 곧 제약 <code>z ≥ 1</code></td><td><b>마진 경계 밖</b>이거나 경계 위. <code>w</code> 에 기여하지 않음</td></tr>
+      <tr><td><b><code>0 &lt; α &lt; C</code></b></td><td><code>C − α &gt; 0</code> 이라 <code>ξ = 0</code>. <code>α &gt; 0</code> 이라 첫째 줄에서 대괄호가 0, 곧 <code>z = 1</code></td><td><b>마진 경계 위</b> (4장의 서포트 벡터)</td></tr>
+      <tr><td><b><code>α = C</code></b></td><td><code>C − α = 0</code> 이라 <code>ξ</code> 는 0 이상 아무 값. <code>α &gt; 0</code> 이라 대괄호가 0, 곧 <code>z = 1 − ξ ≤ 1</code></td><td><b>경계 안쪽·틀린 쪽</b> (<code>ξ &gt; 0</code>)이거나 경계 위 (<code>ξ = 0</code>)</td></tr>
+    </table>
+  </div>
+
+  <p>화면 3 위젯의 <code>α</code> 열에서 &lsquo;= C&rsquo; 로 표시된 점이 셋째 부류입니다. 거꾸로 읽으면 이렇습니다.</p>
+
+  <ul>
+    <li>점이 띠 바깥(<code>z &gt; 1</code>)이면 <code>α = 0</code>. (<code>α &gt; 0</code> 이면 <code>z = 1 − ξ ≤ 1</code> 이라 모순)</li>
+    <li>점이 띠 안쪽이거나 틀린 쪽(<code>z &lt; 1</code>)이면 <code>ξ &gt; 0</code> 이고, 그러면 <code>C − α = 0</code> 이라 <code>α = C</code>. 곧 <b><code>ξ &gt; 0</code> 인 점은 모두 서포트 벡터</b>(<code>α &gt; 0</code>)입니다.</li>
+    <li>마진 경계 위(<code>z = 1</code>)에 있는 점은 세 부류 모두 가능합니다. 4장에서 경계 위인데 <code>α = 0</code> 인 점이 있었던 것처럼, 이제는 경계 위인데 <code>α = C</code> 인 점도 있습니다.</li>
+  </ul>
+
+  <div class="box good">
+    <p class="box-t">검증 — 화면 3 의 4점 예제 <code>C = 1</code></p>
+    <p>화면 3 의 표에서 <code>C = 1</code> 이면 <code>α = (0, 0, 1, 1)</code>, <code>w = (½, ½)</code> 라고 했습니다. 직접 확인합니다. (점 번호: <code>x⁽¹⁾ = (3, 3)</code>, <code>x⁽²⁾ = (4, 3)</code>, <code>x⁽³⁾ = (1, 1)</code>, <code>x⁽⁴⁾ = (1.5, 1.5)</code>)</p>
+    <ul>
+      <li><b>쌍대 가능성.</b> <code>0 ≤ α ≤ C = 1</code> ✓. <code>Σαy = 0·1 + 0·1 + 1·(−1) + 1·(+1) = 0</code> ✓.</li>
+      <li><b><code>w</code> 복원.</b> <code>w = 1·(−1)·(1, 1) + 1·(+1)·(1.5, 1.5) = (0.5, 0.5)</code> ✓.</li>
+      <li><b>쌍대 값.</b> <code>D = Σα − ½‖w‖² = 2 − ½·½ = 1.75</code> (<code>ΣΣ</code> 가 <code>w·w</code> 와 같다는 4장 화면 4 의 4 줄을 썼습니다).</li>
+      <li><b>원문제 값.</b> <code>b = −2</code> 로 놓으면 화면 2 의 후보 1 이라 <code>½‖w‖² + CΣξ = ¼ + 1.5 = 1.75</code>.</li>
+      <li>쌍대 값은 어떤 가능한 원문제 값보다도 크지 않고(약쌍대성, 4장 화면 5), 위의 원문제 값이 쌍대 값과 <b>같으므로</b> 둘 다 최적입니다. <code>C = 1</code> 에서 후보 1 이 정말 답입니다.</li>
+    </ul>
+    <p>점의 부류는 <code>x⁽¹⁾, x⁽²⁾</code> 가 <code>α = 0</code>(<code>z = 1, 1.5</code> ≥ 1), <code>x⁽³⁾, x⁽⁴⁾</code> 가 <code>α = C</code>(<code>x⁽⁴⁾</code> 는 <code>z = −½ &lt; 1</code> 로 틀린 쪽, <code>x⁽³⁾</code> 는 <code>z = 1</code> 이라 <code>ξ = 0</code> 이지만 <code>α = C</code>)입니다. 세 부류 중 둘만 나왔고, 가운데 부류(<code>0 &lt; α &lt; C</code>)는 4장의 세 점 예제(<code>C &gt; ¼</code> 이면 <code>α = (¼, 0, ¼)</code> 의 두 양수가 모두 <code>0 &lt; α &lt; C</code>)에서 만납니다.</p>
+  </div>
+
+  <h3><code>b</code> 는 어떤 점으로 구하나</h3>
+
+  <p>4장에서는 <code>α &gt; 0</code> 인 점에서 등식 <code>y(w·x+b) = 1</code> 이 나온다고 했습니다. 소프트 마진에서는 <code>α &gt; 0</code> 인 점이 두 종류라 조심해야 합니다.</p>
+
+  <ul>
+    <li><b><code>0 &lt; α &lt; C</code> 인 점</b>은 <code>ξ = 0</code> 임이 확실해서 등식 <code>y(w·x+b) = 1</code> 이 성립합니다. <code>b = y − w·x</code> 로 구합니다.</li>
+    <li><b><code>α = C</code> 인 점</b>은 <code>z = 1 − ξ</code> 인데 <code>ξ</code> 를 모르니 <code>b</code> 를 정해 주지 못합니다.</li>
+    <li><b><code>α = 0</code> 인 점</b>은 부등식 <code>z ≥ 1</code> 만 줍니다.</li>
+  </ul>
+
+  <div class="box warn">
+    <p class="box-t">한계 — <code>0 &lt; α &lt; C</code> 인 점이 하나도 없으면 <code>b</code> 는 구간입니다</p>
+    <p>위 4점 예제(<code>C = 1</code>)가 그런 경우입니다. <code>w = (½, ½)</code> 는 하나로 정해지지만 <code>b</code> 는 <code>−2 ≤ b ≤ −½</code> 의 어느 값이든 됩니다.
+    조건은 이렇습니다. <code>α = 0</code> 인 <code>x⁽¹⁾</code> 은 <code>3 + b ≥ 1</code>, <code>α = C</code> 인 <code>x⁽³⁾</code> 은 <code>z = −(1 + b) ≤ 1</code>, <code>x⁽⁴⁾</code> 은 <code>z = 1.5 + b ≤ 1</code> 에서 <code>b ≥ −2</code> 와 <code>b ≤ −½</code> 가 나옵니다.
+    그 구간 안에서는 <code>ξ⁽³⁾ = 2 + b</code>, <code>ξ⁽⁴⁾ = −½ − b</code> 라 합이 늘 1.5 이고 목적값이 같아서 어느 <code>b</code> 도 똑같이 최적입니다. 위젯도 이럴 때는 구간을 알려 주고 가운데 값을 그립니다.
+    <code>0 &lt; α &lt; C</code> 인 점이 하나라도 있으면 <code>b</code> 가 정해집니다. 여기서 <code>w</code> 는 언제나 하나이고 <code>b</code> 만 구간일 수 있습니다.</p>
+  </div>
+
+  <h3>힌지 손실로 다시 보기</h3>
+
+  <p>이번에는 같은 문제를 <code>ξ</code> 없이 다시 씁니다. <code>(w, b)</code> 를 하나 정했다고 합시다. 그러면 점 <code>i</code> 의 <code>ξ⁽ⁱ⁾</code> 는 제약 <code>ξ⁽ⁱ⁾ ≥ 1 − z⁽ⁱ⁾</code>, <code>ξ⁽ⁱ⁾ ≥ 0</code> 을 지키는 가장 작은 값이면 되고 (<code>C &gt; 0</code> 이라 작을수록 이득입니다), 그것은 둘 중 큰 쪽입니다.</p>
+
+  <p style="text-align:center"><code>ξ⁽ⁱ⁾ = max( 0, 1 − y⁽ⁱ⁾ f(x⁽ⁱ⁾) )</code> &nbsp;&nbsp; (<code>f(x) = w·x + b</code>)</p>
+
+  <p>오른쪽 식 <code>max(0, 1 − z)</code> 가 <span class="term" data-term="hinge">힌지 손실</span>(hinge loss)입니다. 마진 밖(<code>z ≥ 1</code>)에서는 0 이고 그 안쪽에서는 1 에서 모자란 만큼 올라갑니다. 곧 <b><code>ξ</code> 는 힌지 손실입니다.</b> 문제는 <code>ξ</code> 를 지우고 이렇게 쓸 수 있습니다.</p>
+
+  <p style="text-align:center"><code>min<sub>w, b</sub> &nbsp; ½‖w‖² + C Σ<sub>i</sub> max( 0, 1 − y⁽ⁱ⁾ f(x⁽ⁱ⁾) )</code></p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 440 210" role="img" aria-label="가로축이 z = y·f(x), 세로축이 손실. 힌지 손실은 z 가 1 이상에서 0 이고 그 아래에서는 직선으로 올라간다. 0-1 손실은 z 가 0 미만이면 1 이고 0 이상이면 0 인 계단이다">
+      <g fill="none" stroke-width="1.4" style="stroke:var(--muted)"><path d="M40 170 H420"/><path d="M190 190 V20"/></g>
+      <g class="svg-muted" font-size="10" text-anchor="middle">
+        <text x="50" y="186">−2</text><text x="120" y="186">−1</text><text x="190" y="186">0</text><text x="260" y="186">1</text><text x="330" y="186">2</text><text x="400" y="186">3</text>
+        <text x="430" y="174" font-size="12" class="svg-fg">z</text>
+      </g>
+      <g class="svg-muted" font-size="10" text-anchor="end">
+        <text x="184" y="134">1</text><text x="184" y="94">2</text><text x="184" y="54">3</text>
+      </g>
+      <path d="M50 50 L260 170 L400 170" fill="none" stroke-width="2.6" style="stroke:var(--accent)"/>
+      <path d="M50 130 H190 M190 170 H400" fill="none" stroke-width="2" style="stroke:var(--bad);stroke-dasharray:5 4"/>
+      <circle cx="190" cy="130" r="3.5" fill="none" stroke-width="1.5" style="stroke:var(--bad)"/>
+      <circle cx="190" cy="170" r="3.5" style="fill:var(--bad)"/>
+      <g font-size="11.5" class="svg-fg">
+        <text x="62" y="46" style="fill:var(--accent)">힌지 손실 max(0, 1 − z)</text>
+        <text x="272" y="146" style="fill:var(--bad)">0-1 손실 (틀리면 1)</text>
+      </g>
+    </svg>
+    <figcaption>가로축은 <code>z = y·f(x)</code>, 세로축은 손실입니다. 힌지 손실(파란 실선)은 <code>z ≥ 1</code> 에서 0, 그 아래에서 직선으로 올라가고 <code>z = 0</code>(직선 위)에서 1, <code>z &lt; 0</code>(틀린 쪽)에서 1 을 넘습니다. 붉은 점선은 &ldquo;틀리면 1, 맞으면 0&rdquo; 인 0-1 손실입니다.</figcaption>
+  </figure>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th><code>z = y·f(x)</code></th><th>힌지 손실 <code>ξ</code></th><th>예</th></tr>
+      <tr><td>1.5</td><td>0</td><td>띠 바깥 (화면 2 후보 1 의 <code>x⁽²⁾</code> 는 <code>z = 1.5</code>, 손실 0)</td></tr>
+      <tr><td>1</td><td>0</td><td>마진 경계 위</td></tr>
+      <tr><td>0.5</td><td>0.5</td><td>띠 안, 올바른 쪽 (화면 2 의 <code>C = 2</code> 직선에서 <code>x⁽³⁾, x⁽⁴⁾</code>)</td></tr>
+      <tr><td>0</td><td>1</td><td>직선 위</td></tr>
+      <tr><td>−0.5</td><td>1.5</td><td>틀린 쪽 (화면 2 후보 1 의 <code>x⁽⁴⁾</code>)</td></tr>
+      <tr><td>−2</td><td>3</td><td>멀리 틀린 쪽: 벌점이 거리에 비례해 계속 올라감</td></tr>
+    </table>
+  </div>
+
+  <p>이 식은 목적함수가 <b>두 항의 합</b>임을 선명하게 보여 줍니다. <code>½‖w‖²</code> 은 <code>w</code> 를 작게, 곧 마진을 넓게 유지하는 항이고, <code>CΣ(힌지 손실)</code> 은 학습 데이터에서 얼마나 어겼는지를 재는 손실 항입니다. <code>C</code> 는 손실 항의 비중입니다.
+  하드 마진은 그 손실을 한 점도 허용하지 않는 극단입니다.</p>
+
+  <div class="box note">
+    <p class="box-t">왜 0-1 손실이 아니고 힌지인가 — 그리고 한계 두 가지</p>
+    <ul>
+      <li>힌지 손실은 늘 0-1 손실 이상입니다(<code>z &lt; 0</code> 이면 힌지는 1 이상). 그래서 <code>Σξ</code> 는 틀린 점의 수 이상의 값입니다. 0-1 손실은 계단이라 최소화하기 어렵고, 힌지 손실은 꺾이는 한 곳을 빼면 직선이라 이 문제가 푸는 쉬운 문제(4장의 이차 문제)가 됩니다.</li>
+      <li>힌지 손실은 틀린 정도에 비례해 벌점이 계속 올라가서, 멀리 떨어진 이상치일수록 <code>ξ</code> 가 크고 큰 <code>C</code> 에서 직선을 더 세게 끌어당깁니다. 마지막 줄의 <code>z = −2</code> 가 그것입니다.</li>
+      <li><code>ξ = max(0, 1 − z)</code> 가 정확히 성립하는 것은 <b>최적해에서</b>입니다. 제약식만 보면 <code>ξ</code> 는 그 값 이상이면 아무 값이나 가능합니다(<code>C &gt; 0</code> 이 아래로 눌러 줍니다).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 5 -->
+<section class="screen" data-title="요약 · 퀴즈 · 과제">
+  <p class="kicker">5장 · 화면 5</p>
+  <h2>5장 마무리</h2>
+
+  <div class="summary">
+    <h3>핵심 요약</h3>
+    <ol>
+      <li>하드 마진은 &ldquo;모든 점이 예외 없이&rdquo; 라서 이상치 하나에 약합니다. 빨간 점이 파란 두 점의 선분 위에 놓이면 가능해가 없고, 가를 수 있어도 마진이 크게 줄어듭니다(예제에서 2.83 → 0.71).</li>
+      <li>점마다 슬랙 변수 <code>ξ⁽ⁱ⁾ ≥ 0</code> 을 두어 제약을 <code>y⁽ⁱ⁾(w·x⁽ⁱ⁾+b) ≥ 1 − ξ⁽ⁱ⁾</code> 로 풀고, 목적함수에 벌점을 더한 것이 소프트 마진입니다: <code>min ½‖w‖² + CΣξ⁽ⁱ⁾</code>. <code>ξ = 0</code> 은 제약 그대로, <code>0 &lt; ξ &lt; 1</code> 은 띠 안, <code>ξ &gt; 1</code> 은 틀린 쪽이고, <code>ξ = max(0, 1 − y f(x))</code> 는 힌지 손실입니다.</li>
+      <li><code>C</code> 는 침범의 단가입니다. 크면 엄격해서 하드 마진에 가까워지고(이상치에 끌려 과적합할 수 있음), 작으면 관대해서 마진이 넓어집니다(점을 거의 안 봐 과소적합할 수 있음). 정답 <code>C</code> 는 사람이 정하는 하이퍼파라미터이고, 하드 마진의 가능해가 있을 때만 <code>C</code> 를 키우면 하드 마진이 됩니다.</li>
+      <li>쌍대문제는 <code>α ≥ 0</code> 이 <code>0 ≤ α ≤ C</code> 로 바뀌는 한 줄 차이입니다. <code>α = 0</code> 은 띠 바깥, <code>0 &lt; α &lt; C</code> 는 마진 경계 위, <code>α = C</code> 는 경계 안쪽·틀린 쪽(또는 경계 위)이고, <code>b</code> 는 <code>0 &lt; α &lt; C</code> 인 점의 <code>y(w·x+b) = 1</code> 에서 구합니다.</li>
+    </ol>
+  </div>
+
+  <div class="quiz" data-answer="1">
+    <p class="q">어떤 점의 슬랙 변수가 <code>ξ⁽ⁱ⁾ = 0.4</code> 입니다. 이 점은 어디에 있을까요?</p>
+    <ol class="options">
+      <li data-why="맞습니다. z = 1 − ξ = 0.6 이라 0 < z < 1 입니다. 마진 경계(z = 1)는 넘어 띠 안쪽으로 들어왔지만 직선(z = 0)은 넘지 않았으니 분류는 맞습니다.">마진 띠 안쪽이지만 올바른 쪽이다</li>
+      <li data-why="틀린 쪽이려면 z < 0, 곧 ξ > 1 이어야 합니다. ξ = 0.4 는 1 보다 작아서 아직 직선을 넘지 않았습니다. ξ 가 '오차'가 아니라 '규칙에서 벗어난 크기'라서 1 을 넘어야 틀린 것입니다.">직선을 넘어 틀린 쪽에 있다</li>
+      <li data-why="경계 위(또는 바깥)는 z ≥ 1 이고 그때 ξ = 0 입니다. ξ > 0 이면 z = 1 − ξ < 1 이라 경계 안쪽으로 들어온 것입니다.">마진 경계 위에 있다</li>
+    </ol>
+    <div class="explain">
+      <p>화면 4 의 부류표로 한 걸음 더 갑니다. <code>ξ = 0.4 &gt; 0</code> 이면 상보 여유성 <code>(C − α)ξ = 0</code> 에서 <code>α = C</code> 여야 합니다. <b>띠를 침범한 점은 예외 없이 <code>α = C</code> 의 서포트 벡터</b>이고,
+      거꾸로 <code>α = C</code> 라고 침범한 것은 아닙니다(경계 위에 정확히 놓인 점도 있습니다). 직선을 정하는 데 점이 얼마나 힘을 쓰는지(<code>α</code>)의 상한이 <code>C</code> 이므로, 이상치 한 점의 영향력도 <code>C</code> 로 막혀 있습니다.</p>
+    </div>
+  </div>
+
+  <div class="quiz" data-answer="3">
+    <p class="q">화면 3 의 위젯에서 약한 이상치를 놓고 <code>C = 0.01</code> 로 아주 작게 했습니다. 어떤 모습이 나올까요?</p>
+    <ol class="options">
+      <li data-why="이것은 C 가 큰 쪽의 모습입니다. C 가 작으면 침범 1 의 값이 0.01 밖에 안 돼서, 점들을 띠 밖에 두려고 마진을 좁힐 이유가 없습니다.">모든 점이 띠 바깥에 놓이고 마진이 좁아져 이상치도 맞힌다</li>
+      <li data-why="마진이 좁아지고 이상치를 따라가는 것은 C 가 클 때(약한 이상치에서 C ≥ 4 의 하드 마진 w = (2, 2), 마진 0.71)의 일입니다. 작은 C 에서는 반대로 마진이 넓어집니다.">마진이 0.71 로 좁아지고 직선이 이상치 쪽에 붙는다</li>
+      <li data-why="맞습니다. 침범이 싸서 ½‖w‖² 이 지배적이고, w 가 작아져 마진이 25.6 으로 아주 넓어집니다. 7점 중 6점의 α 가 C 에 닿고 점 세 개를 틀리게 분류합니다.">침범이 싸서 마진이 매우 넓어지고, 많은 점이 띠 안쪽에 들어가며 일부는 틀리게 분류된다</li>
+    </ol>
+    <div class="explain">
+      <p>이것이 과소적합입니다. 재미있는 점은 <b>이상치가 없는 데이터에서도</b> 같은 일이 생긴다는 것입니다. 이상치 없음에서 <code>C = 0.01</code> 로 놓으면 여섯 점이 모두 <code>α = C</code> 이고 모든 점이 띠 안쪽에 있습니다(가운데 값의 <code>b</code> 에서 <code>ξ ≈ 0.8</code>).
+      소프트 마진의 <code>C</code> 는 이상치를 위한 다이얼이기 전에 &ldquo;데이터를 얼마나 믿느냐&rdquo;의 다이얼입니다. 너무 작으면 직선을 데이터에 맞추는 일 자체를 포기합니다.</p>
+    </div>
+  </div>
+
+  <div class="quiz" data-answer="2">
+    <p class="q">소프트 마진의 쌍대문제를 풀어 <code>α</code> 를 얻었습니다. <code>b</code> 를 구하려면 어떤 점의 식 <code>y(w·x + b) = 1</code> 을 써야 할까요?</p>
+    <ol class="options">
+      <li data-why="α = C 인 점은 z = 1 − ξ 이고 ξ 가 얼마인지 모르기 때문에 z = 1 이라고 단정할 수 없습니다. 우연히 ξ = 0 인 점(화면 4 의 x⁽³⁾)도 있지만 α 만 보고는 알 수 없습니다.">α = C 인 점 (서포트 벡터이므로)</li>
+      <li data-why="맞습니다. 0 < α < C 이면 C − α > 0 이라 ξ = 0 이고, α > 0 이라 대괄호가 0 이므로 z = 1 이 확실합니다. 이런 점이 하나도 없으면 b 는 구간으로만 정해집니다.">0 &lt; α &lt; C 인 점</li>
+      <li data-why="α = 0 인 점은 상보 여유성에서 z ≥ 1 이라는 부등식만 나옵니다. 등식이 아니므로 b 를 풀 수 없습니다(4장 화면 7 의 x⁽²⁾ 와 같습니다).">α = 0 인 점 (w 에 기여하지 않으므로)</li>
+    </ol>
+    <div class="explain">
+      <p>여러 점이 <code>0 &lt; α &lt; C</code> 이면 각 점으로 구한 <code>b</code> 가 모두 같아야 합니다. 실제 구현에서는 수치 오차 때문에 조금씩 달라서 그 평균을 쓰는 것이 흔합니다. 위젯의 계산도 그렇게 합니다.
+      반대로 이런 점이 없는 경우에는 화면 4 처럼 <code>b</code> 의 가능한 구간을 구하고 그 가운데를 고르는 것이 한 방법인데, 이것은 약속일 뿐 유일한 답은 아닙니다.</p>
+    </div>
+  </div>
+
+  <div class="box note">
+    <h3>직접 해보기</h3>
+    <p>수직선 위(<code>x₂ = 0</code>)의 네 점입니다. <code>x⁽¹⁾ = (2, 0)</code>(+1), <code>x⁽²⁾ = (3, 0)</code>(+1), <code>x⁽³⁾ = (0, 0)</code>(−1), 그리고 이상치 <code>x⁽⁴⁾ = (0.5, 0)</code>(+1) 입니다. 후보 직선 세 개를 비교합니다.</p>
+    <ul>
+      <li>후보 A: <code>w = (1, 0)</code>, <code>b = −1</code> (4장 과제의 답)</li>
+      <li>후보 H: <code>w = (4, 0)</code>, <code>b = −1</code></li>
+      <li>후보 Z: <code>w = (0, 0)</code>, <code>b = 1</code></li>
+    </ul>
+    <ol>
+      <li>세 후보 각각에서 네 점의 <code>z = y(w·x+b)</code> 와 <code>ξ = max(0, 1 − z)</code> 를 구하세요.</li>
+      <li>각 후보의 목적값 <code>½‖w‖² + CΣξ</code> 를 <code>C</code> 의 식으로 쓰세요.</li>
+      <li><code>C</code> 가 어느 범위일 때 세 후보 중 A 가 가장 작습니까?</li>
+      <li>후보 Z 와 후보 H 가 각각 이기는 범위에서 직선이 어떤 상태인지 이 장의 말(과소적합, 과적합, 엄격, 관대)로 한 줄씩 설명하세요.</li>
+    </ol>
+  </div>
+
+  <details class="fold answer">
+    <summary>모범답안 — 그리고 흔한 실수가 왜 부족한지</summary>
+    <div class="fold-body">
+      <p><b>1.</b> 후보 A 는 <code>f = x₁ − 1</code>. <code>x⁽¹⁾</code>: <code>z = 1</code>, <code>ξ = 0</code>. <code>x⁽²⁾</code>: <code>z = 2</code>, <code>ξ = 0</code>. <code>x⁽³⁾</code>: <code>f = −1</code>, <code>y = −1</code> 이라 <code>z = 1</code>, <code>ξ = 0</code>. <code>x⁽⁴⁾</code>: <code>f = −0.5</code> 라 <code>z = −0.5</code>, <code>ξ = 1.5</code>.<br>
+      후보 H 는 <code>f = 4x₁ − 1</code>. <code>x⁽¹⁾</code>: 7, <code>x⁽²⁾</code>: 11, <code>x⁽³⁾</code>: <code>f = −1</code> 이라 <code>z = 1</code>, <code>x⁽⁴⁾</code>: <code>f = 1</code> 이라 <code>z = 1</code>. 네 점 모두 <code>z ≥ 1</code> 이라 <code>ξ = 0</code>.<br>
+      후보 Z 는 <code>f = 1</code>. <code>x⁽¹⁾, x⁽²⁾, x⁽⁴⁾</code>: <code>z = 1</code>, <code>ξ = 0</code>. <code>x⁽³⁾</code>: <code>z = −1</code>, <code>ξ = 2</code>.</p>
+      <p><b>2.</b> A: <code>½·1 + 1.5C = ½ + 1.5C</code>. H: <code>½·16 + 0 = 8</code>. Z: <code>0 + 2C = 2C</code>.</p>
+      <p><b>3.</b> A &lt; Z 는 <code>½ + 1.5C &lt; 2C</code>, 곧 <code>C &gt; 1</code>. A &lt; H 는 <code>½ + 1.5C &lt; 8</code>, 곧 <code>C &lt; 5</code>. 따라서 <b><code>1 &lt; C &lt; 5</code></b> 일 때 A 가 가장 작습니다(경계 <code>C = 1</code>, <code>C = 5</code> 에서는 동점).</p>
+      <p><b>4.</b> <code>C &lt; 1</code> 에서는 Z 가 이깁니다. 침범이 싸서 <code>w = 0</code> 으로 두고 빨간 점 하나를 틀리게 두는 직선으로, 관대함이 지나쳐 데이터를 보지 않는 과소적합입니다. <code>C &gt; 5</code> 에서는 H 가 이깁니다. 침범이 비싸서 이상치까지 <code>z = 1</code> 에 맞추려고 마진을 <code>2/‖w‖ = 0.5</code> 로 좁힌 엄격한 직선으로, 이상치 하나에 휘둘리는 과적합 쪽입니다. 둘 사이(<code>1 &lt; C &lt; 5</code>)에서는 A 가 이상치 하나를 틀리게 두는 대신 마진을 지킵니다.</p>
+      <p><b>흔한 실수 1</b> — <code>ξ⁽⁴⁾ = 1.5</code> 를 &ldquo;오차 1.5 개&rdquo;로 읽기. <code>ξ</code> 는 <code>1 − z</code> 라는 마진 규칙에서의 이탈 크기이지 틀린 개수가 아닙니다. 1 을 넘으면 틀린 것이라는 사실만 개수와 연결되고, 그래서 <code>Σξ</code> 는 틀린 개수의 상한입니다.</p>
+      <p><b>흔한 실수 2</b> — <code>C</code> 와 마진의 방향을 거꾸로 알기. <code>C</code> 가 클수록 침범이 비싸 마진이 좁아지고, 작을수록 마진이 넓어집니다(H 와 Z 로 확인).</p>
+      <p><b>흔한 실수 3</b> — 세 후보 중 A 가 이겼다고 A 가 진짜 최적이라고 단정하기. 비교한 것은 후보 셋뿐입니다. 이 문제의 실제 최적해는 세 후보 사이의 직선일 수 있습니다(화면 2 의 <code>C = 2</code> 예와 같습니다).</p>
+      <p><b>이 교재가 가는 길</b> — 5장의 소프트 마진은 이상치 몇 개를 견디게 했지만 직선이라는 틀은 그대로입니다. 6장은 직선으로 가를 수 없는 데이터(원형으로 둘러싼 점)를 다룹니다.</p>
+    </div>
+  </details>
+
+  <div class="chapter-end">
+    <a href="index.html"><span>돌아가기</span>표지와 목차</a>
+    <a href="ch06.html"><span>다음 장</span>6장 — 커널 트릭</a>
+  </div>
+</section>
+
+</div></main>
+
+<script src="assets/book.js"></script>
+</body>
+</html>
