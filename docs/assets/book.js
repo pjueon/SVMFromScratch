@@ -7,8 +7,8 @@
   'use strict';
 
   /* ── [교재별 1/5] 교재 제목 — 사이드바 머리와 표지에 쓰인다 ──── */
-  var TITLE = '교재 제목';
-  var SUBTITLE = '부제 한 줄';
+  var TITLE = 'SVM 밑바닥부터';
+  var SUBTITLE = '마진·쌍대문제·커널 트릭을 손으로 풀어 보는 서포트 벡터 머신';
 
   /* ── [교재별 2/5] 책 전체 목차 — 모든 페이지가 공유하는 단일 진실 원천 ──
         커리큘럼이 확정되면 이 배열을 그대로 옮겨 적는다.
@@ -16,10 +16,14 @@
         ready:true 인 장만 링크가 되고 "이어서 읽기" 대상이 된다 —
         집필 전 장은 ready 를 빼 두면 목차에 회색으로 남는다. */
   var BOOK = [
-    { id: 'ch00', num: '0장', title: '이 교재를 읽는 방법', part: '입문', screens: 6, hours: 0.5, ready: true },
-    { id: 'ch01', num: '1장', title: '첫 장 제목', part: '입문', screens: 12, hours: 2.0, ready: true },
-    { id: 'ch02', num: '2장', title: '둘째 장 제목', part: '본문', screens: 12, hours: 2.0 },
-    { id: 'glossary', num: '부록', title: '용어집', part: '본문', screens: 1, hours: 0 }
+    { id: 'ch01', num: '1장', title: '점들을 가르는 직선', part: '1부 · 직선과 마진', screens: 5, hours: 0.8, ready: true },
+    { id: 'ch02', num: '2장', title: '마진과 하드 마진 SVM', part: '1부 · 직선과 마진', screens: 6, hours: 1.0 },
+    { id: 'ch03', num: '3장', title: '제약 있는 최적화 기초 (라그랑주·KKT)', part: '2부 · 최적화와 쌍대', screens: 6, hours: 1.0 },
+    { id: 'ch04', num: '4장', title: '쌍대문제 유도', part: '2부 · 최적화와 쌍대', screens: 8, hours: 1.3 },
+    { id: 'ch05', num: '5장', title: '소프트 마진', part: '3부 · 현실로 넓히기', screens: 5, hours: 0.8 },
+    { id: 'ch06', num: '6장', title: '커널 트릭', part: '3부 · 현실로 넓히기', screens: 8, hours: 1.3 },
+    { id: 'ch07', num: '7장', title: '밑바닥부터 구현 (NumPy, SMO)', part: '4부 · 구현과 실전', screens: 6, hours: 1.0 },
+    { id: 'ch08', num: '8장', title: '실전: scikit-learn 과 SVM 의 자리', part: '4부 · 구현과 실전', screens: 4, hours: 0.7 }
   ];
 
   /* ── [교재별 3/5] 용어집 — 툴팁의 원천 ────────────────────────
@@ -28,15 +32,25 @@
         _smoke 항목은 _smoke.html 이 참조하므로 지우지 않는다. */
   var TERMS = {
     _smoke: '스모크 점검용 항목 — 이 줄은 지우지 않는다.',
-    sample: '샘플 용어 — 교재의 용어로 이 표를 채운다. 한 줄로 "무엇이고 무엇과 다른지"까지 쓴다.'
+    classification: '분류 — 입력(점)이 미리 정해진 범주 중 어디에 속하는지 맞히는 문제. 값(숫자)을 맞히는 회귀와는 다르다.',
+    label: '레이블 — 학습용 점마다 붙어 있는 정답표. 이 교재에서는 파랑 = +1, 빨강 = −1 로 쓴다.',
+    feature: '특성 — 점 하나를 설명하는 숫자 하나하나. 평면 위의 점이라면 가로 좌표 x₁ 과 세로 좌표 x₂ 가 두 특성이다.',
+    traindata: '학습 데이터 — 정답(레이블)을 알고 있어서 분류기를 만드는 데 쓰는 점들. 새 점은 여기에 없는 점이다.',
+    boundary: '결정경계 — 분류기가 점들을 두 범주로 나누는 경계. 선형 분류기에서는 초평면 w·x+b=0 그 자체다.',
+    hyperplane: '초평면 — w·x+b=0 을 만족하는 점들의 집합. 2차원에서는 직선, 3차원에서는 평면이고, 그 위 차원에서도 같은 식으로 쓴다.',
+    dot: '내적 — 같은 자리의 숫자끼리 곱해 더한 값. 두 벡터가 같은 방향이면 크고, 수직이면 0, 반대 방향이면 음수.',
+    norm: '노름 ||w|| — 벡터의 길이. w=(w₁,w₂) 이면 √(w₁²+w₂²).',
+    normal: '법선 벡터 — 직선(또는 평면)에 수직인 방향의 벡터.',
+    perceptron: '퍼셉트론 — 점들을 가르는 직선을 하나 찾아 주는 오래된 학습법. 가르기만 하면 멈추기 때문에 어떤 직선이 나올지는 시작값과 점 순서에 달려 있다.',
+    sign: '부호 함수 sign — 양수면 +1, 음수면 −1 을 돌려주는 함수.'
   };
 
   /* ── [교재별 4/5] 진도 저장 키 — 교재 슬러그를 접두어로 둔다 ─────
         file:// 에서는 로컬로 열린 모든 페이지가 저장소를 공유하므로,
         접두어가 겹치면 다른 교재의 진도를 덮어쓴다. 아래 세 키의 접두어를 함께 바꾼다. */
-  var STORE_KEY = 'course:progress';
-  var NAV_KEY = 'course:nav';     // '다음 장'으로 넘어왔는지 (sessionStorage)
-  var BACK_KEY = 'course:back';   // 다른 장의 참조 링크를 누른 자리 (sessionStorage)
+  var STORE_KEY = 'svm-book:progress';
+  var NAV_KEY = 'svm-book:nav';     // '다음 장'으로 넘어왔는지 (sessionStorage)
+  var BACK_KEY = 'svm-book:back';   // 다른 장의 참조 링크를 누른 자리 (sessionStorage)
 
   /* ── 진도 저장 (file:// 에서는 모든 로컬 페이지가 저장소를 공유하므로
         키에 반드시 접두어를 붙인다) ──────────────────────────────── */
