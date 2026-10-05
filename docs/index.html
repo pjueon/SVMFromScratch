@@ -6,19 +6,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>교재 제목 — 부제</title><!-- ▣ -->
+<title>SVM 밑바닥부터 — 마진·쌍대문제·커널 트릭을 손으로 풀어 보는 서포트 벡터 머신</title><!-- ▣ -->
 <link rel="stylesheet" href="assets/book.css">
 </head>
 <body>
 
 <div class="cover">
 
-  <p class="kicker">누구를 위한 교재인가 한 줄</p><!-- ▣ -->
-  <h1 class="title">교재 제목</h1><!-- ▣ -->
-  <p class="sub">무엇을 어떤 예제로 어떻게 배우는지 두 줄.<br>
-  전체 몇 장짜리인지까지 밝힌다.</p><!-- ▣ -->
+  <p class="kicker">벡터와 내적은 알지만 쌍대문제와 커널 트릭은 늘 막연했던 분을 위한 교재</p><!-- ▣ -->
+  <h1 class="title">SVM 밑바닥부터</h1><!-- ▣ -->
+  <p class="sub">평면 위의 점 세 개로 마진, 라그랑주 승수법, 쌍대문제, 커널 트릭을 끝까지 손으로 풀고,<br>
+  NumPy 로 직접 구현해 scikit-learn 과 견주어 봅니다. 전체 8장입니다.</p><!-- ▣ -->
 
-  <p><a class="resume" id="resume" href="ch00.html">처음부터 읽기</a></p>
+  <p><a class="resume" id="resume" href="ch01.html">처음부터 읽기</a></p>
 
   <hr>
 
@@ -34,7 +34,7 @@
       <li><b>접힌 상자</b>는 눌러서 펼치는 부분입니다. <b>더 깊이</b>는 처음 읽을 때 건너뛰어도
       되고, <b>모범답안</b>은 스스로 해본 다음에 열어보세요.</li>
       <li><b>퀴즈</b>는 반드시 풀어보세요. 해설에 본문에 없는 이야기가 들어 있습니다.</li>
-      <li>점선 밑줄이 그어진 <span class="term" data-term="sample">낱말</span>은
+      <li>점선 밑줄이 그어진 <span class="term" data-term="dot">내적</span>은
       마우스를 올리면 뜻이 나옵니다.</li>
       <li><b>Before / After</b> 탭이 있는 코드는 탭을 눌러 같은 자리에서 비교해 보세요.</li>
     </ul>
@@ -42,30 +42,30 @@
 
   <h2>학습 트랙 — 하나 골라서 시작하세요</h2>
 
-  <p>전체 분량은 <b>NN화면 / 약 N시간</b>입니다. 읽기만 하는 시간이 아니라
+  <p>전체 분량은 <b>8장 · 48화면 / 약 8시간</b>입니다. 읽기만 하는 시간이 아니라
   퀴즈와 과제까지 포함한 시간입니다.</p><!-- ▣ 커리큘럼 합계와 맞춘다 -->
 
   <div class="track-grid"><!-- ▣ 전체 시간으로 나눈 트랙 3~4개 -->
     <div class="track">
       <h4>여유</h4>
-      <div class="big">N주</div>
-      <p>하루 30분, 매일<br>주 3.5시간</p>
+      <div class="big">4주</div>
+      <p>한 주에 2시간<br>(하루 30분, 주 4일)</p>
     </div>
     <div class="track pick">
       <h4>표준 (추천)</h4>
-      <div class="big">N주</div>
-      <p>평일 하루 1시간<br>주 5시간</p>
+      <div class="big">2주</div>
+      <p>하루 1시간, 주 4일<br>주 4시간</p>
     </div>
     <div class="track">
       <h4>단기 몰입</h4>
-      <div class="big">N주</div>
-      <p>하루 2~3시간<br>주 12시간</p>
+      <div class="big">4일</div>
+      <p>하루 2시간<br>나흘 연속</p>
     </div>
   </div>
 
   <div class="box warn">
     <p class="box-t">어떤 트랙이든</p>
-    <p>이 교재의 허리가 되는 장을 지목하고, 그 장에서는 속도를 늦추라고 알린다.</p><!-- ▣ -->
+    <p>교재의 허리는 <b>2장(마진), 4장(쌍대문제 유도), 6장(커널 트릭)</b>입니다. 이 세 장에서는 식을 한 줄씩 손으로 따라 쓰며 천천히 가세요. 나머지 장은 그 세 장을 받쳐 주는 준비와 마무리입니다.</p><!-- ▣ -->
   </div>
 
   <h2>목차</h2>
@@ -74,7 +74,13 @@
   <div class="box" style="margin-top:2rem">
     <p class="box-t">이 교재를 다 읽으면</p>
     <ol>
-      <li>기획서의 학습 목표를 독자 시점의 "할 수 있다"로 옮겨 적는다.</li><!-- ▣ -->
+      <li>데이터를 가르는 직선(초평면)과 마진을 식으로 쓰고, 마진 최대화가 왜 <code>||w||</code> 최소화가 되는지 설명할 수 있습니다.</li>
+      <li>라그랑주 승수법과 KKT 조건으로 제약 있는 최적화 문제를 손으로 풀 수 있습니다.</li>
+      <li>SVM 원문제에서 쌍대문제를 직접 유도하고, 서포트 벡터가 왜 소수의 점인지 설명할 수 있습니다.</li>
+      <li>소프트 마진의 <code>C</code> 가 무엇을 조절하는지, 힌지 손실과 어떻게 이어지는지 말할 수 있습니다.</li>
+      <li>커널 트릭이 왜 고차원으로 보내지 않고도 고차원 내적을 계산하게 해 주는지 설명하고, RBF 의 <code>γ</code> 를 조절할 수 있습니다.</li>
+      <li>NumPy 만으로 간이 SMO 기반 SVM 을 구현하고 scikit-learn 결과와 비교할 수 있습니다.</li>
+      <li>SVM 을 쓰지 말아야 할 때(대용량, 확률 출력이 필요할 때, 특성 스케일을 방치할 때)를 판단할 수 있습니다.</li><!-- ▣ -->
     </ol>
   </div>
 
