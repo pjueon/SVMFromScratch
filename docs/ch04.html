@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ko" data-chapter="ch04">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4장 · 쌍대문제 유도 — SVM 밑바닥부터</title>
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+
+<main id="book"><div class="inner">
+
+<!-- ─────────────────────────────────────────── 화면 1 -->
+<section class="screen" data-title="전체 흐름 먼저">
+  <p class="kicker">4장 · 화면 1</p>
+  <h1>쌍대문제 유도</h1>
+
+  <p class="lead">2장은 문제를 하나 세웠고(<code>½‖w‖²</code> 를 줄이되 점마다 제약 하나), 3장은 그런 문제를 푸는 도구(라그랑지안과 KKT 조건)를 만들었습니다.
+  이 장은 그 도구를 SVM 에 직접 대 보는 장입니다. 계산을 따라가면 변수가 <code>w, b</code> 에서 <b>점마다 하나씩의 <code>α</code></b> 로 바뀐 새 문제, 곧
+  <span class="term" data-term="dual">쌍대문제</span>가 나옵니다. 이 문제 하나에서 두 가지 질문이 풀립니다. 답을 정하는 점은 왜 몇 개뿐일까, 그리고 6장에서 왜 새로운 일이 가능해질까.</p>
+
+  <p>유도는 줄이 많습니다. 그래서 <b>세부보다 지도를 먼저</b> 보겠습니다. 이 화면에서는 어디로 가는지만 보고, 각 걸음은 화면 2~5 에서 한 줄씩 걷습니다.</p>
+
+  <h2>전체 흐름 — 다섯 걸음</h2>
+
+  <figure class="fig">
+    <svg viewBox="0 0 640 196" role="img" aria-label="원문제에서 라그랑지안을 세우고, 편미분으로 w와 b의 식을 얻고, 대입해서 w와 b를 지워 쌍대문제에 이르는 다섯 단계 블록도. 쌍대문제를 풀면 w와 b를 되찾는다">
+      <g class="svg-line" fill="none" stroke-width="1.4">
+        <rect x="0" y="14" width="112" height="76" rx="6"/>
+        <rect x="132" y="14" width="112" height="76" rx="6"/>
+        <rect x="264" y="14" width="112" height="76" rx="6"/>
+        <rect x="396" y="14" width="112" height="76" rx="6"/>
+        <rect x="528" y="14" width="112" height="76" rx="6" stroke-width="2.6"/>
+        <path d="M112 52 H130 M124 47 L130 52 L124 57"/>
+        <path d="M244 52 H262 M256 47 L262 52 L256 57"/>
+        <path d="M376 52 H394 M388 47 L394 52 L388 57"/>
+        <path d="M508 52 H526 M520 47 L526 52 L520 57"/>
+        <path d="M584 90 V150 H56 V94 M51 100 L56 94 L61 100" stroke-dasharray="5 4"/>
+      </g>
+      <g text-anchor="middle" font-size="12" font-weight="700" class="svg-fg">
+        <text x="56" y="36">① 원문제</text>
+        <text x="188" y="36">② 라그랑지안</text>
+        <text x="320" y="36">③ 편미분 = 0</text>
+        <text x="452" y="36">④ 대입해 소거</text>
+        <text x="584" y="36">⑤ 쌍대문제</text>
+      </g>
+      <g text-anchor="middle" font-size="10" class="svg-fg">
+        <text x="56" y="56">min ½‖w‖²</text>
+        <text x="188" y="56">L(w, b, α)</text>
+        <text x="320" y="56">w = Σ α y x</text>
+        <text x="452" y="56">L 에 두 식을 넣는다</text>
+        <text x="584" y="56">α 만 남은 문제</text>
+      </g>
+      <g text-anchor="middle" font-size="10" class="svg-muted">
+        <text x="56" y="72">제약 y(w·x+b) ≥ 1</text>
+        <text x="188" y="72">제약마다 α 하나</text>
+        <text x="320" y="72">Σ α y = 0</text>
+        <text x="452" y="72">w, b 가 사라진다</text>
+        <text x="584" y="72">max 문제</text>
+        <text x="56" y="108">2장 · 3장</text>
+        <text x="188" y="108">화면 2</text>
+        <text x="320" y="108">화면 3</text>
+        <text x="452" y="108">화면 4</text>
+        <text x="584" y="108">화면 5</text>
+        <text x="320" y="170" class="svg-fg" font-size="11">⑤ 를 풀어 α 를 얻은 뒤 w, b 를 되찾는다 (화면 7)</text>
+      </g>
+    </svg>
+    <figcaption>점선은 되돌아오는 길입니다. 쌍대문제의 답 <code>α</code> 에서 처음에 구하려던 <code>w, b</code> 를 다시 계산합니다. 그림의 <code>Σ</code> 는 &ldquo;점마다 하나씩 더한다&rdquo;는 기호이고, 화면 2 에서 정확히 읽습니다.</figcaption>
+  </figure>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>걸음</th><th>하는 일</th><th>이 걸음이 끝났을 때 손에 쥐는 것</th></tr>
+      <tr><td>① <span class="term" data-term="primal">원문제</span></td><td>2장의 문제. 변수는 <code>w, b</code></td><td><code>min ½‖w‖²</code>, 제약 <code>y⁽ⁱ⁾(w·x⁽ⁱ⁾+b) ≥ 1</code> (점마다)</td></tr>
+      <tr><td>② 라그랑지안</td><td>3장 화면 3 의 방식으로 제약 하나하나에 승수 <code>α</code> 를 달아 한 함수로 묶는다</td><td>함수 <code>L(w, b, α)</code></td></tr>
+      <tr><td>③ 편미분</td><td><code>L</code> 을 <code>w</code> 와 <code>b</code> 로 편미분해 0 으로 놓는다 (3장의 정상성)</td><td><code>w</code> 를 <code>α</code> 로 쓴 식, 그리고 <code>α</code> 들 사이의 식 하나</td></tr>
+      <tr><td>④ 대입</td><td>③ 의 두 식을 <code>L</code> 에 넣어 <code>w</code> 와 <code>b</code> 를 지운다</td><td><code>α</code> 만 들어 있는 식</td></tr>
+      <tr><td>⑤ 쌍대문제</td><td>④ 의 식에 <code>α ≥ 0</code> 등 조건을 붙여 문제로 완성한다</td><td><code>α</code> 를 변수로 하는 새 문제. 푼 뒤에 <code>w, b</code> 를 되찾는다</td></tr>
+    </table>
+  </div>
+
+  <p>손으로 쥐고 갈 예제는 2장부터 써 온 세 점 <code>x⁽¹⁾ = (3, 3)</code>(+1), <code>x⁽²⁾ = (4, 3)</code>(+1), <code>x⁽³⁾ = (1, 1)</code>(−1) 입니다.
+  이 장의 끝(화면 7)에서 이 세 점으로 ⑤ 를 직접 풀어, 2장에서 검증만 했던 <code>w = (½, ½)</code>, <code>b = −2</code> 를 <b>처음부터 계산해서</b> 얻습니다.</p>
+
+  <div class="box note">
+    <p class="box-t">이 장의 진행</p>
+    <ol>
+      <li>지도를 먼저 본다 (이 화면).</li>
+      <li>SVM 의 라그랑지안을 세우고 기호를 하나씩 읽는다 (화면 2).</li>
+      <li><code>w</code> 와 <code>b</code> 로 편미분해 0 으로 놓는다 (화면 3).</li>
+      <li>그 결과를 대입해 <code>w</code> 와 <code>b</code> 를 지운다 — 유도의 핵심 (화면 4).</li>
+      <li>쌍대문제를 완성하고 &lsquo;쌍대&rsquo;라는 이름의 뜻을 확인한다 (화면 5).</li>
+      <li>승수가 0 이 아닌 점에 이름을 붙이고 위젯으로 확인한다 (화면 6).</li>
+      <li>세 점 예제에서 쌍대문제를 손으로 푼다 (화면 7).</li>
+    </ol>
+  </div>
+
+  <div class="box good">
+    <p class="box-t">이 장에서 갚는 빚</p>
+    <ul>
+      <li>SVM 의 라그랑지안을 직접 세운다 → 화면 2 (3장 화면 5)</li>
+      <li><code>w·x = w₁x₁ + w₂x₂</code> 의 편미분을 <code>w</code> 로 미분하는 데 쓴다 → 화면 3 (3장 화면 1)</li>
+      <li>&lsquo;쌍대 가능성&rsquo;의 &lsquo;쌍대&rsquo;가 왜 그 이름인가 → 화면 5 (3장 화면 5)</li>
+      <li>승수가 0 이 아닌 점에 이름을 붙이고, 승수가 0 이어야 하는 점 <code>x⁽²⁾</code> 를 확인한다 → 화면 6 (3장 화면 5, 1장 화면 4)</li>
+    </ul>
+  </div>
+
+  <div class="box note">
+    <p class="box-t">기호 하나 — <code>λ</code> 가 <code>α</code> 로</p>
+    <p>3장에서 승수를 <code>λ</code> 라 썼습니다. SVM 에서는 관례대로 <b><code>α</code></b>(알파)라고 부릅니다. 이름만 바꾼 것이고 뜻은 같습니다. 제약 하나당 하나씩 있는 수이며
+    <code>α ≥ 0</code> 입니다. 점 <code>i</code> 의 승수는 <code>α⁽ⁱ⁾</code> 처럼 위첨자 괄호로 씁니다(점 번호는 위, 좌표 번호는 아래라는 1장의 규약 그대로입니다).</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 2 -->
+<section class="screen" data-title="SVM 의 라그랑지안">
+  <p class="kicker">4장 · 화면 2</p>
+  <h2>SVM 의 라그랑지안 세우기</h2>
+
+  <p>지도의 ② 입니다. 3장 화면 3 에서 정한 규약은 이랬습니다. <b>최소화할 식 <code>J</code>, 제약은 <code>g ≥ 0</code> 꼴, 라그랑지안은 <code>L = J − λ·g</code>, 그리고 <code>λ ≥ 0</code>.</b>
+  SVM 의 각 부분을 이 규약에 하나씩 맞춰 봅시다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>3장의 말</th><th>SVM 에서는</th><th>덧붙임</th></tr>
+      <tr><td>변수 <code>w₁, w₂</code></td><td>변수 <code>w</code> (= <code>(w₁, w₂)</code>)와 <code>b</code></td><td>3장의 장난감 문제에는 <code>b</code> 가 없었지만 SVM 에서는 직선의 위치를 정하는 <code>b</code> 도 변수입니다</td></tr>
+      <tr><td>최소화할 식 <code>J</code></td><td><code>½‖w‖²</code></td><td>2장 화면 4. <code>‖w‖² = w₁² + w₂²</code> 이므로 <code>½(w₁² + w₂²)</code></td></tr>
+      <tr><td>제약 <code>g ≥ 0</code></td><td><code>g⁽ⁱ⁾ = y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1 ≥ 0</code></td><td>2장의 <code>y(w·x+b) ≥ 1</code> 에서 1 을 왼쪽으로 넘긴 것. <b>점마다 하나</b>, 점이 <code>n</code> 개면 <code>n</code> 개</td></tr>
+      <tr><td>승수 <code>λ</code></td><td><code>α⁽ⁱ⁾</code></td><td>제약이 점마다 하나이므로 승수도 점마다 하나</td></tr>
+    </table>
+  </div>
+
+  <h3>먼저 Σ 읽는 법</h3>
+
+  <p>제약이 <code>n</code> 개이면 <code>L</code> 에서 뺄 덩어리도 <code>n</code> 개입니다. 이것을 한 줄로 쓰려고 <b>Σ(시그마)</b>를 씁니다. 이 교재에서 처음 쓰는 기호이니 뜻을 정확히 해 둡시다.</p>
+
+  <div class="box good">
+    <p class="box-t">정의 — Σ (더하기 기호)</p>
+    <p style="text-align:center;font-size:1.1rem"><code>Σ<sub>i=1</sub><sup>n</sup> a⁽ⁱ⁾ = a⁽¹⁾ + a⁽²⁾ + … + a⁽ⁿ⁾</code></p>
+    <p><span class="term" data-term="sigma">Σ</span> 아래의 <code>i=1</code> 은 &ldquo;<code>i</code> 를 1 에서 시작해&rdquo;, 위의 <code>n</code> 은 &ldquo;<code>n</code> 까지 1 씩 올리며&rdquo;, 오른쪽의 식은 &ldquo;매번 이 식에 <code>i</code> 를 넣어 만든 항을 전부 더하라&rdquo;는 뜻입니다.
+    범위가 분명할 때는 <code>Σ<sub>i</sub></code> 로 줄여 씁니다.</p>
+  </div>
+
+  <p>우리 예제는 <code>n = 3</code> 이고 <code>y⁽¹⁾ = +1, y⁽²⁾ = +1, y⁽³⁾ = −1</code> 입니다. 직접 펼쳐 봅시다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Σ 로 쓴 것</th><th><code>n = 3</code> 으로 펼친 것</th><th>예제 숫자를 넣으면</th></tr>
+      <tr><td><code>Σ<sub>i</sub> α⁽ⁱ⁾</code></td><td><code>α⁽¹⁾ + α⁽²⁾ + α⁽³⁾</code></td><td>그대로 (아직 값을 모릅니다)</td></tr>
+      <tr><td><code>Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾</code></td><td><code>α⁽¹⁾y⁽¹⁾ + α⁽²⁾y⁽²⁾ + α⁽³⁾y⁽³⁾</code></td><td><code>α⁽¹⁾ + α⁽²⁾ − α⁽³⁾</code></td></tr>
+      <tr><td><code>Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾</code></td><td><code>α⁽¹⁾y⁽¹⁾x⁽¹⁾ + α⁽²⁾y⁽²⁾x⁽²⁾ + α⁽³⁾y⁽³⁾x⁽³⁾</code></td><td><code>α⁽¹⁾(3, 3) + α⁽²⁾(4, 3) − α⁽³⁾(1, 1)</code> (벡터의 합)</td></tr>
+    </table>
+  </div>
+
+  <h3>라그랑지안</h3>
+
+  <div class="box good">
+    <p class="box-t">정의 — SVM 의 라그랑지안</p>
+    <p style="text-align:center;font-size:1.05rem"><code>L(w, b, α) = ½‖w‖² − Σ<sub>i=1</sub><sup>n</sup> α⁽ⁱ⁾ [ y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1 ]</code> &nbsp;, &nbsp; <code>α⁽ⁱ⁾ ≥ 0</code></p>
+    <ul>
+      <li><code>½‖w‖²</code> — 3장의 <code>J</code>. 줄이고 싶은 값.</li>
+      <li><code>α⁽ⁱ⁾</code> — <code>i</code> 번째 점의 제약에 곱하는 승수. 아직 값을 모르는 미지수이며 <code>w, b</code> 와 똑같이 <code>L</code> 의 변수입니다.</li>
+      <li><code>y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1</code> — 대괄호 안 전체가 <code>g⁽ⁱ⁾</code>. 점 <code>i</code> 가 띠 바깥에 얼마나 여유 있게 있는지(2장의 함수 마진에서 1 을 뺀 값)이고, 제약은 이것이 0 이상이라는 것입니다.</li>
+      <li><code>Σ</code> — 모든 점 <code>i = 1, …, n</code> 에 대해 <code>α⁽ⁱ⁾g⁽ⁱ⁾</code> 를 더합니다. 3장의 <code>L = J − λ₁g₁ − … − λₘgₘ</code> 를 Σ 로 쓴 것일 뿐입니다.</li>
+      <li><code>α⁽ⁱ⁾ ≥ 0</code> — 3장의 쌍대 가능성. 부등식 제약의 승수는 음수가 될 수 없습니다.</li>
+    </ul>
+  </div>
+
+  <p>3점 예제에 쓰면 <code>L</code> 은 미지수 여섯 개(<code>w₁, w₂, b</code> 와 <code>α⁽¹⁾, α⁽²⁾, α⁽³⁾</code>)의 함수입니다. 각 점의 대괄호는 2장 화면 5 에서 쓴 제약 세 개 그대로입니다
+  (<code>x⁽³⁾</code> 는 <code>y = −1</code> 이라 <code>−(w₁ + w₂ + b) − 1</code>).</p>
+
+  <p style="text-align:center"><code>L = ½(w₁² + w₂²) − α⁽¹⁾(3w₁ + 3w₂ + b − 1) − α⁽²⁾(4w₁ + 3w₂ + b − 1) − α⁽³⁾(−w₁ − w₂ − b − 1)</code></p>
+
+  <div class="box note">
+    <p class="box-t">숫자로 감 잡기 — 2장의 답에서 대괄호 값</p>
+    <p>2장의 답 <code>(w, b) = ((½, ½), −2)</code> 에서 세 대괄호의 값은 <code>3·½ + 3·½ − 2 − 1 = 0</code>, <code>4·½ + 3·½ − 2 − 1 = ½</code>, <code>−½ − ½ + 2 − 1 = 0</code> 입니다
+    (2장 화면 5 의 함수 마진 1, 1.5, 1 에서 1 을 뺀 값). <b>제약이 딱 맞는 점은 대괄호가 0 이고, 여유 있는 점은 양수</b>입니다. 이 차이가 화면 6 에서 중요해집니다.</p>
+  </div>
+
+  <p>이 <code>L</code> 을 어떻게 쓰는지는 3장에서 배웠습니다. <b>변수로 편미분해서 0 으로 놓는다.</b> 다음 화면에서 <code>w</code> 와 <code>b</code> 로 그렇게 합니다. 그 전에 한 가지만 짚어 둡니다.
+  지금 <code>α</code> 는 값이 정해지지 않은 채입니다. 그래서 편미분 결과는 숫자가 아니라 <b><code>α</code> 를 포함한 식</b>으로 나옵니다.</p>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 3 -->
+<section class="screen" data-title="w, b 로 편미분하기">
+  <p class="kicker">4장 · 화면 3</p>
+  <h2><code>w</code> 와 <code>b</code> 로 편미분해 0 으로</h2>
+
+  <p>지도의 ③ 입니다. 3장의 정상성(<code>∇<sub>w</sub>L = 0</code>)을 실제로 해 봅니다. 먼저 <code>L</code> 을 편미분하기 좋게 괄호를 풀어 정리하고, 그 다음 미분합니다.</p>
+
+  <h3>1단계 — 괄호 풀어 정리하기</h3>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th style="width:3rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
+      <tr><td>a</td><td><code>α⁽ⁱ⁾[ y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1 ] = α⁽ⁱ⁾y⁽ⁱ⁾(w·x⁽ⁱ⁾) + α⁽ⁱ⁾y⁽ⁱ⁾b − α⁽ⁱ⁾</code></td><td>분배법칙입니다. 대괄호 안의 세 덩어리(<code>y·w·x</code>, <code>y·b</code>, <code>−1</code>)에 <code>α⁽ⁱ⁾</code> 를 각각 곱했습니다.</td></tr>
+      <tr><td>b</td><td><code>Σ<sub>i</sub> [ A⁽ⁱ⁾ + B⁽ⁱ⁾ + C⁽ⁱ⁾ ] = Σ<sub>i</sub> A⁽ⁱ⁾ + Σ<sub>i</sub> B⁽ⁱ⁾ + Σ<sub>i</sub> C⁽ⁱ⁾</code></td><td>Σ 는 항을 전부 더하라는 뜻이라 더하는 순서를 바꿔도 됩니다. 점이 3개면 <code>(A⁽¹⁾+B⁽¹⁾+C⁽¹⁾) + (A⁽²⁾+B⁽²⁾+C⁽²⁾) + (A⁽³⁾+B⁽³⁾+C⁽³⁾)</code> 을 같은 종류끼리 묶은 것입니다.</td></tr>
+      <tr><td>c</td><td><code>Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾b = b · Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾</code></td><td><code>b</code> 는 점 번호 <code>i</code> 와 상관없는 한 개의 수라서 Σ 밖으로 꺼냅니다 (<code>α¹y¹b + α²y²b + α³y³b = b(α¹y¹ + α²y² + α³y³)</code>).</td></tr>
+      <tr><td>d</td><td><code>Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾(w·x⁽ⁱ⁾) = w · ( Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾ )</code></td><td><code>w</code> 도 <code>i</code> 와 상관없습니다. 내적의 분배법칙 <code>w·u + w·v = w·(u + v)</code> 를 점 3개에 적용한 것입니다.</td></tr>
+    </table>
+  </div>
+
+  <p>세 덩어리를 모으면 <code>L</code> 은 이렇게 정리됩니다. 이 식에 <b>(★)</b> 표시를 해 두고 화면 4 에서 다시 씁니다.</p>
+
+  <p style="text-align:center"><code>(★) &nbsp; L = ½‖w‖² − w · ( Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾ ) − b · Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾ + Σ<sub>i</sub> α⁽ⁱ⁾</code></p>
+
+  <h3>2단계 — <code>w</code> 로 편미분</h3>
+
+  <p><code>w = (w₁, w₂)</code> 이므로 편미분이 둘입니다. (★) 에서 <code>w₁</code> 이 들어 있는 항은 둘뿐입니다. <code>½‖w‖² = ½(w₁² + w₂²)</code> 와
+  <code>w·(Σαyx) = w₁·(Σαyx 의 첫째 성분) + w₂·(둘째 성분)</code> 입니다. 점 <code>i</code> 의 첫째·둘째 좌표를 <code>x₁⁽ⁱ⁾, x₂⁽ⁱ⁾</code> 로 쓰면 첫째 성분은 <code>Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x₁⁽ⁱ⁾</code> 입니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>편미분 = 0</th><th>계산</th><th>왜 이렇게 되는지</th></tr>
+      <tr><td><code>∂L/∂w₁ = 0</code></td><td><code>w₁ − Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x₁⁽ⁱ⁾ = 0</code></td><td><code>½w₁²</code> 은 <code>w₁</code>. <code>w₁</code> 에 곱해진 계수가 그대로 남는다는 3장 화면 1 의 요령 3 입니다(<code>5w₁ + 2w₂</code> 를 <code>w₁</code> 로 미분하면 5). 나머지 항은 <code>w₁</code> 이 없어 0 입니다.</td></tr>
+      <tr><td><code>∂L/∂w₂ = 0</code></td><td><code>w₂ − Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x₂⁽ⁱ⁾ = 0</code></td><td>같은 방식입니다. <code>w₂</code> 에 곱해진 계수가 남습니다.</td></tr>
+    </table>
+  </div>
+
+  <p>두 식을 한 줄로 묶습니다(첫째 성분끼리, 둘째 성분끼리 같다는 것이 벡터로 같다는 뜻입니다).</p>
+
+  <div class="box good">
+    <p class="box-t">결과 ① — <code>w</code> 를 <code>α</code> 로 쓴 식</p>
+    <p style="text-align:center;font-size:1.2rem"><code>w = Σ<sub>i=1</sub><sup>n</sup> α⁽ⁱ⁾ y⁽ⁱ⁾ x⁽ⁱ⁾</code></p>
+    <p>예제에서 펼치면 <code>w = α⁽¹⁾(3, 3) + α⁽²⁾(4, 3) − α⁽³⁾(1, 1)</code>, 곧
+    <code>w₁ = 3α⁽¹⁾ + 4α⁽²⁾ − α⁽³⁾</code>, <code>w₂ = 3α⁽¹⁾ + 3α⁽²⁾ − α⁽³⁾</code> 입니다.
+    <b>직선의 방향 <code>w</code> 는 점들을 <code>α</code> 의 비중으로 섞은 것</b>이고, <code>y</code> 가 −1 인 점은 음의 부호로 들어갑니다.</p>
+  </div>
+
+  <p>이 식에서 <code>x⁽ⁱ⁾</code> 앞의 <code>α⁽ⁱ⁾</code> 가 0 이면 그 점은 <code>w</code> 를 만드는 데 한 몫도 하지 못합니다. 이 관찰을 화면 6 에서 다시 꺼냅니다.</p>
+
+  <h3>3단계 — <code>b</code> 로 편미분</h3>
+
+  <p>(★) 에서 <code>b</code> 가 들어 있는 항은 <code>−b·Σ α⁽ⁱ⁾y⁽ⁱ⁾</code> 하나뿐입니다. 이 항은 <code>b</code> 에 대한 일차식이라 기울기는 <code>b</code> 앞의 계수 <code>−Σ α⁽ⁱ⁾y⁽ⁱ⁾</code> 입니다.</p>
+
+  <div class="box good">
+    <p class="box-t">결과 ② — <code>α</code> 들 사이의 식</p>
+    <p style="text-align:center;font-size:1.2rem"><code>∂L/∂b = −Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾ = 0 &nbsp;&nbsp;⟹&nbsp;&nbsp; Σ<sub>i=1</sub><sup>n</sup> α⁽ⁱ⁾ y⁽ⁱ⁾ = 0</code></p>
+    <p>예제에서는 <code>α⁽¹⁾ + α⁽²⁾ − α⁽³⁾ = 0</code>, 곧 <b>+1 인 점들의 <code>α</code> 합과 −1 인 점들의 <code>α</code> 합이 같다</b>는 식입니다.</p>
+  </div>
+
+  <div class="box warn">
+    <p class="box-t">그런데 <code>b</code> 는 어디 갔나 — 그리고 왜 &ldquo;= 0&rdquo;이 조건이 되나</p>
+    <p>결과 ② 에는 <code>b</code> 가 없습니다. <code>b</code> 의 값을 알려 주는 식이 아니라 <code>α</code> 들이 지켜야 할 식이 나온 것입니다. <code>b</code> 는 화면 7 에서 따로 구합니다.
+    이유는 이렇습니다. <code>L</code> 은 <code>b</code> 에 대해 일차식(직선)이라서, <code>Σαy ≠ 0</code> 이면 <code>b</code> 를 한없이 키우거나 줄여서 <code>L</code> 을 한없이 작게 만들 수 있고 <b>바닥이 없습니다</b>.
+    기울기가 0 인 곳이 있으려면 <code>Σαy = 0</code> 이어야 합니다. 다시 말해 이 식은 &ldquo;<code>b</code> 를 풀어 주는 식&rdquo;이 아니라 &ldquo;<code>L</code> 에 바닥이 있으려면 <code>α</code> 가 지켜야 하는 조건&rdquo;이고, 쌍대문제의 제약 하나로 남습니다.</p>
+  </div>
+
+  <div class="box note">
+    <p class="box-t">왜 &ldquo;기울기 0&rdquo;이 곧 &ldquo;바닥&rdquo;인가</p>
+    <p><code>α</code> 를 하나 정해 놓고 <code>w</code> 만 움직이면 <code>L</code> 은 <code>½‖w‖²</code> 에 <code>w</code> 의 일차식을 더한 것이라 <b>그릇 모양</b>입니다(3장 화면 1 의 한계 상자: 그릇 모양이면 기울기 0 이 바닥).
+    그러므로 결과 ① 은 &ldquo;<code>α</code> 가 이 값일 때 <code>L</code> 을 가장 작게 만드는 <code>w</code>&rdquo;입니다. 다음 화면에서 이 <code>w</code> 를 <code>L</code> 에 넣는 일은 곧 <b><code>L</code> 의 최솟값을 구하는 일</b>이 됩니다.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 4 -->
+<section class="screen" data-title="대입해서 w, b 지우기">
+  <p class="kicker">4장 · 화면 4</p>
+  <h2>대입해서 <code>w</code> 와 <code>b</code> 지우기 — 유도의 핵심</h2>
+
+  <p>지도의 ④ 입니다. 화면 3 의 (★) 에 결과 ① <code>w = Σαyx</code> 와 결과 ② <code>Σαy = 0</code> 을 넣습니다. 한 줄씩 가겠습니다. 먼저 이 화면에서 처음 만나는 이중합을 준비합니다.</p>
+
+  <h3>준비 — 이중합 <code>ΣΣ</code> 읽는 법</h3>
+
+  <p>마지막 줄에서 <code>w·w</code> 를 <code>α</code> 로 풀어 쓰면 Σ 가 두 겹이 됩니다. 먼저 <code>w = Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾</code> 를 점 3개로 펼쳐 이름을 붙입니다.
+  <code>u⁽ⁱ⁾ = α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾</code> 라 두면 <code>w = u⁽¹⁾ + u⁽²⁾ + u⁽³⁾</code> 이고,</p>
+
+  <p style="text-align:center"><code>w·w = (u⁽¹⁾ + u⁽²⁾ + u⁽³⁾) · (u⁽¹⁾ + u⁽²⁾ + u⁽³⁾)</code></p>
+
+  <p>입니다. 앞 괄호의 항 하나하나가 뒤 괄호의 항 하나하나와 내적되므로(분배법칙) <b>3 × 3 = 9 개의 항</b>이 생깁니다. 항 하나는 <code>u⁽ⁱ⁾·u⁽ʲ⁾</code> 꼴이고,
+  숫자 <code>α, y</code> 는 내적 밖으로 나오므로 <code>u⁽ⁱ⁾·u⁽ʲ⁾ = α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾(x⁽ⁱ⁾·x⁽ʲ⁾)</code> 입니다. 9 개를 격자로 놓으면 이렇습니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th></th><th><code>j = 1</code></th><th><code>j = 2</code></th><th><code>j = 3</code></th></tr>
+      <tr><th><code>i = 1</code></th><td><code>α¹α¹y¹y¹(x¹·x¹)</code></td><td><code>α¹α²y¹y²(x¹·x²)</code></td><td><code>α¹α³y¹y³(x¹·x³)</code></td></tr>
+      <tr><th><code>i = 2</code></th><td><code>α²α¹y²y¹(x²·x¹)</code></td><td><code>α²α²y²y²(x²·x²)</code></td><td><code>α²α³y²y³(x²·x³)</code></td></tr>
+      <tr><th><code>i = 3</code></th><td><code>α³α¹y³y¹(x³·x¹)</code></td><td><code>α³α²y³y²(x³·x²)</code></td><td><code>α³α³y³y³(x³·x³)</code></td></tr>
+    </table>
+  </div>
+
+  <p>(표에서는 칸을 줄이려고 <code>α¹</code> 을 <code>α⁽¹⁾</code> 의 약식으로 썼습니다.) 이 아홉 개를 <b>모두 더한 것</b>을 이렇게 씁니다.</p>
+
+  <p style="text-align:center"><code>Σ<sub>i=1</sub><sup>n</sup> Σ<sub>j=1</sub><sup>n</sup> α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾(x⁽ⁱ⁾·x⁽ʲ⁾)</code> &nbsp;=&nbsp; 격자 9 칸의 합</p>
+
+  <div class="box note">
+    <p class="box-t">읽는 법과 주의 두 가지</p>
+    <ul>
+      <li><span class="term" data-term="doublesum">이중합</span>은 안쪽부터 읽습니다. 바깥 <code>i</code> 를 하나 고정하고(격자의 한 행), 안쪽 <code>j</code> 를 1 에서 <code>n</code> 까지 돌려 그 행을 더하고, 이어서 <code>i</code> 를 바꿔 가며 행들을 더합니다.</li>
+      <li>두 번째 Σ 의 번호를 <code>j</code> 로 따로 쓰는 이유가 있습니다. 두 괄호는 <b>서로 독립적으로</b> 점을 고르기 때문입니다. 둘 다 <code>i</code> 로 쓰면 <code>(i, i)</code> 대각선 세 칸만 남아 항이 9 개가 아니라 3 개가 됩니다.</li>
+      <li>격자에서 <code>(i, j)</code> 칸과 <code>(j, i)</code> 칸은 값이 같습니다(내적은 순서를 바꿔도 같습니다). 그래서 대각선이 아닌 칸은 두 번씩 나옵니다. 화면 7 에서 이 사실을 씁니다.</li>
+    </ul>
+  </div>
+
+  <h3>한 줄씩 대입</h3>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th style="width:2.2rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
+      <tr><td>0</td><td><code>L = ½ w·w − w·( Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾ ) − b·Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾ + Σ<sub>i</sub> α⁽ⁱ⁾</code></td><td>화면 3 의 (★) 입니다. <code>‖w‖² = w·w</code> 로 썼습니다(1장).</td></tr>
+      <tr><td>1</td><td><code>− w·( Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾ ) = − w·w</code></td><td>괄호 안이 결과 ① 에 의해 바로 <code>w</code> 이기 때문입니다.</td></tr>
+      <tr><td>2</td><td><code>− b·Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾ = − b · 0 = 0</code></td><td>결과 ② 에 의해 Σ 가 0 이기 때문입니다. <b><code>b</code> 가 사라지는 곳</b>이 여기입니다.</td></tr>
+      <tr><td>3</td><td><code>L = ½ w·w − w·w + 0 + Σ<sub>i</sub> α⁽ⁱ⁾ = −½ w·w + Σ<sub>i</sub> α⁽ⁱ⁾</code></td><td>0 줄에 1·2 줄을 넣었습니다. <code>½ − 1 = −½</code> 입니다. 이제 <code>w</code> 만 남았습니다.</td></tr>
+      <tr><td>4</td><td><code>w·w = ( Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾ ) · ( Σ<sub>j</sub> α⁽ʲ⁾y⁽ʲ⁾x⁽ʲ⁾ ) = Σ<sub>i</sub>Σ<sub>j</sub> α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾(x⁽ⁱ⁾·x⁽ʲ⁾)</code></td><td>결과 ① 을 <code>w·w</code> 의 두 <code>w</code> 에 각각 넣고(번호는 <code>i</code>, <code>j</code>) 위 격자처럼 9 칸으로 펼쳤습니다. <b><code>w</code> 가 사라지는 곳</b>입니다.</td></tr>
+      <tr><td>5</td><td><code>L = Σ<sub>i</sub> α⁽ⁱ⁾ − ½ Σ<sub>i</sub>Σ<sub>j</sub> α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾(x⁽ⁱ⁾·x⁽ʲ⁾)</code></td><td>3 줄의 <code>w·w</code> 에 4 줄을 넣었습니다. 남은 문자는 <code>α, y, x</code> 뿐이고 <code>w, b</code> 는 없습니다.</td></tr>
+    </table>
+  </div>
+
+  <div class="box good">
+    <p class="box-t">이 줄의 정체</p>
+    <p>5 줄의 식은 &ldquo;<code>α</code> 가 정해졌을 때(그리고 <code>Σαy = 0</code> 일 때) <code>L</code> 을 <code>w, b</code> 에 대해 가장 작게 만든 값&rdquo;입니다. 화면 3 에서 <code>w</code> 는 그릇의 바닥에 놓았고,
+    <code>b</code> 는 <code>Σαy = 0</code> 아래서 <code>L</code> 에 영향을 주지 않기 때문입니다. 이 값을 <code>D(α)</code> 라 부르겠습니다. 다음 화면에서 문제로 완성합니다.</p>
+  </div>
+
+  <h3>예제 숫자로 검산</h3>
+
+  <p>식이 맞는지 숫자로 확인합니다. <code>α = (¼, 0, ¼)</code> 를 써 보겠습니다. 이 값이 정답이라는 것은 <b>화면 7 에서 처음부터 구하는 것</b>이고, 지금은 <code>Σαy = ¼ + 0 − ¼ = 0</code> 을 만족하는 한 후보로서 줄마다 값이 맞는지 보려는 용도입니다.
+  이때 결과 ① 에 따라 <code>w = ¼(3, 3) − ¼(1, 1) = (½, ½)</code> 입니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>항</th><th>계산</th><th>값</th></tr>
+      <tr><td>0 줄 첫 항 <code>½‖w‖²</code></td><td><code>½(¼ + ¼)</code></td><td><b>¼</b></td></tr>
+      <tr><td>1 줄 <code>− w·w</code></td><td><code>−(¼ + ¼)</code></td><td><b>−½</b></td></tr>
+      <tr><td>2 줄 <code>− b·Σαy</code></td><td><code>−b · 0</code> (<code>b</code> 가 무엇이든)</td><td><b>0</b></td></tr>
+      <tr><td>0 줄 끝 항 <code>Σα</code></td><td><code>¼ + 0 + ¼</code></td><td><b>½</b></td></tr>
+      <tr><td>합 <code>L</code></td><td><code>¼ − ½ + 0 + ½</code></td><td><b>¼</b></td></tr>
+      <tr><td>5 줄 <code>Σα − ½ΣΣ</code></td><td><code>α⁽²⁾ = 0</code> 이라 2 행과 2 열의 5 칸이 0 이고 <code>(1,1)</code>, <code>(1,3)</code>, <code>(3,1)</code>, <code>(3,3)</code> 네 칸만 남습니다. 값은 <code>(1/16)·(18, −6, −6, 2)</code>, 합 <code>½</code>. 그래서 <code>½ − ½·½</code></td><td><b>¼</b></td></tr>
+    </table>
+  </div>
+
+  <p>두 길(0~3 줄로 계산한 <code>L</code> 과 5 줄의 식)이 모두 <code>¼</code> 로 일치합니다. 이 <code>¼</code> 은 2장에서 본 <code>½‖w‖² = ¼</code> 과도 같은데, 그 까닭은 화면 5 와 7 에서 봅니다.</p>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 5 -->
+<section class="screen" data-title="쌍대문제 완성">
+  <p class="kicker">4장 · 화면 5</p>
+  <h2>쌍대문제 완성</h2>
+
+  <p>지도의 ⑤ 입니다. 화면 4 의 식에, 유도 중에 나온 조건 두 개를 붙이면 문제가 완성됩니다.</p>
+
+  <div class="box good">
+    <p class="box-t">SVM 의 쌍대문제</p>
+    <p style="text-align:center;font-size:1.05rem"><code>max<sub>α</sub> &nbsp; D(α) = Σ<sub>i=1</sub><sup>n</sup> α⁽ⁱ⁾ − ½ Σ<sub>i=1</sub><sup>n</sup> Σ<sub>j=1</sub><sup>n</sup> α⁽ⁱ⁾α⁽ʲ⁾ y⁽ⁱ⁾y⁽ʲ⁾ (x⁽ⁱ⁾·x⁽ʲ⁾)</code></p>
+    <p style="text-align:center;font-size:1.05rem"><code>s.t. &nbsp; α⁽ⁱ⁾ ≥ 0 &nbsp;(모든 i), &nbsp;&nbsp; Σ<sub>i=1</sub><sup>n</sup> α⁽ⁱ⁾y⁽ⁱ⁾ = 0</code></p>
+    <ul>
+      <li><code>α⁽ⁱ⁾ ≥ 0</code> — 화면 2 에서 부등식 제약의 승수에 붙은 부호 조건(쌍대 가능성)입니다.</li>
+      <li><code>Σαy = 0</code> — 화면 3 의 결과 ② 입니다. 이 조건이 깨지면 <code>L</code> 에 바닥이 없었습니다.</li>
+      <li>변수는 <code>α⁽¹⁾, …, α⁽ⁿ⁾</code> 뿐입니다. <code>w</code> 와 <code>b</code> 는 문제 안에 없습니다.</li>
+    </ul>
+  </div>
+
+  <h3>그런데 <code>min</code> 이었던 문제가 왜 <code>max</code> 가 되었나</h3>
+
+  <p>이것이 처음 보는 사람에게 가장 낯선 부분입니다. 이유는 <code>D(α)</code> 가 <b>원문제 답의 아래쪽 한계(하한)</b>이기 때문입니다.</p>
+
+  <ol>
+    <li>원문제의 가능한 <code>(w, b)</code> 에서는 모든 대괄호 <code>g⁽ⁱ⁾ ≥ 0</code> 이고 <code>α⁽ⁱ⁾ ≥ 0</code> 이므로, <code>L</code> 에서 빼는 <code>Σα⁽ⁱ⁾g⁽ⁱ⁾</code> 는 0 이상입니다. 그래서 <code>L(w, b, α) ≤ ½‖w‖²</code>.</li>
+    <li><code>D(α)</code> 는 <code>L</code> 을 <code>w, b</code> 에 대해 가장 작게 만든 값이므로 <code>D(α) ≤ L(w, b, α)</code> 입니다.</li>
+    <li>합치면 <b><code>D(α) ≤ ½‖w‖²</code></b>. 아무 <code>α ≥ 0</code> 를 넣어도 <code>D(α)</code> 는 원문제의 어떤 가능한 값보다도 크지 않습니다.</li>
+  </ol>
+
+  <p>그러면 가장 쓸모 있는 하한은 <b>가장 높은 하한</b>이니, <code>D(α)</code> 를 <b>최대로</b> 만드는 것이 맞습니다. 이 사실을
+  <span class="term" data-term="weakdual">약쌍대성</span>이라 합니다. 예제의 숫자로 직접 확인합니다. 원문제의 값은 2장에서 본 <code>½‖w‖² = ¼</code> 입니다.
+  <code>D(α)</code> 값은 화면 4 의 5 줄 식에서 나옵니다(화면 7 에서 같은 식을 직접 전개합니다).</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th><code>α = (α⁽¹⁾, α⁽²⁾, α⁽³⁾)</code></th><th><code>Σαy</code></th><th><code>D(α)</code></th><th>원문제 값 ¼ 과 비교</th></tr>
+      <tr><td>(0.1, 0, 0.1)</td><td>0</td><td>0.16</td><td>≤ ¼ ✓ 하한</td></tr>
+      <tr><td>(0.2, 0.1, 0.3)</td><td>0</td><td>0.175</td><td>≤ ¼ ✓ 하한</td></tr>
+      <tr><td>(0.4, 0, 0.4)</td><td>0</td><td>0.16</td><td>≤ ¼ ✓ 하한</td></tr>
+      <tr><td><b>(0.25, 0, 0.25)</b></td><td>0</td><td><b>0.25</b></td><td>= ¼. 하한이 원문제 값에 딱 닿았습니다</td></tr>
+      <tr><td>(1.5, <b>−1</b>, 0.5)</td><td>0</td><td>0.5</td><td>&gt; ¼ ✗ — <code>α⁽²⁾ &lt; 0</code> 이라 쌍대문제의 가능해가 아님</td></tr>
+    </table>
+  </div>
+
+  <p>마지막 줄이 <code>α ≥ 0</code> 의 이유를 보여 줍니다. 음수를 허용하면 &ldquo;하한&rdquo;이 원문제의 값 <code>¼</code> 을 넘어 버립니다. 1번 줄에서 <code>Σαg ≥ 0</code> 이라고 한 것은 <code>α ≥ 0</code> 일 때만 맞기 때문입니다.</p>
+
+  <h3>&lsquo;쌍대&rsquo;라는 이름</h3>
+
+  <p><b>쌍대(dual)</b>는 &ldquo;짝&rdquo;이라는 뜻입니다. 같은 <code>L</code> 을 두 방향에서 본 두 문제가 짝을 이룹니다.</p>
+
+  <ul>
+    <li><b>원문제</b>: <code>w, b</code> 를 정해 <code>L</code> 이 가장 작은 곳을 찾는다. 이때 <code>α</code> 는 제약을 지키게 하는 역할이다. 제약을 어긴 점이 있으면(<code>g &lt; 0</code>) 그 점의 <code>α</code> 를 키워 <code>L</code> 이 얼마든지 커지게 만들 수 있으니, 어긴 <code>(w, b)</code> 는 최소화에서 걸러진다. 지킨 점뿐이면 <code>α = 0</code> 이 가장 큰 값을 주어 <code>L = ½‖w‖²</code> 이 된다. 따라서 원문제는 &ldquo;<code>α ≥ 0</code> 로 <code>L</code> 을 가장 크게 만든 뒤, <code>w, b</code> 로 가장 작게&rdquo; 하는 것과 같다 (min-max).</li>
+    <li><b>쌍대문제</b>: 순서를 뒤집는다. <code>w, b</code> 로 <code>L</code> 을 먼저 가장 작게(화면 3·4) 만든 뒤, <code>α ≥ 0</code> 로 가장 크게 (max-min).</li>
+  </ul>
+
+  <p>변수도 바뀝니다. 원문제는 <code>w, b</code> (이 예제에서 세 개)가 변수이고 제약이 <code>n</code> 개였는데, 쌍대문제는 <code>α</code> (<code>n</code> 개)가 변수이고 제약이 단순합니다(<code>α ≥ 0</code> 과 등식 하나). 두 문제의 역할이 맞바뀐 짝입니다.
+  3장 화면 5 의 &lsquo;<b>쌍대 가능성</b>(<code>λ ≥ 0</code>)&rsquo;이라는 이름은 이제 설명이 됩니다. <code>α ≥ 0</code> 은 <b>쌍대문제의 가능해가 되기 위한 조건</b>이라서 그 이름이 붙었습니다.</p>
+
+  <div class="box warn">
+    <p class="box-t">한계 — 하한이 답과 같다는 것은 증명하지 않았습니다</p>
+    <p>약쌍대성은 <code>D(α) ≤ (원문제 값)</code> 만 보장합니다. 하한의 최댓값이 원문제 최솟값과 <b>정확히 같은지</b>(<span class="term" data-term="strongdual">강쌍대성</span>)는 별개의 사실입니다.
+    이 교재의 문제(그릇 모양 목적함수 + 직선 제약, 곧 볼록 이차계획)에서는 성립하고, 예제에서도 화면 7 에서 <code>¼ = ¼</code> 로 확인합니다. 증명은 하지 않습니다.
+    원전은 Boyd &amp; Vandenberghe, 『Convex Optimization』 5장(쌍대성)입니다. 일반 문제에서는 둘 사이에 간격이 있을 수 있습니다.</p>
+  </div>
+
+  <h3>그리고 — 데이터가 어디에 들어 있나</h3>
+
+  <p><code>D(α)</code> 를 다시 보세요. 점의 좌표 <code>x⁽ⁱ⁾</code> 는 오직 <code>(x⁽ⁱ⁾·x⁽ʲ⁾)</code>, <b>두 점의 내적</b>의 형태로만 들어 있고 다른 곳에는 없습니다. 레이블 <code>y</code> 는 ±1 의 부호로만 들어옵니다.
+  원문제에서는 <code>w·x⁽ⁱ⁾</code> 가 곳곳에 있었습니다. 이 변화는 지금 보기에는 사소해 보이지만, 점이 2차원이든 백만 차원이든 쌍대문제의 모양은 같다는 뜻입니다.
+  <span class="later">6장에서 다룸</span> — 이것이 6장에서 커널 트릭이 가능해지는 이유입니다.</p>
+
+  <div class="box note">
+    <p class="box-t">왜 굳이 쌍대로 푸나 — 이유 두 가지</p>
+    <ol>
+      <li><b>내적만 남는다.</b> 위에서 본 이 모양이 6장의 출발점입니다.</li>
+      <li><b>답에서 <code>α</code> 가 0 인 점이 대개 많다.</b> 3장의 상보 여유성(<code>α·g = 0</code>)에서 나오는 성질로, 화면 6 에서 근거를 확인합니다.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 6 -->
+<section class="screen" data-title="서포트 벡터의 정체">
+  <p class="kicker">4장 · 화면 6</p>
+  <h2>승수가 0 이 아닌 점 — 서포트 벡터</h2>
+
+  <p>3장 화면 5 의 상보 여유성을 SVM 에 적용합니다. 모든 점 <code>i</code> 에서 이것이 성립해야 합니다.</p>
+
+  <p style="text-align:center"><code>α⁽ⁱ⁾ · g⁽ⁱ⁾ = 0 &nbsp;&nbsp;(g⁽ⁱ⁾ = y⁽ⁱ⁾(w·x⁽ⁱ⁾ + b) − 1)</code></p>
+
+  <p><code>g⁽ⁱ⁾ = 0</code> 은 함수 마진이 정확히 1, 곧 2장 화면 3 의 <b>띠의 가장자리에 점이 닿은 상태</b>이고, <code>g⁽ⁱ⁾ &gt; 0</code> 은 가장자리에서 떨어져 띠 바깥쪽에 여유 있게 있는 상태입니다.
+  곱이 0 이니 둘 중 하나는 0 이어야 합니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>점의 위치</th><th><code>g⁽ⁱ⁾</code></th><th>상보 여유성이 말하는 것</th></tr>
+      <tr><td>띠의 가장자리(마진 경계) 위</td><td>0</td><td><code>α⁽ⁱ⁾</code> 는 0 이어도 되고 양수여도 된다 — 곱이 이미 0 이다</td></tr>
+      <tr><td>띠 바깥으로 여유 있게</td><td>&gt; 0</td><td><b><code>α⁽ⁱ⁾ = 0</code> 이어야 한다</b></td></tr>
+    </table>
+  </div>
+
+  <p>이 표를 거꾸로 읽으면 이 화면의 요점입니다. <b><code>α⁽ⁱ⁾ &gt; 0</code> 이면 <code>g⁽ⁱ⁾ = 0</code>, 곧 그 점은 반드시 마진 경계 위에 있다.</b>
+  (거꾸로, 경계 위에 있다고 해서 <code>α &gt; 0</code> 인 것은 아닙니다. 이 방향은 성립하지 않으니 아래 한계에서 다시 봅니다.)</p>
+
+  <div class="box good">
+    <p class="box-t">정의 — 서포트 벡터</p>
+    <p>쌍대문제의 답 <code>α</code> 를 하나 골랐을 때 <code>α⁽ⁱ⁾ &gt; 0</code> 인 점 <code>x⁽ⁱ⁾</code> 를 <b><span class="term" data-term="supportvector">서포트 벡터</span></b>(support vector)라 합니다. 위에서 보았듯 서포트 벡터는 모두 마진 경계 위에 있습니다.
+    띠를 양쪽에서 받쳐서(support) 그 자리에 세워 두는 점들이라는 뜻입니다.</p>
+  </div>
+
+  <h3>예제에서 — 1장의 약속 갚기</h3>
+
+  <p>2장 화면 5 에서 세 점의 <code>g</code> 값은 <code>0, ½, 0</code> 이었습니다. 이를 표에 적용하면 이렇습니다.</p>
+
+  <ul>
+    <li><code>x⁽²⁾</code> 는 <code>g = ½ &gt; 0</code>, 띠 바깥에 여유가 있습니다. 그러므로 <b><code>α⁽²⁾ = 0</code></b> 입니다.</li>
+    <li><code>x⁽¹⁾, x⁽³⁾</code> 는 <code>g = 0</code> 이라 <code>α</code> 가 0 일 수도 있습니다. 그런데 <code>α⁽²⁾ = 0</code> 이면 화면 3 의 결과 ② 가 <code>α⁽¹⁾ = α⁽³⁾</code> 이 되고, 결과 ① 은 <code>w = α⁽¹⁾(3, 3) − α⁽³⁾(1, 1) = α⁽¹⁾(2, 2)</code> 입니다.
+    둘이 모두 0 이면 <code>w = (0, 0)</code> 인데 이것은 제약을 어깁니다(2장 화면 4). 그러므로 <b>둘 다 양수</b>이고, 서포트 벡터는 <code>x⁽¹⁾, x⁽³⁾</code> 입니다. 값은 화면 7 에서 직접 구합니다.</li>
+  </ul>
+
+  <p>1장 화면 4 에서 남겨 둔 질문, &ldquo;<code>x⁽²⁾</code> 는 직선을 정하는 데 왜 필요 없는가&rdquo;의 답이 이것입니다.</p>
+
+  <ul>
+    <li><b><code>w</code> 에서</b>: 결과 ① <code>w = Σαyx</code> 에서 <code>x⁽²⁾</code> 앞의 <code>α⁽²⁾</code> 가 0 이라 그 항이 통째로 사라집니다.</li>
+    <li><b><code>b</code> 에서</b>: <code>b</code> 는 서포트 벡터 하나의 등식 <code>y(w·x+b) = 1</code> 에서 구하는데(화면 7), <code>x⁽²⁾</code> 에서는 부등식(<code>≥ 1</code>)만 나옵니다.</li>
+    <li><b>옮겨도 그대로인 이유</b>: <code>x⁽²⁾</code> 를 옮기거나 지워도 같은 <code>(w, b, α)</code> 가 3장의 KKT 네 줄을 여전히 만족하는 한(<code>g⁽²⁾ ≥ 0</code> 이 유지되고 <code>α⁽²⁾ = 0</code> 이니 정상성·상보 여유성은 그대로), 이 교재의 문제에서는 KKT 를 만족하는 점이 곧 답이므로(3장 화면 5) 답은 안 바뀝니다.
+    단 <code>g⁽²⁾ ≥ 0</code> 이 깨져 띠 안으로 들어오면 이 말은 더 이상 통하지 않고 답이 바뀝니다.</li>
+  </ul>
+
+  <h3>직접 끌어 보기</h3>
+
+  <p>결론은 위에 적었습니다. 위젯은 이를 확인하는 도구입니다. 점을 끌면 하드 마진 SVM 의 답(실선), 마진 경계(점선 두 줄), 그리고 점마다의 <code>g</code> 와 <code>α</code> 를 즉석에서 다시 계산합니다.
+  계산은 이렇게 합니다. 마진 경계에 닿는 점 2~3 개의 모든 조합에서 가능한 해를 만들어 <code>½‖w‖²</code> 가 가장 작은 것을 고르고, 거기서 <code>α</code> 를 복원합니다(화면 7 에서 손으로 한 계산의 기계적 버전입니다).
+  회색 긴 점선은 비교용 <b>기준 답</b>(점을 끌기 시작하는 순간의 답, 버튼을 누르면 처음 세 점의 답)이고, 파란 동그라미는 +1, 빨간 네모는 −1, 겹친 동그란 테두리는 서포트 벡터(<code>α &gt; 0</code>)입니다.</p>
+
+  <figure class="fig">
+    <svg id="sv-svg" viewBox="0 0 380 356" role="img" aria-label="점을 끌어 하드 마진 SVM 의 답과 서포트 벡터를 확인하는 그림" style="max-width:28rem;touch-action:none">
+      <defs><clipPath id="sv-clip"><rect x="50" y="30" width="300" height="300"/></clipPath></defs>
+      <g class="svg-line" stroke-width=".6">
+      <path d="M100 30 V330"/><path d="M50 280 H350"/>
+      <path d="M150 30 V330"/><path d="M50 230 H350"/>
+      <path d="M200 30 V330"/><path d="M50 180 H350"/>
+      <path d="M250 30 V330"/><path d="M50 130 H350"/>
+      <path d="M300 30 V330"/><path d="M50 80 H350"/>
+      <path d="M350 30 V330"/><path d="M50 30 H350"/>
+      </g>
+      <g stroke-width="1.4" fill="none" style="stroke:var(--muted)"><path d="M50 330 H350"/><path d="M50 330 V30"/></g>
+      <g class="svg-muted" font-size="10" text-anchor="middle">
+      <text x="50" y="344">0</text>
+      <text x="100" y="344">1</text>
+      <text x="150" y="344">2</text>
+      <text x="200" y="344">3</text>
+      <text x="250" y="344">4</text>
+      <text x="300" y="344">5</text>
+      <text x="350" y="344">6</text>
+      <text x="364" y="334" font-size="12" class="svg-fg">x₁</text><text x="50" y="20" font-size="12" class="svg-fg">x₂</text>
+      </g><g class="svg-muted" font-size="10" text-anchor="end">
+      <text x="43" y="283">1</text>
+      <text x="43" y="233">2</text>
+      <text x="43" y="183">3</text>
+      <text x="43" y="133">4</text>
+      <text x="43" y="83">5</text>
+      <text x="43" y="33">6</text>
+      </g>
+      <g clip-path="url(#sv-clip)" fill="none">
+        <path id="sv-ghost" d="" stroke-width="2.4" style="stroke:var(--muted);stroke-dasharray:7 5"/>
+        <path id="sv-m1" d="" stroke-width="1.4" style="stroke:var(--accent);stroke-dasharray:3 3"/>
+        <path id="sv-m2" d="" stroke-width="1.4" style="stroke:var(--bad);stroke-dasharray:3 3"/>
+        <path id="sv-line" d="" stroke-width="2.4" style="stroke:var(--fg)"/>
+      </g>
+      <g id="sv-pts"></g>
+    </svg>
+    <figcaption>실선이 지금의 답 <code>w·x+b = 0</code>, 파란 점선이 <code>= +1</code>, 빨간 점선이 <code>= −1</code> 입니다. 회색 긴 점선은 비교용 기준 답입니다. 점은 0.25 간격 격자에 맞춰 움직입니다.</figcaption>
+  </figure>
+
+  <div style="display:grid;grid-template-columns:auto minmax(8rem,16rem) 3.6rem;gap:.35rem .7rem;align-items:center;justify-content:center;font-size:.9rem;margin-bottom:.4rem">
+    <label for="sv-sel">고른 점</label>
+    <select id="sv-sel" style="width:100%;font:inherit;background:var(--card);color:var(--fg);border:1px solid var(--rule);border-radius:6px;padding:.2rem"></select><span></span>
+    <label for="sv-x1">x₁</label><input id="sv-x1" type="range" min="0" max="6" step="0.25" value="3" style="width:100%"><b id="sv-x1v">3.00</b>
+    <label for="sv-x2">x₂</label><input id="sv-x2" type="range" min="0" max="6" step="0.25" value="3" style="width:100%"><b id="sv-x2v">3.00</b>
+  </div>
+
+  <div style="display:flex;gap:.45rem;align-items:center;justify-content:center;flex-wrap:wrap;font-size:.86rem;margin-bottom:.6rem">
+    <button type="button" id="sv-p0" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">처음 상태</button>
+    <button type="button" id="sv-p1" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">x⁽²⁾ 를 멀리 (5, 5)</button>
+    <button type="button" id="sv-p2" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">x⁽²⁾ 를 띠 안으로 (2.25, 2.25)</button>
+    <button type="button" id="sv-p3" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">x⁽¹⁾ 를 (3, 4) 로</button>
+    <button type="button" id="sv-p4" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">경계 위에 파란 점 하나 더 (5, 1)</button>
+    <button type="button" id="sv-p5" style="font:inherit;font-size:.82rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer">못 가르는 배치</button>
+  </div>
+
+  <p style="text-align:center;font-size:.86rem;color:var(--muted);margin:.2rem 0 .8rem">조작 방법: 점을 마우스로 끌거나, &lsquo;고른 점&rsquo;을 정하고 슬라이더를 움직이거나, 버튼으로 준비된 배치를 만드세요. 버튼은 모두 처음 세 점에서 시작해 한 곳을 바꿉니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>점</th><th>좌표, 레이블</th><th><code>g = y(w·x+b) − 1</code></th><th><code>α</code></th><th>서포트 벡터?</th></tr>
+      <tbody id="sv-rows"></tbody>
+    </table>
+  </div>
+
+  <p id="sv-sol" style="text-align:center;font-weight:700;margin:.5rem 0 .2rem"></p>
+  <p id="sv-note" style="text-align:center;font-weight:700;margin:.2rem 0 .8rem"></p>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var SUP = ['⁽¹⁾', '⁽²⁾', '⁽³⁾', '⁽⁴⁾', '⁽⁵⁾', '⁽⁶⁾'];
+  var BASE = [{ x: [3, 3], y: 1 }, { x: [4, 3], y: 1 }, { x: [1, 1], y: -1 }];
+  function clone(a) { return a.map(function (p) { return { x: [p.x[0], p.x[1]], y: p.y }; }); }
+
+  /* 하드 마진 SVM: 경계에 닿는 점 2~3 개의 모든 조합에서 가능한 (w,b) 를 만들고 ½‖w‖² 최소를 고른다 */
+  function dot(a, b) { return a[0] * b[0] + a[1] * b[1]; }
+  function det3(m) { return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]); }
+  function solve(P) {
+    var n = P.length, best = null, i, j, k;
+    function feasible(w, b) {
+      for (var m = 0; m < n; m++) if (P[m].y * (dot(w, P[m].x) + b) < 1 - 1e-7) return false;
+      return true;
+    }
+    function consider(w, b) {
+      if (!isFinite(w[0]) || !isFinite(w[1]) || !feasible(w, b)) return;
+      var nn = dot(w, w);
+      if (!best || nn < best.nn - 1e-9) best = { w: w, b: b, nn: nn };
+    }
+    for (i = 0; i < n; i++) for (j = 0; j < n; j++) {          // 서로 다른 레이블 두 점이 경계에 닿는 경우
+      if (P[i].y !== 1 || P[j].y !== -1) continue;
+      var d = [P[i].x[0] - P[j].x[0], P[i].x[1] - P[j].x[1]], dd = dot(d, d);
+      if (dd < 1e-9) continue;
+      var w = [2 * d[0] / dd, 2 * d[1] / dd];
+      consider(w, 1 - dot(w, P[i].x));
+    }
+    for (i = 0; i < n; i++) for (j = i + 1; j < n; j++) for (k = 0; k < n; k++) {   // 같은 레이블 두 점 + 반대 레이블 한 점
+      if (P[i].y !== P[j].y || P[k].y === P[i].y) continue;
+      var s = P[i].y, e = [P[i].x[0] - P[j].x[0], P[i].x[1] - P[j].x[1]], el = Math.sqrt(dot(e, e));
+      if (el < 1e-6) continue;
+      var nv = [-e[1] / el, e[0] / el], q0 = [P[i].x[0] - P[k].x[0], P[i].x[1] - P[k].x[1]], c0 = dot(nv, q0);
+      if (Math.abs(c0) < 1e-9) continue;
+      var w2 = [s * 2 * nv[0] / c0, s * 2 * nv[1] / c0];
+      consider(w2, s - dot(w2, P[i].x));
+    }
+    if (!best) return null;
+    // α 복원: 경계 위 점들 중에서 w = Σαyx, Σαy = 0, α ≥ 0 을 만족하는 2~3 개 조합을 찾는다
+    var a = P.map(function () { return 0; }), onb = [], m2, p, q, r2, found = false;
+    for (m2 = 0; m2 < n; m2++) if (Math.abs(P[m2].y * (dot(best.w, P[m2].x) + best.b) - 1) < 1e-7) onb.push(m2);
+    for (p = 0; p < onb.length && !found; p++) for (q = p + 1; q < onb.length && !found; q++) {
+      if (P[onb[p]].y === P[onb[q]].y) continue;
+      var u = onb[p], v = onb[q], dv = [P[u].x[0] - P[v].x[0], P[u].x[1] - P[v].x[1]], av = 2 / dot(dv, dv);
+      var ww = [P[u].y * av * dv[0], P[u].y * av * dv[1]];
+      if (Math.abs(ww[0] - best.w[0]) < 1e-7 && Math.abs(ww[1] - best.w[1]) < 1e-7) { a[u] = av; a[v] = av; found = true; }
+    }
+    for (p = 0; p < onb.length && !found; p++) for (q = p + 1; q < onb.length && !found; q++) for (r2 = q + 1; r2 < onb.length && !found; r2++) {
+      var ids = [onb[p], onb[q], onb[r2]];
+      var M = [0, 1, 2].map(function (row) { return ids.map(function (id) { return row < 2 ? P[id].y * P[id].x[row] : P[id].y; }); });
+      var D = det3(M), rr = [best.w[0], best.w[1], 0];
+      if (Math.abs(D) < 1e-12) continue;
+      var sol = [0, 1, 2].map(function (c) { return det3(M.map(function (row, ri) { var t = row.slice(); t[c] = rr[ri]; return t; })) / D; });
+      if (sol[0] > -1e-9 && sol[1] > -1e-9 && sol[2] > -1e-9) { ids.forEach(function (id, kk) { a[id] = sol[kk]; }); found = true; }
+    }
+    best.a = a.map(function (x) { return x < 1e-9 ? 0 : x; });
+    return best;
+  }
+
+  var pts = clone(BASE), ghost = null, sel = 0, svg = $('sv-svg');
+  function X(x) { return 50 + 50 * x; }
+  function Y(y) { return 330 - 50 * y; }
+  function f(v, d) { var s = Math.abs(v) < 5e-4 ? '0' : v.toFixed(d === undefined ? 3 : d).replace(/0+$/, '').replace(/\.$/, ''); return s === '-0' ? '0' : s.replace('-', '−'); }
+  function linePath(sol, c) {
+    var nn = sol.nn, p0 = [(c - sol.b) * sol.w[0] / nn, (c - sol.b) * sol.w[1] / nn], len = Math.sqrt(nn), dr = [-sol.w[1] / len, sol.w[0] / len];
+    return 'M' + X(p0[0] + 30 * dr[0]).toFixed(1) + ' ' + Y(p0[1] + 30 * dr[1]).toFixed(1) + ' L' + X(p0[0] - 30 * dr[0]).toFixed(1) + ' ' + Y(p0[1] - 30 * dr[1]).toFixed(1);
+  }
+  function snapshot() { var s = solve(pts); ghost = s ? { w: s.w.slice(), b: s.b, nn: s.nn } : null; hasGhost = true; }
+  var hasGhost = false;
+
+  function draw() {
+    var sol = solve(pts), i, html = '', rows = '', svn = [];
+    $('sv-ghost').setAttribute('d', ghost ? linePath(ghost, 0) : '');
+    if (sol) {
+      $('sv-line').setAttribute('d', linePath(sol, 0));
+      $('sv-m1').setAttribute('d', linePath(sol, 1));
+      $('sv-m2').setAttribute('d', linePath(sol, -1));
+    } else {
+      $('sv-line').setAttribute('d', ''); $('sv-m1').setAttribute('d', ''); $('sv-m2').setAttribute('d', '');
+    }
+    for (i = 0; i < pts.length; i++) {
+      var px = X(pts[i].x[0]), py = Y(pts[i].x[1]), isSV = sol && sol.a[i] > 0;
+      if (isSV) { html += '<circle cx="' + px + '" cy="' + py + '" r="13" fill="none" stroke-width="2" style="stroke:var(--fg)"/>'; svn.push('x' + SUP[i]); }
+      html += pts[i].y > 0
+        ? '<circle data-i="' + i + '" cx="' + px + '" cy="' + py + '" r="7" style="fill:var(--accent);cursor:grab"/>'
+        : '<rect data-i="' + i + '" x="' + (px - 6.5) + '" y="' + (py - 6.5) + '" width="13" height="13" style="fill:var(--bad);cursor:grab"/>';
+      html += '<text x="' + px + '" y="' + (py - 17) + '" text-anchor="middle" font-size="12" class="svg-fg" style="pointer-events:none">x' + SUP[i] + '</text>';
+      var g = sol ? pts[i].y * (dot(sol.w, pts[i].x) + sol.b) - 1 : null;
+      rows += '<tr><td>x' + SUP[i] + '</td><td>(' + f(pts[i].x[0], 2) + ', ' + f(pts[i].x[1], 2) + '), ' + (pts[i].y > 0 ? '+1' : '−1') + '</td>' +
+        '<td>' + (g === null ? '–' : f(g)) + '</td><td>' + (sol ? f(sol.a[i]) : '–') + '</td><td>' +
+        (!sol ? '–' : isSV ? '<b>예 (α &gt; 0)</b>' : Math.abs(g) < 1e-7 ? '아니오 — 경계 위지만 α = 0' : '아니오 — 띠 바깥, α = 0') + '</td></tr>';
+    }
+    $('sv-pts').innerHTML = html;
+    $('sv-rows').innerHTML = rows;
+    var note;
+    if (!sol) {
+      $('sv-sol').textContent = '';
+      note = '선형으로 가를 수 없는 배치입니다. 하드 마진은 가능해가 없습니다(2장 화면 4). 이런 데이터를 다루는 방법은 5장에서 다룹니다.';
+    } else {
+      $('sv-sol').textContent = 'w = (' + f(sol.w[0]) + ', ' + f(sol.w[1]) + '),  b = ' + f(sol.b) + ',  ½‖w‖² = ' + f(sol.nn / 2) + ',  마진 2/‖w‖ = ' + f(2 / Math.sqrt(sol.nn));
+      if (!hasGhost) note = '서포트 벡터(α > 0): ' + svn.join(', ') + '. 점을 움직여 보세요.';
+      else if (ghost && Math.abs(ghost.w[0] - sol.w[0]) < 1e-7 && Math.abs(ghost.w[1] - sol.w[1]) < 1e-7 && Math.abs(ghost.b - sol.b) < 1e-7)
+        note = '기준 답(회색 점선)과 해 (w, b) 가 똑같습니다. 서포트 벡터: ' + svn.join(', ') + '.';
+      else note = '해가 바뀌었습니다(회색 점선이 기준 답). 서포트 벡터: ' + svn.join(', ') + '.';
+    }
+    $('sv-note').textContent = note;
+    var sl = $('sv-sel'), cur = sl.options.length;
+    if (cur !== pts.length) {
+      sl.innerHTML = pts.map(function (p, k) { return '<option value="' + k + '">x' + SUP[k] + '</option>'; }).join('');
+    }
+    if (sel >= pts.length) sel = 0;
+    sl.value = String(sel);
+    $('sv-x1').value = pts[sel].x[0]; $('sv-x2').value = pts[sel].x[1];
+    $('sv-x1v').textContent = pts[sel].x[0].toFixed(2); $('sv-x2v').textContent = pts[sel].x[1].toFixed(2);
+  }
+
+  function setPreset(fn) { var g0 = solve(BASE); ghost = { w: g0.w.slice(), b: g0.b, nn: g0.nn }; hasGhost = true; pts = clone(BASE); sel = 0; if (fn) fn(pts); draw(); }
+  $('sv-p0').addEventListener('click', function () { setPreset(null); });
+  $('sv-p1').addEventListener('click', function () { setPreset(function (P) { P[1].x = [5, 5]; sel = 1; }); });
+  $('sv-p2').addEventListener('click', function () { setPreset(function (P) { P[1].x = [2.25, 2.25]; sel = 1; }); });
+  $('sv-p3').addEventListener('click', function () { setPreset(function (P) { P[0].x = [3, 4]; }); });
+  $('sv-p4').addEventListener('click', function () { setPreset(function (P) { P.push({ x: [5, 1], y: 1 }); sel = 3; }); });
+  $('sv-p5').addEventListener('click', function () { setPreset(function (P) { P[2].x = [3.5, 3]; sel = 2; }); });
+  $('sv-sel').addEventListener('change', function () { sel = +this.value; draw(); });
+  ['sv-x1', 'sv-x2'].forEach(function (id, ax) {
+    var el = $(id);
+    el.addEventListener('pointerdown', snapshot);
+    el.addEventListener('keydown', snapshot);
+    el.addEventListener('input', function () { pts[sel].x[ax] = +this.value; draw(); });
+  });
+  var drag = -1;
+  function toGrid(e) {
+    var pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    var p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    function sn(v) { return Math.min(6, Math.max(0, Math.round(v * 4) / 4)); }
+    return [sn((p.x - 50) / 50), sn((330 - p.y) / 50)];
+  }
+  svg.addEventListener('pointerdown', function (e) {
+    var t = e.target; if (!t || t.getAttribute('data-i') === null) return;
+    drag = +t.getAttribute('data-i'); sel = drag; snapshot();
+    try { svg.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
+    e.preventDefault(); draw();
+  });
+  svg.addEventListener('pointermove', function (e) {
+    if (drag < 0) return;
+    var g = toGrid(e);
+    if (g[0] !== pts[drag].x[0] || g[1] !== pts[drag].x[1]) { pts[drag].x = g; draw(); }
+  });
+  function endDrag() { drag = -1; }
+  svg.addEventListener('pointerup', endDrag);
+  svg.addEventListener('pointercancel', endDrag);
+  draw();
+})();
+</script>
+
+  <div class="box note">
+    <p class="box-t">이렇게 움직여 보세요</p>
+    <ol>
+      <li><b>&lsquo;x⁽²⁾ 를 멀리&rsquo;</b> 를 누릅니다. <code>x⁽²⁾</code> 가 (4, 3) 에서 (5, 5) 로 옮겨 가도 실선이 그대로이고 <code>w, b</code> 도 같습니다. <code>x⁽²⁾</code> 의 <code>α</code> 는 계속 0 입니다. 끌어서 띠 바깥쪽 어디로 보내도 마찬가지입니다.</li>
+      <li><b>&lsquo;x⁽²⁾ 를 띠 안으로&rsquo;</b> 를 누릅니다. 점이 띠의 가장자리를 넘어 안쪽으로 들어오자 해가 바뀌고, 서포트 벡터가 <code>x⁽²⁾, x⁽³⁾</code> 로 갈아탑니다(<code>x⁽¹⁾</code> 의 <code>α</code> 가 0 이 됩니다). 서포트 벡터가 아닌 점이 &ldquo;아무 데나 움직여도 된다&rdquo;는 뜻은 아닙니다. <b>띠 바깥에 머무는 동안</b>만 그렇습니다.</li>
+      <li><b>&lsquo;x⁽¹⁾ 를 (3, 4) 로&rsquo;</b> 를 누릅니다. 서포트 벡터를 움직이면 해가 바뀝니다. 이번에는 서포트 벡터가 셋이 됩니다.</li>
+      <li><b>&lsquo;경계 위에 파란 점 하나 더&rsquo;</b> 를 누릅니다. 새 점 <code>x⁽⁴⁾ = (5, 1)</code> 은 마진 경계 위에 있지만(<code>g = 0</code>) <code>α = 0</code> 이라 서포트 벡터가 아닙니다. 위에서 말한 &ldquo;거꾸로는 성립하지 않는다&rdquo;의 실물입니다.</li>
+      <li><b>&lsquo;못 가르는 배치&rsquo;</b> 를 누르면 <code>x⁽³⁾</code> 가 두 파란 점을 잇는 선분 위에 놓여 어떤 직선으로도 가를 수 없습니다. 하드 마진은 답이 없다고 안내합니다.</li>
+    </ol>
+  </div>
+
+  <div class="box warn">
+    <p class="box-t">한계 — 이 말들이 어디까지 맞는가</p>
+    <ul>
+      <li><b>방향</b>: 서포트 벡터는 <code>α &gt; 0</code> 인 점이고, 그러면 경계 위에 있습니다. 경계 위에 있어도 <code>α = 0</code> 일 수 있습니다(위젯 4번).</li>
+      <li><b><code>α</code> 가 하나로 정해지지 않을 수 있습니다</b>: 경계 위에 점이 여럿 놓인 퇴화 배치에서는 같은 <code>(w, b)</code> 를 주는 <code>α</code> 가 여러 개일 수 있고, 그러면 &ldquo;<code>α &gt; 0</code> 인 점&rdquo;도 고른 <code>α</code> 에 따라 달라집니다. 예를 들어 <code>(2,1)</code>+, <code>(2,−1)</code>+, <code>(0,1)</code>−, <code>(0,−1)</code>− 는 네 점이 모두 경계 위이고 답은 <code>w = (1, 0)</code>, <code>b = −1</code> 입니다. <code>α = (½, 0, ½, 0)</code> 이면 <code>x⁽¹⁾</code> 이 서포트 벡터지만 <code>x⁽¹⁾</code> 을 지워도 답은 같습니다. 화면 7 의 세 점 예제는 <code>α</code> 가 하나로 정해지는 경우입니다.</li>
+      <li><b>&ldquo;소수&rdquo;는 보장이 아닙니다</b>: 서포트 벡터는 마진 경계 위의 점뿐이므로 보통 적지만, 경계 위에 점이 많이 놓이는 배치에서는 많아질 수 있습니다. 이 화면이 보인 것은 &ldquo;경계 밖 점은 해에 영향을 주지 않는다&rdquo;이지 &ldquo;서포트 벡터는 몇 개 이하다&rdquo;가 아닙니다.</li>
+      <li><b>쌍대가 늘 빠르지는 않습니다</b>: 쌍대문제의 변수는 점의 수 <code>n</code> 개입니다. 점이 아주 많고 특성이 적은 선형 SVM 에서는 원문제 형태가 더 싼 경우도 있습니다. 쌍대로 푸는 두 이유(내적만 남는다, <code>α</code> 가 대부분 0 이다)가 힘을 쓰는 곳은 커널을 쓸 때입니다.</li>
+    </ul>
+  </div>
+
+  <h3>쌍대로 푸는 이유 ② — 예측에도 서포트 벡터만 쓴다</h3>
+
+  <p>새 점 <code>q</code> 를 분류할 때 필요한 것은 <code>w·q + b</code> 의 부호입니다. 결과 ① 을 넣으면
+  <code>w·q + b = Σ<sub>i</sub> α⁽ⁱ⁾y⁽ⁱ⁾(x⁽ⁱ⁾·q) + b</code> 이고, <code>α⁽ⁱ⁾ = 0</code> 인 항은 계산에서 빠지므로 <b>서포트 벡터와 <code>q</code> 의 내적만</b> 더하면 됩니다.
+  (여기에도 내적만 있습니다.) 예제에서 <code>q = (2, 3)</code> 이면 <code>w = (½, ½)</code>, <code>b = −2</code> 로 <code>w·q + b = ½</code>, 양수이니 +1 쪽입니다.</p>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 7 -->
+<section class="screen" data-title="점 3개 손계산">
+  <p class="kicker">4장 · 화면 7</p>
+  <h2>점 3개로 쌍대문제를 직접 풀기</h2>
+
+  <p>2장에서는 정답 <code>w = (½, ½)</code>, <code>b = −2</code> 를 알려 주고 검증만 했습니다. 이번에는 <b>쌍대문제만으로 처음부터</b> 구합니다. 위젯이나 화면 6 의 결론은 쓰지 않고 정말로 식만 풀어 보겠습니다.</p>
+
+  <h3>1단계 — 내적 표 만들기</h3>
+
+  <p>쌍대문제에 필요한 데이터는 점들끼리의 내적뿐이었습니다. 세 점 <code>x⁽¹⁾ = (3, 3)</code>, <code>x⁽²⁾ = (4, 3)</code>, <code>x⁽³⁾ = (1, 1)</code> 의 내적 6 가지를 계산합니다
+  (<code>x⁽ⁱ⁾·x⁽ʲ⁾ = x⁽ʲ⁾·x⁽ⁱ⁾</code> 이니 절반만 필요합니다).</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>내적</th><th>계산</th><th>값</th><th>레이블 곱 <code>y⁽ⁱ⁾y⁽ʲ⁾</code></th><th>곱한 값 <code>y⁽ⁱ⁾y⁽ʲ⁾(x⁽ⁱ⁾·x⁽ʲ⁾)</code></th></tr>
+      <tr><td><code>x⁽¹⁾·x⁽¹⁾</code></td><td>3·3 + 3·3</td><td>18</td><td>(+1)(+1) = +1</td><td><b>18</b></td></tr>
+      <tr><td><code>x⁽¹⁾·x⁽²⁾</code></td><td>3·4 + 3·3</td><td>21</td><td>(+1)(+1) = +1</td><td><b>21</b></td></tr>
+      <tr><td><code>x⁽¹⁾·x⁽³⁾</code></td><td>3·1 + 3·1</td><td>6</td><td>(+1)(−1) = −1</td><td><b>−6</b></td></tr>
+      <tr><td><code>x⁽²⁾·x⁽²⁾</code></td><td>4·4 + 3·3</td><td>25</td><td>(+1)(+1) = +1</td><td><b>25</b></td></tr>
+      <tr><td><code>x⁽²⁾·x⁽³⁾</code></td><td>4·1 + 3·1</td><td>7</td><td>(+1)(−1) = −1</td><td><b>−7</b></td></tr>
+      <tr><td><code>x⁽³⁾·x⁽³⁾</code></td><td>1·1 + 1·1</td><td>2</td><td>(−1)(−1) = +1</td><td><b>2</b></td></tr>
+    </table>
+  </div>
+
+  <h3>2단계 — 목적식 전개</h3>
+
+  <p>화면 4 의 격자 9 칸을 위 값으로 채웁니다. 대각선이 아닌 칸은 두 번씩 나오므로 <code>2 ×</code> 로 묶습니다. 아래 <code>a₁, a₂, a₃</code> 는 <code>α⁽¹⁾, α⁽²⁾, α⁽³⁾</code> 의 약식입니다(좌표가 아니라 승수입니다).</p>
+
+  <p style="text-align:center"><code>ΣΣ = 18a₁² + 25a₂² + 2a₃² + 2·21 a₁a₂ + 2·(−6) a₁a₃ + 2·(−7) a₂a₃</code></p>
+
+  <p style="text-align:center"><code>D = a₁ + a₂ + a₃ − ½ ( 18a₁² + 25a₂² + 2a₃² + 42a₁a₂ − 12a₁a₃ − 14a₂a₃ )</code></p>
+
+  <p>제약은 화면 3 의 결과 ② <code>a₁ + a₂ − a₃ = 0</code>, 곧 <code>a₃ = a₁ + a₂</code> 와 <code>a ≥ 0</code> 입니다. <code>a₃</code> 를 없애려고 <code>a₃ = a₁ + a₂</code> 를 넣습니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>항</th><th><code>a₃ = a₁ + a₂</code> 를 넣으면</th></tr>
+      <tr><td><code>a₁ + a₂ + a₃</code></td><td><code>2a₁ + 2a₂</code></td></tr>
+      <tr><td><code>2a₃²</code></td><td><code>2(a₁² + 2a₁a₂ + a₂²) = 2a₁² + 4a₁a₂ + 2a₂²</code></td></tr>
+      <tr><td><code>−12a₁a₃</code></td><td><code>−12a₁² − 12a₁a₂</code></td></tr>
+      <tr><td><code>−14a₂a₃</code></td><td><code>−14a₁a₂ − 14a₂²</code></td></tr>
+      <tr><td>괄호 안 전부 모으면</td><td><code>a₁²</code>: 18 + 2 − 12 = <b>8</b>, &nbsp; <code>a₂²</code>: 25 + 2 − 14 = <b>13</b>, &nbsp; <code>a₁a₂</code>: 42 + 4 − 12 − 14 = <b>20</b></td></tr>
+    </table>
+  </div>
+
+  <div class="box good">
+    <p class="box-t">두 변수로 줄어든 목적식</p>
+    <p style="text-align:center;font-size:1.1rem"><code>D(a₁, a₂) = 2a₁ + 2a₂ − 4a₁² − 10a₁a₂ − 6.5a₂²</code> &nbsp;&nbsp; (<code>a₁ ≥ 0, a₂ ≥ 0</code>)</p>
+    <p>(<code>−½·(8, 20, 13) = −4, −10, −6.5</code>.)</p>
+  </div>
+
+  <h3>3단계 — 가장 큰 곳 찾기</h3>
+
+  <p>3장 화면 4~5 의 방식 그대로입니다. &ldquo;<code>a</code> 가 0 보다 큰 쪽/0 인 쪽&rdquo;의 경우를 나누어 각각 풀고, 모순 없는 경우를 고릅니다. 편미분은 이렇습니다.</p>
+
+  <p style="text-align:center"><code>∂D/∂a₁ = 2 − 8a₁ − 10a₂</code> &nbsp;, &nbsp; <code>∂D/∂a₂ = 2 − 10a₁ − 13a₂</code></p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>경우</th><th>풀면</th><th>점검</th><th>판정</th></tr>
+      <tr><td><code>a₁ &gt; 0, a₂ &gt; 0</code> (둘 다 안쪽)</td><td>두 편미분 = 0 → <code>8a₁ + 10a₂ = 2</code>, <code>10a₁ + 13a₂ = 2</code>. 첫째 ×13, 둘째 ×10 으로 빼면 <code>4a₁ = 6</code>, <code>a₁ = 3/2</code>, <code>a₂ = −1</code></td><td><code>a₂ &lt; 0</code> 위반 (이때 <code>D = ½</code> 로 화면 5 의 마지막 줄)</td><td>탈락</td></tr>
+      <tr><td><code>a₂ = 0</code>, <code>a₁ &gt; 0</code></td><td><code>∂D/∂a₁ = 2 − 8a₁ = 0</code> → <code>a₁ = ¼</code>, <code>a₃ = ¼</code>, <code>D = ½ − ¼ = ¼</code></td><td><code>a₂</code> 를 0 에서 키우면 어떻게 되나? <code>∂D/∂a₂ = 2 − 10·¼ = −½ ≤ 0</code>. 키우면 <b>D 가 줄어든다</b> ✓</td><td><b>통과</b></td></tr>
+      <tr><td><code>a₁ = 0</code>, <code>a₂ &gt; 0</code></td><td><code>∂D/∂a₂ = 2 − 13a₂ = 0</code> → <code>a₂ = 2/13</code>, <code>D = 2/13 ≈ 0.154</code></td><td><code>∂D/∂a₁ = 2 − 20/13 = 6/13 &gt; 0</code>. <code>a₁</code> 을 키우면 <b>D 가 늘어난다</b>. 최대가 아님</td><td>탈락</td></tr>
+      <tr><td><code>a₁ = a₂ = 0</code></td><td><code>α = (0, 0, 0)</code>, <code>D = 0</code></td><td>두 편미분이 모두 2 &gt; 0, 키우면 <code>D</code> 가 늘어난다</td><td>탈락</td></tr>
+    </table>
+  </div>
+
+  <p>두 번째 줄이 답입니다. 이 경우를 &ldquo;<code>α⁽²⁾ = 0</code> 이라고 가정&rdquo;하고 곧바로 풀 수도 있었습니다(그러면 <code>a₁ = a₃ = a</code>, 목적식은 <code>2a − 4a²</code>, 미분 <code>2 − 8a = 0</code> 에서 <code>a = ¼</code>).
+  하지만 그 가정이 옳은지는 위의 네 줄을 모두 따져야 알 수 있습니다. 특히 <b>두 번째 줄의 <code>−½</code></b>가 요점입니다. <code>α⁽²⁾</code> 를 양수로 키우는 것은 손해이므로 <code>α⁽²⁾ = 0</code> 이 최선입니다.</p>
+
+  <div class="box note">
+    <p class="box-t">이 답이 &lsquo;최대&rsquo;임을 한 번 더</p>
+    <p><code>D(a₁, a₂)</code> 의 이차항 <code>−(4a₁² + 10a₁a₂ + 6.5a₂²)</code> 에서 괄호 안은 <code>4(a₁ + 1.25a₂)² + 0.25a₂²</code> 로 쓸 수 있어 늘 0 이상이고 0 은 원점뿐입니다. 곧 <code>D</code> 는 위로 볼록한 그릇을 뒤집은 모양이라 최댓값이 하나뿐이고,
+    네 경우 가운데 경계 기울기 점검까지 통과한 곳이 그 최댓값입니다(3장 화면 5 의 한계 상자와 같은 논리이고, 이번에는 최소 대신 최대입니다).</p>
+  </div>
+
+  <h3>4단계 — <code>w</code> 와 <code>b</code> 되찾기</h3>
+
+  <p><b>답: <code>α = (¼, 0, ¼)</code>.</b> 이제 되돌아가는 길(지도의 점선)을 걷습니다.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>구하는 것</th><th>식</th><th>계산</th></tr>
+      <tr><td><code>w</code></td><td>화면 3 의 결과 ① <code>w = Σαyx</code></td><td><code>¼·(+1)·(3, 3) + 0·(4, 3) + ¼·(−1)·(1, 1) = (¾, ¾) − (¼, ¼) = (½, ½)</code></td></tr>
+      <tr><td><code>b</code> (<code>x⁽¹⁾</code> 에서)</td><td><code>α⁽¹⁾ &gt; 0</code> 이므로 <code>g⁽¹⁾ = 0</code>, 곧 <code>y⁽¹⁾(w·x⁽¹⁾ + b) = 1</code></td><td><code>(+1)(½·3 + ½·3 + b) = 1</code> → <code>3 + b = 1</code> → <b><code>b = −2</code></b></td></tr>
+      <tr><td><code>b</code> (<code>x⁽³⁾</code> 에서 검산)</td><td><code>α⁽³⁾ &gt; 0</code> 이므로 <code>y⁽³⁾(w·x⁽³⁾ + b) = 1</code></td><td><code>(−1)(½·1 + ½·1 + b) = 1</code> → <code>−(1 + b) = 1</code> → <code>b = −2</code> ✓ 같은 값</td></tr>
+    </table>
+  </div>
+
+  <p><code>b</code> 를 서포트 벡터에서 구하는 이유는 <code>α &gt; 0</code> 일 때만 상보 여유성에서 <b>등식</b> <code>g = 0</code> 이 나오기 때문입니다. <code>x⁽²⁾</code> 로는 등식이 나오지 않습니다
+  (<code>(+1)(½·4 + ½·3 − 2) = 1.5 ≥ 1</code>, 부등식일 뿐).</p>
+
+  <div class="box good">
+    <p class="box-t">검산 — 세 가지가 모두 맞아떨어집니다</p>
+    <ul>
+      <li><b>2장의 답과 같다.</b> <code>w = (½, ½)</code>, <code>b = −2</code>. 마진 <code>2/‖w‖ = 2/(1/√2) = 2√2</code> 도 2장 화면 5 와 같습니다.</li>
+      <li><b>쌍대 값 = 원문제 값.</b> <code>D = ¼</code>, <code>½‖w‖² = ½(¼ + ¼) = ¼</code>. 화면 5 에서 증명 없이 말한 강쌍대성이 이 문제에서 성립한 것입니다.</li>
+      <li><b>KKT 네 줄.</b> ① 정상성 <code>w = Σαyx</code> (위에서 만든 식), ② 원문제 가능성 <code>g = (0, ½, 0) ≥ 0</code>, ③ 쌍대 가능성 <code>α = (¼, 0, ¼) ≥ 0</code>, ④ 상보 여유성 <code>α·g = (¼·0, 0·½, ¼·0) = 0</code> — 모두 ✓.</li>
+    </ul>
+  </div>
+
+  <p>점이 세 개뿐이라 손으로 풀렸습니다. 점이 수천 개이면 <code>α</code> 가 수천 개이고, 위와 같은 경우 나누기는 불가능합니다. 그래도 문제의 모양(<code>D(α)</code> 와 두 조건)은 하나도 달라지지 않습니다.
+  그 모양에서 내적 <code>x⁽ⁱ⁾·x⁽ʲ⁾</code> 만 남았다는 것(화면 5)은 6장에서 갚습니다.</p>
+</section>
+
+<!-- ─────────────────────────────────────────── 화면 8 -->
+<section class="screen" data-title="요약 · 퀴즈 · 과제">
+  <p class="kicker">4장 · 화면 8</p>
+  <h2>4장 마무리</h2>
+
+  <div class="summary">
+    <h3>핵심 요약</h3>
+    <ol>
+      <li>원문제의 제약마다 승수 <code>α⁽ⁱ⁾ ≥ 0</code> 을 달아 라그랑지안 <code>L = ½‖w‖² − Σ α⁽ⁱ⁾[ y⁽ⁱ⁾(w·x⁽ⁱ⁾+b) − 1 ]</code> 을 만들고, <code>w</code> 와 <code>b</code> 로 편미분해 0 으로 놓으면 <code>w = Σ α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾</code> 와 <code>Σ α⁽ⁱ⁾y⁽ⁱ⁾ = 0</code> 이 나옵니다.</li>
+      <li>이 둘을 <code>L</code> 에 넣으면 <code>w, b</code> 가 사라지고 <b>쌍대문제</b> <code>max Σα − ½ΣΣ α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾(x⁽ⁱ⁾·x⁽ʲ⁾)</code> (<code>α ≥ 0</code>, <code>Σαy = 0</code>)이 됩니다. 쌍대 목적값은 원문제 답의 하한이라 <code>max</code> 이고, 이 문제에서는 하한의 최댓값이 원문제 최솟값과 같습니다(증명 생략).</li>
+      <li>상보 여유성 <code>α⁽ⁱ⁾g⁽ⁱ⁾ = 0</code> 때문에 <code>α &gt; 0</code> 인 점(<b>서포트 벡터</b>)은 마진 경계 위에 있고, 띠 바깥의 점은 <code>α = 0</code> 이라 <code>w</code> 에도 <code>b</code> 에도 영향이 없습니다. 거꾸로(경계 위이면 <code>α &gt; 0</code>)는 성립하지 않습니다.</li>
+      <li>세 점 예제: <code>α = (¼, 0, ¼)</code>, <code>w = (½, ½)</code>, <code>b = −2</code>. 쌍대문제에 데이터는 내적 <code>x⁽ⁱ⁾·x⁽ʲ⁾</code> 로만 들어 있고, 이것이 6장의 출발점입니다.</li>
+    </ol>
+  </div>
+
+  <div class="quiz" data-answer="2">
+    <p class="q">라그랑지안 <code>L(w, b, α)</code> 를 <b><code>b</code> 로 편미분</b>해 0 으로 놓으면 나오는 식은 무엇일까요?</p>
+    <ol class="options">
+      <li data-why="이 식은 w 로 편미분했을 때 나옵니다. L 에서 w 가 들어 있는 항은 ½‖w‖² 와 −w·(Σαyx) 이고 b 가 들어 있는 항과는 다릅니다. b 로 미분하면 w 가 든 항은 상수 취급이라 사라지므로 이 식이 나올 수 없습니다.">w = Σ α⁽ⁱ⁾y⁽ⁱ⁾x⁽ⁱ⁾</li>
+      <li data-why="맞습니다. L 에서 b 가 들어 있는 항은 −b·Σαy 하나뿐이라 b 로 미분하면 −Σαy 가 남고, 이것이 0 이어야 L 에 바닥이 있습니다.">Σ α⁽ⁱ⁾y⁽ⁱ⁾ = 0</li>
+      <li data-why="α ≥ 0 은 편미분으로 얻는 식이 아니라 부등식 제약의 승수에 원래 붙는 부호 조건(쌍대 가능성)입니다. 편미분은 &lsquo;= 0&rsquo; 꼴의 식만 줍니다.">α⁽ⁱ⁾ ≥ 0</li>
+    </ol>
+    <div class="explain">
+      <p>만약 직선이 원점을 지나야 한다는 조건을 걸어 <code>b</code> 를 아예 없앤다면(<code>y(w·x) ≥ 1</code>), 이 편미분 자체가 없어져서 쌍대문제에서 <code>Σαy = 0</code> 도 사라집니다.
+      이 등식 제약은 &ldquo;직선의 위치 <code>b</code> 를 자유롭게 둔 대가&rdquo;입니다. 화면 7 의 예제에서도 이 식 하나가 <code>α</code> 세 개를 두 개로 줄여 주었습니다.</p>
+    </div>
+  </div>
+
+  <div class="quiz" data-answer="3">
+    <p class="q">세 점 예제에 새 점 <code>x⁽⁴⁾ = (5, 5)</code>(레이블 +1)를 추가했습니다. 쌍대문제의 답은 어떻게 될까요? (기존 답: <code>w = (½, ½)</code>, <code>b = −2</code>)</p>
+    <ol class="options">
+      <li data-why="새 점이 늘어났다고 서포트 벡터가 늘어나는 것은 아닙니다. 서포트 벡터는 α > 0 인 점이고 그러려면 마진 경계 위에 있어야 하는데, (5,5) 에서는 y(w·x+b) = ½·5 + ½·5 − 2 = 3 으로 경계(1)에서 멀리 떨어져 있어 α⁽⁴⁾ = 0 이어야 합니다.">답 (w, b) 는 그대로이고, α⁽⁴⁾ &gt; 0 이라 서포트 벡터가 하나 늘어난다</li>
+      <li data-why="새 점이 띠 안으로 들어올 때만 해가 바뀝니다. (5,5) 는 파란 점들 쪽 먼 곳이라 y(w·x+b) = 3 ≥ 1 로 띠 바깥입니다. 오히려 점이 늘었는데도 직선을 방해하지 않습니다.">새 점 때문에 마진이 줄고 w 가 달라진다</li>
+      <li data-why="맞습니다. 기존 (w, b) 에서 새 점의 g = 3 − 1 = 2 > 0 이라 제약을 지키고 α⁽⁴⁾ = 0 으로 두면 KKT 네 줄이 그대로 성립합니다. 이 교재의 문제에서는 KKT 를 만족하면 답이므로 답이 안 바뀝니다.">답은 그대로이고 α⁽⁴⁾ = 0 이다</li>
+    </ol>
+    <div class="explain">
+      <p>반대로 같은 파란 점을 <code>(2, 2)</code> 에 두면 기존 직선에서 <code>w·x + b = ½·2 + ½·2 − 2 = 0</code> 으로 직선 위에 놓이게 되어 제약 <code>y(w·x+b) ≥ 1</code> 을 지키지 못하므로 답이 달라집니다.
+      서포트 벡터가 아닌 점이 해를 바꾸려면 <b>띠 안으로 들어와 제약을 어겨야</b> 합니다. 학습 데이터를 모을 때도 &ldquo;경계 가까운 점이 정보를 갖고 있다&rdquo;는 감각의 근거가 이것입니다.</p>
+    </div>
+  </div>
+
+  <div class="quiz" data-answer="1">
+    <p class="q">&ldquo;마진 경계 위에 있는데 <code>α = 0</code> 인 점&rdquo;은 존재할 수 있을까요?</p>
+    <ol class="options">
+      <li data-why="맞습니다. 상보 여유성 α·g = 0 은 g = 0 이면 α 가 무엇이든 성립하므로 경계 위의 점이 α = 0 일 수 있습니다. 예제에 x⁽⁴⁾ = (5, 1)(+1)을 더하면 이 점은 w·x + b = 1 의 경계 위이지만 α⁽⁴⁾ = 0 이고, 서포트 벡터는 여전히 x⁽¹⁾, x⁽³⁾ 뿐입니다.">존재할 수 있다. 서포트 벡터는 α &gt; 0 인 점이고, 경계 위라는 것만으로는 α &gt; 0 이 보장되지 않는다</li>
+      <li data-why="상보 여유성은 α > 0 이면 g = 0 이라는 한 방향만 말해 줍니다. 경계 위(g = 0)인 점에서는 α·g = 0 이 이미 성립하므로 α 에 아무 제약도 걸지 않습니다. 반례는 위젯의 4번입니다.">존재할 수 없다. 경계 위의 점은 모두 α &gt; 0 이다</li>
+      <li data-why="α = 0 이면 g 가 반드시 양수여야 한다는 것은 상보 여유성을 거꾸로 읽은 오해입니다. α·g = 0 은 α 와 g 중 '하나 이상'이 0 이면 되고, 둘 다 0 인 경우도 허용합니다.">존재할 수 없다. α = 0 이면 반드시 g &gt; 0 이다</li>
+    </ol>
+    <div class="explain">
+      <p><code>α</code> 와 <code>g</code> 중 정확히 하나만 0 이어야 한다는 더 강한 조건을 문헌에서는 엄격 상보성(strict complementarity)이라 부르는데, 이것은 늘 성립하지 않습니다. 그래서 이 교재는 서포트 벡터를 &ldquo;경계 위의 점&rdquo;이 아니라 <b><code>α &gt; 0</code> 인 점</b>으로 정의했습니다.
+      경계 위이면서 <code>α = 0</code> 인 점은 지워도 해가 안 바뀌고, 서포트 벡터는 지우면 대개 해가 바뀝니다. 경계 위에 점이 많은 퇴화 배치에서는 <code>α</code> 가 하나로 정해지지 않아 예외가 있습니다(화면 6 의 한계).</p>
+    </div>
+  </div>
+
+  <div class="box note">
+    <h3>직접 해보기</h3>
+    <p>점 두 개 <code>x⁽¹⁾ = (2, 0)</code>(+1), <code>x⁽²⁾ = (0, 0)</code>(−1) 입니다. 이 장의 방법으로 SVM 의 답을 구합니다.</p>
+    <ol>
+      <li>세 가지 내적 <code>x⁽¹⁾·x⁽¹⁾, x⁽¹⁾·x⁽²⁾, x⁽²⁾·x⁽²⁾</code> 와 레이블을 곱한 값을 구하고, 쌍대 목적식 <code>D(α⁽¹⁾, α⁽²⁾)</code> 를 쓰세요.</li>
+      <li>제약 <code>Σαy = 0</code> 으로 <code>α⁽²⁾</code> 를 <code>α⁽¹⁾</code> 로 쓰고, <code>D</code> 를 한 변수 <code>a</code> 의 식으로 만들어 최대가 되는 <code>a</code> 를 구하세요.</li>
+      <li><code>w = Σαyx</code> 와 서포트 벡터의 등식으로 <code>w, b</code> 를 구하세요.</li>
+      <li>쌍대 최댓값과 원문제 값 <code>½‖w‖²</code> 이 같은지 확인하세요.</li>
+      <li>세 번째 점 <code>x⁽³⁾ = (3, 0)</code>(+1)을 더하면 서포트 벡터가 되나요? <code>g⁽³⁾</code> 를 계산해 답하세요.</li>
+    </ol>
+  </div>
+
+  <details class="fold answer">
+    <summary>모범답안 — 그리고 흔한 실수가 왜 부족한지</summary>
+    <div class="fold-body">
+      <p><b>1.</b> 내적은 <code>x⁽¹⁾·x⁽¹⁾ = 4</code>, <code>x⁽¹⁾·x⁽²⁾ = 0</code>, <code>x⁽²⁾·x⁽²⁾ = 0</code>. 레이블 곱을 하면 <code>y⁽¹⁾y⁽¹⁾·4 = 4</code>, <code>y⁽¹⁾y⁽²⁾·0 = 0</code>, <code>y⁽²⁾y⁽²⁾·0 = 0</code> 입니다.
+      따라서 <code>D = α⁽¹⁾ + α⁽²⁾ − ½·4(α⁽¹⁾)² = α⁽¹⁾ + α⁽²⁾ − 2(α⁽¹⁾)²</code> 입니다.</p>
+      <p><b>2.</b> <code>Σαy = α⁽¹⁾ − α⁽²⁾ = 0</code> 에서 <code>α⁽²⁾ = α⁽¹⁾ = a</code>. <code>D = 2a − 2a²</code>, <code>dD/da = 2 − 4a = 0</code> 에서 <code>a = ½</code> 이고 <code>D = 1 − ½ = ½</code> 입니다
+      (<code>a ≥ 0</code> 의 경계 <code>a = 0</code> 은 <code>D = 0</code> 이고 키우면 늘어나므로 최대가 아닙니다). <code>α = (½, ½)</code>.</p>
+      <p><b>3.</b> <code>w = ½·(+1)·(2, 0) + ½·(−1)·(0, 0) = (1, 0)</code>. <code>α⁽¹⁾ &gt; 0</code> 이므로 <code>y⁽¹⁾(w·x⁽¹⁾ + b) = 1</code>, 곧 <code>2 + b = 1</code>, <code>b = −1</code>. 검산: <code>x⁽²⁾</code> 에서 <code>−(0 + b) = 1</code>, <code>b = −1</code> ✓.
+      직선은 <code>x₁ = 1</code> 로 두 점의 한가운데이고 마진은 <code>2/‖w‖ = 2</code> 입니다.</p>
+      <p><b>4.</b> <code>½‖w‖² = ½·1 = ½</code>, <code>D = ½</code> 로 같습니다.</p>
+      <p><b>5.</b> <code>g⁽³⁾ = y(w·x + b) − 1 = (1·3 − 1) − 1 = 1 &gt; 0</code> 이므로 띠 바깥이고 <code>α⁽³⁾ = 0</code>, 서포트 벡터가 아닙니다. 답은 그대로 <code>w = (1, 0)</code>, <code>b = −1</code> 입니다.</p>
+      <p><b>흔한 실수 1</b> — 2번에서 <code>a₁, a₂</code> 를 따로 최대화하기. <code>D = α⁽¹⁾ + α⁽²⁾ − 2(α⁽¹⁾)²</code> 에서 <code>α⁽²⁾</code> 를 한없이 키우면 <code>D</code> 도 한없이 커지는 것처럼 보이지만, <code>Σαy = 0</code> 이라는 조건이 둘을 묶습니다. 쌍대문제는 목적식만이 아니라 <b>제약까지 합쳐</b> 하나의 문제입니다.</p>
+      <p><b>흔한 실수 2</b> — <code>b</code> 를 <code>Σαy = 0</code> 에서 구하려 하기. 그 식에는 <code>b</code> 가 없습니다. <code>b</code> 는 <code>α &gt; 0</code> 인 점의 등식 <code>y(w·x+b) = 1</code> 에서 구합니다. <code>α = 0</code> 인 점에서는 부등식만 나와서 <code>b</code> 를 정할 수 없습니다.</p>
+      <p><b>흔한 실수 3</b> — 답 <code>α</code> 가 양수인지 확인하지 않기. 편미분 = 0 으로 구한 점이 <code>α &lt; 0</code> 이면 가능해가 아닙니다(화면 7 의 <code>(3/2, −1)</code>).</p>
+      <p><b>이 교재가 가는 길</b> — 5장은 지금의 쌍대문제에서 딱 한 줄(<code>0 ≤ α ≤ C</code>)만 바꾸어 이상치를 견디는 SVM 을 만들고, 6장은 <code>D(α)</code> 에 남은 내적 <code>x⁽ⁱ⁾·x⁽ʲ⁾</code> 를 다른 함수로 바꿔 끼웁니다.</p>
+    </div>
+  </details>
+
+  <div class="chapter-end">
+    <a href="index.html"><span>돌아가기</span>표지와 목차</a>
+    <a href="ch05.html"><span>다음 장</span>5장 — 소프트 마진</a>
+  </div>
+</section>
+
+</div></main>
+
+<script src="assets/book.js"></script>
+</body>
+</html>
