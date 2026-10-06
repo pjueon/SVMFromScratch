@@ -104,7 +104,7 @@
 
   <p style="text-align:center;font-size:1.05rem">\[\alpha ^{(i)} \text{의 새 값} = \alpha ^{(i)} + y^{(i)}y^{(j)} (\alpha ^{(j)} - t)\]</p>
 
-  <p>(\(\alpha ^{(i)}\), \(\alpha ^{(j)}\) 는 움직이기 전 값입니다. 검산: 새 \(\alpha ^{(i)}y^{(i)} = \alpha ^{(i)}y^{(i)} + y^{(j)}(\alpha ^{(j)} - t)\) 이고 \(y^{(i)2} = 1\) 이므로, 새 \(\alpha ^{(i)}y^{(i)} + t\cdot y^{(j)} = \alpha ^{(i)}y^{(i)} + \alpha ^{(j)}y^{(j)}\) 로 합이 그대로입니다.) 자유로운 변수가 \(t\) 하나로 줄었습니다.</p>
+  <p>(\(\alpha ^{(i)}\), \(\alpha ^{(j)}\) 는 움직이기 전 값입니다. 검산: 새 \(\alpha ^{(i)}y^{(i)} = \alpha ^{(i)}y^{(i)} + y^{(j)}(\alpha ^{(j)} - t)\) 이고 \(y^{(i)2} = 1\) 이므로, 새 \(\alpha ^{(i)}y^{(i)} + ty^{(j)} = \alpha ^{(i)}y^{(i)} + \alpha ^{(j)}y^{(j)}\) 로 합이 그대로입니다.) 자유로운 변수가 \(t\) 하나로 줄었습니다.</p>
 
   <p>남은 제약은 상자 \(0 \le  \alpha  \le  C\) 뿐입니다. 두 \(\alpha \) 의 평면에서 상자는 정사각형이고, 합이 일정하다는 조건은 그 위의 선 하나입니다. <b>선이 상자 안에 있는 부분이 \(t\) 가 움직일 수 있는 구간 <code>[L, H]</code></b> 입니다.</p>
 
@@ -150,7 +150,7 @@
   <p>(합이 \(E^{(k)} + y^{(k)}\) 인 것은 ①의 정의이고, \(y^{(k)2} = 1\) 을 썼습니다.)</p>
 
   <p><b>③ 사슬 법칙으로 t 에 대한 기울기를 구한다.</b> 위의 선 위에서는 \(\alpha ^{(i)}\) 가 \(t\) 에 따라 <code>dα⁽ⁱ⁾/dt = −y⁽ⁱ⁾y⁽ʲ⁾</code> 로 움직입니다. 따라서 움직이기 전 위치(\(t = \alpha ^{(j)}\))에서</p>
-  <p style="text-align:center;font-size:1.05rem">\[dD/dt = \partial D/\partial \alpha ^{(j)} + (\partial D/\partial \alpha ^{(i)})\cdot (-y^{(i)}y^{(j)}) = -y^{(j)}E^{(j)} + y^{(j)}E^{(i)} = y^{(j)}(E^{(i)} - E^{(j)})\]</p>
+  <p style="text-align:center;font-size:1.05rem">\[dD/dt = \partial D/\partial \alpha ^{(j)} + (\partial D/\partial \alpha ^{(i)})(-y^{(i)}y^{(j)}) = -y^{(j)}E^{(j)} + y^{(j)}E^{(i)} = y^{(j)}(E^{(i)} - E^{(j)})\]</p>
   <p>(가운데 항은 \((-y^{(i)}E^{(i)})(-y^{(i)}y^{(j)}) = y^{(j)}E^{(i)}\), \(y^{(i)2} = 1\) 입니다.)</p>
 
   <p><b>④ 곡률을 구한다.</b> 같은 사슬 법칙을 한 번 더 쓰면, 2차 편미분 <code>∂²D/∂α⁽ᵏ⁾∂α⁽ᵐ⁾ = −y⁽ᵏ⁾y⁽ᵐ⁾K<sub>km</sub></code> 에서</p>
@@ -248,7 +248,7 @@ def rbf_kernel(X, Z, gamma=1.0):
   <h3>쌍 고르기와 구간 — <code>violating_pair</code>, <code>clip_range</code></h3>
 
   <p>화면 2 의 식은 쌍 <code>(i, j)</code> 가 주어졌다고 보고 계산했습니다. 이제 그 쌍을 정합니다. 쌍을 &ldquo;D 가 가장 크게 오르는 쌍&rdquo;으로 고르는 것이 목표입니다. 두 \(\alpha ^{(i)}y^{(i)}\) 와 \(\alpha ^{(j)}y^{(j)}\) 를 같은 양 δ 만큼 하나는 올리고 하나는 내리면 합이 유지되어 제약이 지켜집니다. 이때 화면 2 의 ② 를 쓰면 \(D\) 의 변화는 처음에</p>
-  <p style="text-align:center;font-size:1.05rem">\[(-E^{(i)})\cdot \delta  + (+E^{(j)})\cdot \delta  = (E^{(j)} - E^{(i)})\cdot \delta \]</p>
+  <p style="text-align:center;font-size:1.05rem">\[(-E^{(i)})\delta  + (+E^{(j)})\delta  = (E^{(j)} - E^{(i)})\delta \]</p>
   <p>(\(\alpha ^{(i)}\) 는 \(y^{(i)}\delta \) 만큼 변하고 \(\partial D/\partial \alpha ^{(i)} = -y^{(i)}E^{(i)}\) 이므로 \(-E^{(i)}\delta \), \(\alpha ^{(j)}\) 는 \(-y^{(j)}\delta \) 만큼 변하므로 \(+E^{(j)}\delta \))이라, <b>\(E\) 가 작은 점의 \(\alpha y\) 를 올리고 \(E\) 가 큰 점의 \(\alpha y\) 를 내릴수록 이득이 큽니다.</b> 이득의 크기 \(E^{(j)} - E^{(i)}\) 가 그 쌍의 &lsquo;위반 정도&rsquo;이고, 위반이 가장 큰 쌍을 고르는 규칙이 <span class="term" data-term="violpair">최대 위반 쌍</span> 규칙입니다. 5장과 6장의 위젯이 쓴 방법과 같습니다. 가장 큰 위반 정도도 <code>tol</code> 보다 작으면 올라갈 방향이 없다고 보고 끝냅니다(화면 4).</p>
 
   <p>단, \(\alpha \) 가 상자 끝에 붙어 있어서 그 방향으로 못 움직이는 점은 후보에서 뺍니다. \(\alpha y\) 를 올릴 수 있는 점과 내릴 수 있는 점은 다음과 같습니다.</p>
@@ -579,7 +579,7 @@ True
 
   <h3>scikit-learn 과 같은 답인가</h3>
 
-  <p>같은 문제를 scikit-learn 의 <code>SVC</code> 로 풀어서 서포트 벡터와 \(\alpha \), \(b\) 를 비교합니다. <code>SVC</code> 는 \(\alpha \) 를 <code>dual_coef_</code>(= \(\alpha \cdot y\)) 로, 서포트 벡터 번호를 <code>support_</code> 로, \(b\) 를 <code>intercept_</code> 로 알려 줍니다. 여기서는 &ldquo;같은 답이 나오는지 확인&rdquo;만 하고 사용법은 다음 장에서 자세히 봅니다. <span class="later">8장에서 사용법을 본다</span> 먼저 점 3개입니다.</p>
+  <p>같은 문제를 scikit-learn 의 <code>SVC</code> 로 풀어서 서포트 벡터와 \(\alpha \), \(b\) 를 비교합니다. <code>SVC</code> 는 \(\alpha \) 를 <code>dual_coef_</code>(= \(\alpha \odot y\)) 로, 서포트 벡터 번호를 <code>support_</code> 로, \(b\) 를 <code>intercept_</code> 로 알려 줍니다. 여기서는 &ldquo;같은 답이 나오는지 확인&rdquo;만 하고 사용법은 다음 장에서 자세히 봅니다. <span class="later">8장에서 사용법을 본다</span> 먼저 점 3개입니다.</p>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>from sklearn.svm import SVC
 s3 = SVC(kernel="linear", C=10).fit(X3, y3)
@@ -709,7 +709,7 @@ print(SVC(kernel="linear", C=1, tol=1e-10).fit(X4, y4).intercept_)
     <div class="fold-body">
       <p><b>1.</b> \(\eta  = K_{22} + K_{33} - 2K_{23} = 25 + 2 - 14 = 13\). \(\alpha  = 0\) 이라 \(E = (-1, -1, +1)\). \(y^{(2)} \ne  y^{(3)}\) 이고 <code>L = 0</code>, <code>H = C = 10</code>. <code>t* = 0 + y⁽³⁾(E⁽²⁾ − E⁽³⁾)/η = (−1)(−2)/13 = 2/13</code> 는 구간 안이라 그대로입니다. \(\alpha ^{(2)} = 0 + y^{(2)}y^{(3)}(0 - 2/13) = 2/13\). 따라서 \(\alpha  = (0, 2/13, 2/13)\).</p>
       <p><b>2.</b> \(\alpha ^{(1)} + \alpha ^{(2)} - \alpha ^{(3)} = 0 + 2/13 - 2/13 = 0\) ✓.</p>
-      <p><b>3.</b> \(\sum \alpha  = 4/13\). 이중합은 0 이 아닌 \(\alpha ^{(2)}\), \(\alpha ^{(3)}\) 에 대해서만 남고 \((2/13)^{2}\cdot (K_{22} + K_{33} - 2K_{23}) = (4/169)\cdot 13 = 4/13\) 입니다. <code>D = 4/13 − ½·4/13 = 2/13 ≈ 0.1538</code> 로 \(\tfrac14 \) 보다 작습니다. 근거: 4장에서 이 후보 <code>(0, 2/13)</code> 은 쌍대 최댓값이 아니라고 확인했고, 코드의 쌍 선택 규칙으로 보면 <code>E = K@(αy) − y</code> 가 <code>(17/13, 23/13, 23/13)</code> 으로 점마다 달라 위반 정도 \(E^{(j)} - E^{(i)} > 0\) 인 쌍이 남아 있기 때문입니다(최대 위반 쌍이 남아 있으면 더 오를 수 있다).</p>
+      <p><b>3.</b> \(\sum \alpha  = 4/13\). 이중합은 0 이 아닌 \(\alpha ^{(2)}\), \(\alpha ^{(3)}\) 에 대해서만 남고 \((2/13)^{2}(K_{22} + K_{33} - 2K_{23}) = (4/169)\times 13 = 4/13\) 입니다. <code>D = 4/13 − ½·4/13 = 2/13 ≈ 0.1538</code> 로 \(\tfrac14 \) 보다 작습니다. 근거: 4장에서 이 후보 <code>(0, 2/13)</code> 은 쌍대 최댓값이 아니라고 확인했고, 코드의 쌍 선택 규칙으로 보면 <code>E = K@(αy) − y</code> 가 <code>(17/13, 23/13, 23/13)</code> 으로 점마다 달라 위반 정도 \(E^{(j)} - E^{(i)} > 0\) 인 쌍이 남아 있기 때문입니다(최대 위반 쌍이 남아 있으면 더 오를 수 있다).</p>
       <p><b>4.</b> 아래 코드를 <code>svm.py</code> 뒤에 이어 붙여 실행합니다.</p>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>def dual(a, K, y):

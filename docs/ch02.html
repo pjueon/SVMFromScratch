@@ -174,18 +174,18 @@
   <h3>2단계 — 수선의 발의 위치를 w 로 쓰기</h3>
 
   <p>1장 화면 3 에서 \(w\) 는 직선에 수직이라고 했습니다. 따라서 \(x\) 에서 직선으로 내린 수선은
-  \(w\) 방향입니다. 그 수선의 발을 \(p = x - t\cdot w\) 로 씁니다. \(t\) 는 아직 모르는 수이고, 음수일 수도 있습니다
+  \(w\) 방향입니다. 그 수선의 발을 \(p = x - tw\) 로 씁니다. \(t\) 는 아직 모르는 수이고, 음수일 수도 있습니다
   (\(w\) 반대쪽에서 내려가야 할 수도 있으니까요). \(p\) 는 직선 위의 점이므로 \(f(p) = 0\) 이어야 합니다.</p>
 
-  <p style="text-align:center">\[f(p) = w\cdot (x - t\cdot w) + b = (w\cdot x + b) - t\cdot (w\cdot w) = f(x) - t\lVert w\rVert ^{2} = 0\]</p>
+  <p style="text-align:center">\[f(p) = w(x - tw) + b = (w\cdot x + b) - t(w\cdot w) = f(x) - t\lVert w\rVert ^{2} = 0\]</p>
 
   <p>(\(w\cdot w = \lVert w\rVert ^{2}\) 는 1장에서 쓴 사실입니다.) 이 식을 \(t\) 에 대해 풀면 \(t = f(x) / \lVert w\rVert ^{2}\) 입니다.</p>
 
   <h3>3단계 — 길이를 잰다</h3>
 
-  <p>거리는 \(x\) 와 \(p\) 사이의 길이이고, \(x - p = t\cdot w\) 이므로</p>
+  <p>거리는 \(x\) 와 \(p\) 사이의 길이이고, \(x - p = tw\) 이므로</p>
 
-  <p style="text-align:center">\[\text{거리} = \lVert t\cdot w\rVert  = |t|\cdot \lVert w\rVert  = |f(x)| / \lVert w\rVert ^{2} \cdot  \lVert w\rVert  = |f(x)| / \lVert w\rVert \]</p>
+  <p style="text-align:center">\[\text{거리} = \lVert tw\rVert  = |t|\lVert w\rVert  = |f(x)| / \lVert w\rVert ^{2}\lVert w\rVert  = |f(x)| / \lVert w\rVert \]</p>
 
   <div class="box good">
     <p class="box-t">거리 공식</p>
@@ -198,7 +198,7 @@
   <h3>숫자로 확인</h3>
 
   <p>직선 나(\(w=(1,1)\), \(b=-4\))에서 \(\lVert w\rVert  = \sqrt{2} \approx  1.414\) 입니다. 1장 화면 3 의 값 2, 3, −2 를
-  \(\sqrt{2}\) 로 나누면 세 점의 거리가 나옵니다. 수선의 발의 위치 \(p = x - (f(x)/\lVert w\rVert ^{2})\cdot w\) 도 함께 계산해 확인합니다
+  \(\sqrt{2}\) 로 나누면 세 점의 거리가 나옵니다. 수선의 발의 위치 \(p = x - (f(x)/\lVert w\rVert ^{2})w\) 도 함께 계산해 확인합니다
   (\(\lVert w\rVert ^{2} = 2\)).</p>
 
   <div class="table-wrap">
@@ -405,7 +405,7 @@
 
   <div class="table-wrap">
     <table>
-      <tr><th>점</th><th>값 \(w\cdot x+b\)</th><th>함수 마진 \(y\cdot (w\cdot x+b)\)</th><th>≥ 1 ?</th><th>직선까지 거리 \(|\text{값}|/\lVert w\rVert \)</th></tr>
+      <tr><th>점</th><th>값 \(w\cdot x+b\)</th><th>함수 마진 \(y(w\cdot x+b)\)</th><th>≥ 1 ?</th><th>직선까지 거리 \(|\text{값}|/\lVert w\rVert \)</th></tr>
       <tr><td>x<sup>(1)</sup> = (3, 3), y=+1</td><td id="m-v1"></td><td id="m-y1"></td><td id="m-k1"></td><td id="m-d1"></td></tr>
       <tr><td>x<sup>(2)</sup> = (4, 3), y=+1</td><td id="m-v2"></td><td id="m-y2"></td><td id="m-k2"></td><td id="m-d2"></td></tr>
       <tr><td>x<sup>(3)</sup> = (1, 1), y=−1</td><td id="m-v3"></td><td id="m-y3"></td><td id="m-k3"></td><td id="m-d3"></td></tr>
@@ -474,7 +474,7 @@
       $('m-d' + (i + 1)).textContent = zero ? '—' : (Math.abs(f) / nn).toFixed(3);
       $('m-l' + (i + 1)).textContent = NAMES[i] + (ok ? ' ✓' : ' ✗');
     }
-    $('m-eq').textContent = '현재: ' + par(w1) + '·x₁ + ' + par(w2) + '·x₂ + ' + par(b) + ' = 0' +
+    $('m-eq').textContent = '현재: ' + par(w1) + 'x₁ + ' + par(w2) + 'x₂ + ' + par(b) + ' = 0' +
       (zero ? '   (w = (0, 0) 이면 직선도 띠도 정해지지 않습니다)' : '   ‖w‖ = ' + nn.toFixed(3));
     if (zero) {
       $('m-w2n').textContent = '— (w = 0 이면 정해지지 않음)';
@@ -608,7 +608,7 @@
 
   <div class="table-wrap">
     <table>
-      <tr><th>점</th><th>\(w\cdot x+b\)</th><th>값</th><th>\(y\cdot (\text{값})\) ≥ 1 ?</th></tr>
+      <tr><th>점</th><th>\(w\cdot x+b\)</th><th>값</th><th>\(y(\text{값})\) ≥ 1 ?</th></tr>
       <tr><td>x<sup>(1)</sup> = (3, 3)</td><td>½·3 + ½·3 − 2</td><td>1</td><td>(+1)·1 = <b>1</b> ✓ (딱 닿음)</td></tr>
       <tr><td>x<sup>(2)</sup> = (4, 3)</td><td>½·4 + ½·3 − 2</td><td>1.5</td><td>(+1)·1.5 = <b>1.5</b> ✓ (여유 있음)</td></tr>
       <tr><td>x<sup>(3)</sup> = (1, 1)</td><td>½·1 + ½·1 − 2</td><td>−1</td><td>(−1)·(−1) = <b>1</b> ✓ (딱 닿음)</td></tr>
@@ -622,7 +622,7 @@
   <h3>2단계 — 마진과 목적함수의 값</h3>
 
   <p>\(\lVert w\rVert  = \sqrt{\tfrac14 +\tfrac14 } = \sqrt{\tfrac12 } = 1/\sqrt{2} \approx  0.707\) 이므로 <b>마진 \(2/\lVert w\rVert  = 2\sqrt{2} \approx  2.83\)</b>, 목적함수는
-  \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 \cdot \tfrac12  = \tfrac14 \) 입니다. 화면 1 에서 삼각형으로 잰 폭 2√2, 화면 2 의 거리 공식과 모두 맞습니다
+  \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 \times \tfrac12  = \tfrac14 \) 입니다. 화면 1 에서 삼각형으로 잰 폭 2√2, 화면 2 의 거리 공식과 모두 맞습니다
   (가장 가까운 두 점 \(x^{(1)}, x^{(3)}\) 까지의 거리 \(1/\lVert w\rVert  = \sqrt{2}\), 그 두 배).</p>
 
   <h3>3단계 — 이것이 정말 최소인가</h3>
@@ -635,7 +635,7 @@
   <p>\(b\) 가 약분되어 사라졌습니다. 이제 \(w_{1}^{2}+w_{2}^{2}\) 를 아래로 누릅니다. 전개해 보면
   \((w_{1}+w_{2})^{2} + (w_{1}-w_{2})^{2} = 2(w_{1}^{2}+w_{2}^{2})\) 이므로</p>
 
-  <p style="text-align:center">\[w_{1}^{2} + w_{2}^{2} = \tfrac12 [ (w_{1}+w_{2})^{2} + (w_{1}-w_{2})^{2} ] \ge  \tfrac12 (w_{1}+w_{2})^{2} \ge  \tfrac12 \cdot 1^{2} = \tfrac12 \]</p>
+  <p style="text-align:center">\[w_{1}^{2} + w_{2}^{2} = \tfrac12 [ (w_{1}+w_{2})^{2} + (w_{1}-w_{2})^{2} ] \ge  \tfrac12 (w_{1}+w_{2})^{2} \ge  \tfrac12 \times 1^{2} = \tfrac12 \]</p>
 
   <p>첫 부등호는 \((w_{1}-w_{2})^{2} \ge  0\) 이라서, 둘째 부등호는 \(w_{1}+w_{2} \ge  1\) 이 양수이므로 제곱해도 방향이 유지되어서입니다.
   따라서 <b>모든 가능해에서 \(\tfrac12 \lVert w\rVert ^{2} \ge  \tfrac14 \)</b> 입니다. 등호는 \(w_{1} = w_{2}\) 이고 \(w_{1}+w_{2} = 1\) 일 때뿐이므로
@@ -701,7 +701,7 @@
     </ol>
     <div class="explain">
       <p>수선의 발을 직접 구해 확인할 수 있습니다. \(t = f(x)/\lVert w\rVert ^{2} = -10/25 = -0.4\) 이므로
-      \(p = x - t\cdot w = (0,0) + 0.4\cdot (3,4) = (1.2, 1.6)\) 이고, \(f(p) = 3.6 + 6.4 - 10 = 0\) 으로 직선 위입니다.
+      \(p = x - tw = (0,0) + 0.4(3,4) = (1.2, 1.6)\) 이고, \(f(p) = 3.6 + 6.4 - 10 = 0\) 으로 직선 위입니다.
       원점에서 p 까지의 길이는 \(\sqrt{1.44+2.56} = 2\) 입니다. (3, 4, 5 직각삼각형이 숨어 있어서 값이 깔끔하게 떨어집니다.)</p>
     </div>
   </div>
@@ -714,7 +714,7 @@
       <li data-why="1/‖w‖ = 0.4 는 직선에서 가장 가까운 점까지의 거리, 즉 띠의 한쪽 폭입니다. 마진은 양쪽을 합친 폭이라 그 두 배인 0.8 입니다.">0.4</li>
     </ol>
     <div class="explain">
-      <p>이 \(w\) 의 목적함수는 \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 \cdot 6.25 = 3.125\) 입니다. 마진이 작은 만큼 목적함수가 큽니다. 한편 마진은 &lsquo;두 클래스 사이의 길&rsquo;의
+      <p>이 \(w\) 의 목적함수는 \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 \times 6.25 = 3.125\) 입니다. 마진이 작은 만큼 목적함수가 큽니다. 한편 마진은 &lsquo;두 클래스 사이의 길&rsquo;의
       너비라서, SVM 을 &ldquo;가장 넓은 길을 내는 분류기&rdquo;라고 부르기도 합니다. 길의 정중앙이 결정경계, 길의 양쪽 끝이 \(w\cdot x+b=\pm 1\) 입니다.</p>
     </div>
   </div>
