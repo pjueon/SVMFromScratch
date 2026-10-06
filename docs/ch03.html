@@ -470,6 +470,41 @@
 
   <p>답은 화면 3 과 같은 \(w = (\tfrac12 , \tfrac12 )\), \(J = \tfrac14 \) 이고, 제약이 \(g = 0\) 으로 <b>딱 닿아 있습니다.</b></p>
 
+  <figure class="fig">
+<svg viewBox="0 0 380 340" role="img" aria-label="예 A. 가능해 영역은 w₁+w₂ ≥ 1 인 직선 오른쪽 위. 제약 없는 최솟값 원점은 영역 밖이고, 답 (½,½) 은 경계 위에서 등고선이 직선에 닿는 점이며 ∇J 가 영역 안쪽을 향한다" style="max-width:28rem">
+<polygon points="380.0,298.0 380.0,0.0 82.0,0.0" style="fill:var(--accent-bg)"/>
+<g class="svg-line" stroke-width=".6">
+<path d="M66 8 V332"/><path d="M8 294 H372"/>
+<path d="M128 8 V332"/><path d="M8 232 H372"/>
+<path d="M190 8 V332"/><path d="M8 170 H372"/>
+<path d="M252 8 V332"/><path d="M8 108 H372"/>
+<path d="M314 8 V332"/><path d="M8 46 H372"/>
+</g>
+<g stroke-width="1.4" fill="none" style="stroke:var(--muted)"><path d="M8 170 H372"/><path d="M190 332 V8"/></g>
+<g class="svg-muted" font-size="12"><text x="362" y="186" class="svg-fg">w₁</text><text x="198" y="20" class="svg-fg">w₂</text></g>
+<g class="svg-muted" font-size="10" text-anchor="middle"><text x="66" y="184">-2</text><text x="128" y="184">-1</text><text x="252" y="184">1</text><text x="314" y="184">2</text></g>
+<g class="svg-muted" font-size="10" text-anchor="end"><text x="185" y="297">-2</text><text x="185" y="235">-1</text><text x="185" y="111">1</text><text x="185" y="49">2</text></g>
+<g fill="none" stroke-width="1" style="stroke:var(--muted);stroke-dasharray:4 3">
+<circle cx="190" cy="170" r="21.7"/>
+<circle cx="190" cy="170" r="68.2"/>
+<circle cx="190" cy="170" r="93.0"/>
+<circle cx="190" cy="170" r="117.8"/>
+</g>
+<circle cx="190" cy="170" r="43.8" fill="none" stroke-width="1.6" style="stroke:var(--fg)"/>
+<path d="M0.0 -82.0 L380.0 298.0" stroke-width="2.4" fill="none" style="stroke:var(--fg)"/>
+<path d="M221.0 139.0 L252.0 108.0" stroke-width="2.6" fill="none" style="stroke:var(--accent)"/><path d="M252.0 108.0 L249.0 115.4 L244.6 111.0 Z" style="fill:var(--accent)"/>
+<circle cx="190" cy="170" r="5" stroke-width="2" style="fill:var(--bg);stroke:var(--bad)"/>
+<circle cx="221.0" cy="139.0" r="6" style="fill:var(--accent)"/>
+<g font-size="11" class="svg-fg" style="paint-order:stroke;stroke:var(--bg);stroke-width:3.5px;stroke-linejoin:round">
+<text x="190" y="202" text-anchor="middle" style="fill:var(--bad)">(0, 0) 가능해 밖 → 탈락</text>
+<text x="231" y="161">답 (½, ½), λ = ½ ≥ 0</text>
+<text x="255" y="101" style="fill:var(--accent)">∇J</text>
+<text x="280" y="71" class="svg-muted">가능해 영역 g ≥ 0</text>
+<text x="119" y="24" text-anchor="end" class="svg-muted">경계 g = 0</text>
+</g></svg>
+    <figcaption>점선과 굵은 원은 \(J\) 의 등고선(원점을 중심으로 한 원)이고, 파란 영역이 가능해 영역입니다. 제약 없는 최솟값인 원점(빨간 빈 동그라미)은 영역 밖이라 탈락하고, 등고선이 경계 직선에 딱 닿는 점 \((\tfrac12 , \tfrac12 )\) 이 답입니다. 이 점에서 \(\nabla J\)(화살표)는 가능해 영역 안쪽을 향합니다.</figcaption>
+  </figure>
+
   <h3>예 B — 제약이 있어도 무관하다</h3>
 
   <p>같은 목적함수에서 제약만 한 칸 옮깁니다.</p>
@@ -490,6 +525,40 @@
 
   <p>답은 제약이 없던 때와 같은 \(w = (0, 0)\) 이고 \(\lambda  = 0\) 입니다. 제약이 <b>있으나 마나</b> 한 문제입니다.
   경계 위의 \((-\tfrac12 , -\tfrac12 )\) 는 가능해이긴 해도 \(J = \tfrac14 \) 로 원점의 \(J = 0\) 보다 큽니다.</p>
+
+  <figure class="fig">
+<svg viewBox="0 0 380 340" role="img" aria-label="예 B. 가능해 영역은 w₁+w₂ ≥ −1 인 직선 오른쪽 위로 원점을 품는다. 답은 영역 안쪽의 원점이고, 경계 위 (−½,−½) 는 ∇J 가 영역 바깥을 향해 탈락한다" style="max-width:28rem">
+<polygon points="298.0,340.0 380.0,340.0 380.0,0.0 0.0,0.0 0.0,42.0" style="fill:var(--accent-bg)"/>
+<g class="svg-line" stroke-width=".6">
+<path d="M66 8 V332"/><path d="M8 294 H372"/>
+<path d="M128 8 V332"/><path d="M8 232 H372"/>
+<path d="M190 8 V332"/><path d="M8 170 H372"/>
+<path d="M252 8 V332"/><path d="M8 108 H372"/>
+<path d="M314 8 V332"/><path d="M8 46 H372"/>
+</g>
+<g stroke-width="1.4" fill="none" style="stroke:var(--muted)"><path d="M8 170 H372"/><path d="M190 332 V8"/></g>
+<g class="svg-muted" font-size="12"><text x="362" y="186" class="svg-fg">w₁</text><text x="198" y="20" class="svg-fg">w₂</text></g>
+<g class="svg-muted" font-size="10" text-anchor="middle"><text x="66" y="184">-2</text><text x="128" y="184">-1</text><text x="252" y="184">1</text><text x="314" y="184">2</text></g>
+<g class="svg-muted" font-size="10" text-anchor="end"><text x="185" y="297">-2</text><text x="185" y="235">-1</text><text x="185" y="111">1</text><text x="185" y="49">2</text></g>
+<g fill="none" stroke-width="1" style="stroke:var(--muted);stroke-dasharray:4 3">
+<circle cx="190" cy="170" r="21.7"/>
+<circle cx="190" cy="170" r="68.2"/>
+<circle cx="190" cy="170" r="93.0"/>
+<circle cx="190" cy="170" r="117.8"/>
+</g>
+<circle cx="190" cy="170" r="43.8" fill="none" stroke-width="1.6" style="stroke:var(--fg)"/>
+<path d="M0.0 42.0 L380.0 422.0" stroke-width="2.4" fill="none" style="stroke:var(--fg)"/>
+<path d="M159.0 201.0 L128.0 232.0" stroke-width="2.6" fill="none" style="stroke:var(--bad)"/><path d="M128.0 232.0 L131.0 224.6 L135.4 229.0 Z" style="fill:var(--bad)"/>
+<circle cx="159.0" cy="201.0" r="5" stroke-width="2" style="fill:var(--bg);stroke:var(--bad)"/>
+<circle cx="190" cy="170" r="6" style="fill:var(--accent)"/>
+<g font-size="11" class="svg-fg" style="paint-order:stroke;stroke:var(--bg);stroke-width:3.5px;stroke-linejoin:round">
+<text x="200" y="160">답 (0, 0), λ = 0 (제약 무관)</text>
+<text x="173" y="227" style="fill:var(--bad)">(−½, −½) λ = −½ → 탈락</text>
+<text x="124" y="250" text-anchor="end" style="fill:var(--bad)">∇J</text>
+<text x="252" y="52" class="svg-muted">가능해 영역 g ≥ 0</text>
+</g></svg>
+    <figcaption>원점이 가능해 영역 안쪽에 있어서, 제약 없는 최솟값이 그대로 답입니다. 경계 위의 \((-\tfrac12 , -\tfrac12 )\)(빨간 빈 동그라미)에서는 \(\nabla J\)(빨간 화살표)가 영역 바깥을 향합니다. 그 점에서 \(J\) 를 줄이려면 오히려 영역 안쪽(원점 쪽)으로 가야 하므로 답이 아닙니다.</figcaption>
+  </figure>
 
   <div class="box good">
     <p class="box-t">정의 — 활성과 비활성</p>
@@ -580,6 +649,46 @@
       <tr><td>비활성 \(\lambda _{1}=0\)</td><td>비활성 \(\lambda _{2}=0\)</td><td>\(w = (0, 0)\)</td><td>② \(g_{1} = -1 &lt; 0\) 위반</td><td>탈락</td></tr>
     </table>
   </div>
+
+  <figure class="fig">
+<svg viewBox="0 0 380 340" role="img" aria-label="제약이 둘인 문제. 가능해 영역은 w₁ ≥ 1 이고 w₂ ≥ −1 인 모서리 (1, −1) 의 오른쪽 위. 두 제약이 모두 활성인 모서리 (1, −1) 은 λ₂ 가 음수라 탈락하고, 제약 1 만 활성인 (1, 0) 이 답이다. (0, −1) 과 (0, 0) 은 가능해 밖이다" style="max-width:28rem">
+<rect x="252.0" y="8" width="120.0" height="224.0" style="fill:var(--accent-bg)"/>
+<g class="svg-line" stroke-width=".6">
+<path d="M66 8 V332"/><path d="M8 294 H372"/>
+<path d="M128 8 V332"/><path d="M8 232 H372"/>
+<path d="M190 8 V332"/><path d="M8 170 H372"/>
+<path d="M252 8 V332"/><path d="M8 108 H372"/>
+<path d="M314 8 V332"/><path d="M8 46 H372"/>
+</g>
+<g stroke-width="1.4" fill="none" style="stroke:var(--muted)"><path d="M8 170 H372"/><path d="M190 332 V8"/></g>
+<g class="svg-muted" font-size="12"><text x="362" y="164" class="svg-fg">w₁</text><text x="198" y="20" class="svg-fg">w₂</text></g>
+<g class="svg-muted" font-size="10" text-anchor="middle"><text x="66" y="184">-2</text><text x="128" y="184">-1</text><text x="252" y="184">1</text><text x="314" y="184">2</text></g>
+<g class="svg-muted" font-size="10" text-anchor="end"><text x="185" y="297">-2</text><text x="185" y="49">2</text></g>
+<g fill="none" stroke-width="1" style="stroke:var(--muted);stroke-dasharray:4 3">
+<circle cx="190" cy="170" r="31.0"/>
+<circle cx="190" cy="170" r="93.0"/>
+<circle cx="190" cy="170" r="124.0"/>
+</g>
+<circle cx="190" cy="170" r="62.0" fill="none" stroke-width="1.6" style="stroke:var(--fg)"/>
+<path d="M252.0 8 V332" stroke-width="2.4" fill="none" style="stroke:var(--fg)"/>
+<path d="M8 232.0 H372" stroke-width="2.4" fill="none" style="stroke:var(--fg)"/>
+<path d="M252.0 170.0 L307.8 170.0" stroke-width="2.6" fill="none" style="stroke:var(--accent)"/><path d="M307.8 170.0 L300.4 173.1 L300.4 166.9 Z" style="fill:var(--accent)"/>
+<circle cx="252.0" cy="232.0" r="5" stroke-width="2" style="fill:var(--bg);stroke:var(--bad)"/>
+<circle cx="190.0" cy="232.0" r="5" stroke-width="2" style="fill:var(--bg);stroke:var(--bad)"/>
+<circle cx="190.0" cy="170.0" r="5" stroke-width="2" style="fill:var(--bg);stroke:var(--bad)"/>
+<circle cx="252.0" cy="170.0" r="6" style="fill:var(--accent)"/>
+<g font-size="11" class="svg-fg" style="paint-order:stroke;stroke:var(--bg);stroke-width:3.5px;stroke-linejoin:round">
+<text x="262" y="254" style="fill:var(--bad)">표 1행 (1, −1) 탈락</text>
+<text x="260" y="158">표 2행 답 (1, 0)</text>
+<text x="286" y="140" style="fill:var(--accent)" font-size="11">∇J</text>
+<text x="184" y="248" text-anchor="end" style="fill:var(--bad)">표 3행 (0, −1) g₁ &lt; 0 → 탈락</text>
+<text x="182" y="162" text-anchor="end" style="fill:var(--bad)">표 4행 (0, 0) g₁ &lt; 0 → 탈락</text>
+<text x="258" y="18" class="svg-muted">g₁ = 0</text>
+<text x="366" y="248" text-anchor="end" class="svg-muted">g₂ = 0</text>
+<text x="289" y="80" class="svg-muted">가능해 영역</text>
+</g></svg>
+    <figcaption>파란 영역이 두 제약을 모두 지키는 가능해 영역이고, 점선과 굵은 원은 \(J\) 의 등고선입니다. 표의 네 경우가 각각 한 점입니다. 두 제약이 모두 활성인 모서리 \((1, -1)\) 은 가능해이지만 \(\lambda _{2} < 0\) 이라 탈락하고, 제약 1 만 활성인 \((1, 0)\) 에서 등고선이 경계 \(g_{1} = 0\) 에 닿습니다. \(g_{2} = 0\) 은 이 점에서 멀리 떨어져 있어 답에 영향이 없습니다.</figcaption>
+  </figure>
 
   <p>답은 \(w = (1, 0)\), \(\lambda  = (1, 0)\), \(J = \tfrac12 \) 입니다. 제약 1 은 활성이라 답을 밀어 올리고, 제약 2 는 여유가 1 이나 있어 \(\lambda _{2} = 0\) 으로 <b>답에 아무 영향도 못 줍니다.</b>
   제약 2 를 아예 지워도 답이 같습니다. 제약이 수백 개여도 답을 결정하는 것은 활성 제약뿐이라는 것이 부등식 제약 최적화의 핵심 모양입니다.</p>
