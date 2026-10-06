@@ -35,7 +35,7 @@
 
   <h3>SMO 의 아이디어 — 두 개씩 골라 푼다</h3>
 
-  <p><span class="term" data-term="smo">SMO</span>(Sequential Minimal Optimization, Platt 1998)는 문제를 통째로 풀지 않습니다. <b>\(\alpha \) 중 두 개만 골라 나머지를 고정하고, 그 두 개에 대해서만 \(D\) 를 가장 크게 만드는 값</b>으로 바꿉니다. 두 개만 남으면 문제가 한 변수의 2차함수로 줄어서 손으로 풀립니다(화면 2). 그 뒤 또 다른 두 개를 골라 같은 일을 하고, 더 개선할 쌍이 없을 때까지 되풀이합니다. 5장과 6장의 위젯이 학습할 때 안에서 돌린 방법도 이것입니다.</p>
+  <p><span class="term" data-term="smo">SMO</span>(Sequential Minimal Optimization, Platt 1998)는 문제를 통째로 풀지 않습니다. <b>\(\alpha \) 중 두 개만 골라 나머지를 고정하고, 그 두 개에 대해서만 \(D\) 를 가장 크게 만드는 값</b>으로 바꿉니다. 두 개만 남으면 문제가 한 변수의 2차함수로 줄어서 손으로 풀립니다(화면 2). 그 뒤 또 다른 두 개를 골라 같은 일을 하고, 더 개선할 쌍이 없을 때까지 되풀이합니다. 5장과 6장의 위젯도 학습할 때 내부에서 이 방법을 썼습니다.</p>
 
   <figure class="fig">
     <svg viewBox="0 0 660 190" role="img" aria-label="구현의 전체 흐름. 데이터 X와 y에서 커널 행렬 K를 만들고, 두 α를 골라 갱신하는 SMO 반복을 개선할 쌍이 없을 때까지 되풀이한 뒤, b를 구하고 f(x)로 예측한다">
@@ -78,12 +78,12 @@
 
   <div class="box warn">
     <p class="box-t">이 장의 코드는 &lsquo;간이 버전&rsquo;입니다</p>
-    <p>원리를 읽는 데 맞춰 짧게 쓴 구현이라, 점이 수천 개를 넘어가면 느려지고 메모리도 많이 씁니다. 실제로 쓸 때는 LIBSVM 을 감싼 scikit-learn 을 씁니다. 어디가 어떻게 간이인지는 화면 5 에서 숨기지 않고 적습니다.</p>
+    <p>원리를 읽는 데 맞춰 짧게 쓴 구현이라, 점이 수천 개를 넘어가면 느려지고 메모리도 많이 씁니다. 실제로 쓸 때는 LIBSVM 을 감싼 scikit-learn 을 씁니다. 어디가 어떻게 간이인지는 화면 5 에서 정리합니다.</p>
   </div>
 
   <div class="box note">
     <p class="box-t">읽는 방법</p>
-    <p>파이썬의 변수·반복문·함수는 안다고 보고, <b>NumPy 는 처음일 수 있다고 보고</b> 씁니다. NumPy 기능은 처음 쓰는 줄 아래에서 한 줄씩 풀이합니다. 이 장의 코드는 모두 실제로 실행해서 출력을 붙인 것이고, 코드 블록을 위에서 아래로 이어 붙이면 그대로 돌아갑니다. 이어 붙인 파일을 <code>svm.py</code> 라 부르겠습니다.</p>
+    <p>파이썬의 변수·반복문·함수는 아신다고 가정하고, <b>NumPy 는 처음일 수 있다고 가정하고</b> 설명합니다. NumPy 기능은 처음 쓰는 줄 아래에서 한 줄씩 풀이합니다. 이 장의 코드는 모두 실제로 실행해서 출력을 붙인 것이고, 코드 블록을 위에서 아래로 이어 붙이면 그대로 돌아갑니다. 이어 붙인 파일을 <code>svm.py</code> 라 부르겠습니다.</p>
   </div>
 </section>
 
@@ -98,7 +98,7 @@
 
   <p>4장의 점 3개(\(y = (+1, +1, -1)\))에서 제약은 \(\alpha ^{(1)} + \alpha ^{(2)} - \alpha ^{(3)} = 0\) 입니다. 이 제약을 지키는 점 \(\alpha  = (\tfrac14 , 0, \tfrac14 )\) 에서 \(\alpha ^{(1)}\) 만 0.3 으로 올려 봅니다. <code>0.3 + 0 − 0.25 = 0.05 ≠ 0</code>. 제약이 깨집니다. 제약을 지키는 점에서 변수 <b>하나만</b> 움직이면 언제나 이렇게 됩니다. 합이 0 이었는데 한 항만 바뀌었으니 0 이 아닐 수밖에 없기 때문입니다.</p>
 
-  <h3>둘을 움직이면 길이 생긴다</h3>
+  <h3>둘을 함께 움직이면 제약을 지킬 수 있다</h3>
 
   <p>고르는 두 점을 \(i\), \(j\) 라 하고 나머지 \(\alpha \) 는 고정합니다. 제약이 지켜지려면 두 항의 합 \(\alpha ^{(i)}y^{(i)} + \alpha ^{(j)}y^{(j)}\) 이 움직이기 전과 같아야 합니다. 그러면 \(\alpha ^{(j)}\) 를 새 값 \(t\) 로 정했을 때 \(\alpha ^{(i)}\) 는 저절로 정해집니다.</p>
 
@@ -140,9 +140,9 @@
 
   <h3>한 변수의 2차함수로 줄이기 — 손으로 한 단계</h3>
 
-  <p>이제 \(t\) 하나에 대한 \(D\) 의 모양을 구합니다. 한 줄씩 갑니다.</p>
+  <p>이제 \(t\) 하나에 대한 \(D\) 의 모양을 구합니다. 한 단계씩 계산합니다.</p>
 
-  <p><b>① 오차 E 를 정한다.</b> 점 \(k\) 에서 예측값(\(b\) 를 뺀 판정식)에서 정답을 뺀 값을 <span class="term" data-term="errterm">오차</span> \(E^{(k)}\) 라 부릅니다.</p>
+  <p><b>① 오차 E 를 정의한다.</b> 점 \(k\) 에서 예측값(\(b\) 를 뺀 판정식)에서 정답을 뺀 값을 <span class="term" data-term="errterm">오차</span> \(E^{(k)}\) 라 부릅니다.</p>
   <p style="text-align:center;font-size:1.05rem">\[E^{(k)} = \sum _{m} \alpha ^{(m)}y^{(m)}K(x^{(m)}, x^{(k)}) - y^{(k)}\]</p>
 
   <p><b>② D 를 α⁽ᵏ⁾ 로 편미분한다.</b> 이중합에서 \(\alpha ^{(k)}\) 가 들어 있는 항은 바깥 합이 \(k\) 인 줄과 안쪽 합이 \(k\) 인 줄, 두 곳입니다. \(K\) 가 대칭이라 둘이 같아서 앞의 \(\tfrac12 \) 과 약분됩니다.</p>
@@ -164,11 +164,11 @@
     <p style="text-align:center;font-size:1.05rem">\[t* = \alpha ^{(j)} + y^{(j)}(E^{(i)} - E^{(j)}) / \eta \]</p>
   </div>
 
-  <p><b>⑥ 상자에 맞춰 <span class="term" data-term="clipping">클리핑</span>한다.</b> 꼭짓점이 구간 <code>[L, H]</code> 밖이면 안 됩니다. 위로 볼록한 2차함수는 꼭짓점에서 멀어질수록 값이 줄어드니, 구간 안에서 가장 큰 곳은 <b>꼭짓점에 가장 가까운 끝</b>입니다. 그래서 <code>α⁽ʲ⁾ 의 새 값 = min(H, max(L, t*))</code> 로 자르고, \(\alpha ^{(i)}\) 는 위의 식 \(\alpha ^{(i)} + y^{(i)}y^{(j)}(\alpha ^{(j)} - \text{새} \alpha ^{(j)})\) 로 따라옵니다. 이 갱신은 \(D\) 를 줄이지 않습니다(꼭짓점이나 그에 가장 가까운 끝으로 가므로).</p>
+  <p><b>⑥ 상자에 맞춰 <span class="term" data-term="clipping">클리핑</span>한다.</b> 꼭짓점이 구간 <code>[L, H]</code> 밖이면 그 값을 쓸 수 없습니다. 위로 볼록한 2차함수는 꼭짓점에서 멀어질수록 값이 줄어드니, 구간 안에서 가장 큰 곳은 <b>꼭짓점에 가장 가까운 끝</b>입니다. 그래서 <code>α⁽ʲ⁾ 의 새 값 = min(H, max(L, t*))</code> 로 자르고, \(\alpha ^{(i)}\) 는 위의 식 \(\alpha ^{(i)} + y^{(i)}y^{(j)}(\alpha ^{(j)} - \text{새} \alpha ^{(j)})\) 로 따라옵니다. 이 갱신은 \(D\) 를 늘리거나 같게 유지합니다(꼭짓점이나 그에 가장 가까운 끝으로 가므로).</p>
 
-  <p><b>⑦ b 는 어디 갔나.</b> ① 에서 \(b\) 를 뺀 판정식을 썼습니다. \(E^{(i)} - E^{(j)}\) 에서는 \(b\) 가 양쪽에 똑같이 들어 있어 사라지므로, <b>\(\alpha \) 를 갱신하는 데 \(b\) 는 필요 없습니다.</b> Platt 원전은 갱신마다 \(b\) 도 고쳐 쓰지만, 이 교재의 코드는 \(\alpha \) 만 갱신하고 \(b\) 는 끝에서 5장·6장의 규칙(\(0 &lt; \alpha  &lt; C\) 인 점에서 \(b = y - \sum \alpha  y K\))으로 한 번 구합니다. 두 방법은 같은 \(\alpha \) 를 향합니다.</p>
+  <p><b>⑦ b 는 갱신에 필요 없다.</b> ① 에서 \(b\) 를 뺀 판정식을 썼습니다. \(E^{(i)} - E^{(j)}\) 에서는 \(b\) 가 양쪽에 똑같이 들어 있어 사라지므로, <b>\(\alpha \) 를 갱신하는 데 \(b\) 는 필요 없습니다.</b> Platt 원전은 갱신마다 \(b\) 도 고쳐 쓰지만, 이 교재의 코드는 \(\alpha \) 만 갱신하고 \(b\) 는 끝에서 5장·6장의 규칙(\(0 &lt; \alpha  &lt; C\) 인 점에서 \(b = y - \sum \alpha  y K\))으로 한 번 구합니다. 두 방법은 같은 \(\alpha \) 에 도착합니다(이 교재의 예제에서는 확인했습니다).</p>
 
-  <h3>숫자로 한 번: 점 3개의 첫 갱신</h3>
+  <h3>점 3개의 첫 갱신 계산</h3>
 
   <p>4장의 점 3개, 선형 커널입니다. 그램 행렬은 4장 화면 7 의 내적 표(\(K_{11} = 18, K_{12} = 21, K_{13} = 6, K_{22} = 25, K_{23} = 7, K_{33} = 2\))입니다. 시작은 \(\alpha  = (0, 0, 0)\) 이고 \(C\) 는 충분히 크다고 합니다(\(C \ge  \tfrac14 \) 이면 깨끗한 3점은 하드 마진과 같다고 5장에서 확인했습니다). 이번 단계에서는 쌍 <code>(i, j) = (1, 3)</code> 을 골랐다고 합니다. 쌍을 어떻게 고르는지는 화면 3 에서 정합니다.</p>
 
@@ -188,20 +188,20 @@
 
   <div class="box warn">
     <p class="box-t">이 화면이 증명하지 않은 것</p>
-    <p>위 갱신이 매번 \(D\) 를 줄이지 않는다는 것은 보였습니다. 그러나 이 갱신을 되풀이하면 <b>정말 최댓값에 수렴하는가</b>, 쌍을 어떻게 고르면 수렴이 보장되는가는 보이지 않았고, 이 교재에서도 증명하지 않습니다. 원전은 Platt(1998)이고, 수렴 증명은 문헌(Platt 1998, Keerthi 외 2001 이후의 수렴 논문들, Fan · Chen · Lin 2005)에 맡깁니다. 이 화면은 &ldquo;한 번의 갱신이 어떤 계산인지&rdquo;까지만 책임집니다.</p>
+    <p>위 갱신이 매번 \(D\) 를 늘리거나 같게 유지한다는 것은 보였습니다. 그러나 이 갱신을 되풀이하면 <b>정말 최댓값에 수렴하는가</b>, 쌍을 어떻게 고르면 수렴이 보장되는가는 보이지 않았고, 이 교재에서도 증명하지 않습니다. 원전은 Platt(1998)이고, 수렴 증명은 문헌(Platt 1998, Keerthi 외 2001 이후의 수렴 논문들, Fan · Chen · Lin 2005)을 참고하시기 바랍니다. 이 화면은 한 번의 갱신이 어떤 계산인지까지만 다룹니다.</p>
   </div>
 </section>
 
 <!-- ─────────────────────────────────────────── 화면 3 -->
-<section class="screen" data-title="커널 행렬과 헬퍼">
+<section class="screen" data-title="커널 행렬과 보조 함수">
   <p class="kicker">7장 · 화면 3</p>
-  <h2>커널 행렬과 헬퍼 함수</h2>
+  <h2>커널 행렬과 보조 함수</h2>
 
-  <p>화면 2 의 계산에 필요한 재료는 세 가지입니다. 그램 행렬 \(K\), 이번에 움직일 쌍 <code>(i, j)</code>, 그 쌍이 움직일 수 있는 구간 <code>[L, H]</code>. 마지막으로 반복이 끝난 뒤 \(b\) 도 구해야 합니다. 이것을 작은 함수 넷으로 만듭니다. 먼저 NumPy 에서 처음 쓰는 기능을 점 3개로 맛봅니다.</p>
+  <p>화면 2 의 계산에 필요한 것은 그램 행렬 \(K\), 이번에 움직일 쌍 <code>(i, j)</code>, 그 쌍의 구간 <code>[L, H]</code> 세 가지입니다. 여기에 반복이 끝난 뒤 \(b\) 를 구하는 일이 더해져, 모두 네 가지를 작은 함수로 만듭니다. 먼저 NumPy 에서 처음 쓰는 기능을 점 3개로 미리 써 봅니다.</p>
 
-  <h3>NumPy 맛보기 — 점 3개의 내적 표</h3>
+  <h3>NumPy 미리 보기 — 점 3개의 내적 표</h3>
 
-<pre><span class="cap"># NumPy 맛보기</span><code>import numpy as np
+<pre><span class="cap"># NumPy 미리 보기</span><code>import numpy as np
 
 X = np.array([[3, 3], [4, 3], [1, 1]])
 print(X @ X.T)
@@ -223,7 +223,7 @@ print(s[:, None] + s[None, :] - 2 * X @ X.T)
     <li><span class="ln">1~3행</span> <code>np.array</code> 는 리스트를 배열로 바꿉니다. 여기서는 3 × 2 표로, 한 행이 점 하나입니다. <code>import numpy as np</code> 는 NumPy 를 <code>np</code> 라는 짧은 이름으로 쓰겠다는 관용 표기입니다.</li>
     <li><span class="ln">4행</span> <code>X.T</code> 는 행과 열을 뒤집은 전치(2 × 3)이고, <code>@</code> 는 행렬곱입니다. <code>X @ X.T</code> 의 <code>(i, j)</code> 칸은 <code>X</code> 의 i 행과 j 행의 내적이라 3 × 3 내적 표가 나옵니다. 4장 화면 7 의 값 18, 21, 6, 25, 7, 2 와 같습니다.</li>
     <li><span class="ln">5행</span> <code>X**2</code> 는 모든 칸을 제곱하고, <code>.sum(1)</code> 은 열 방향(1 번 축)으로 더해 행마다 하나씩, 곧 점마다 \(x\cdot x\) 를 구합니다(<code>9 + 9 = 18</code>, <code>16 + 9 = 25</code>, <code>1 + 1 = 2</code>).</li>
-    <li><span class="ln">7행</span> 이 줄이 이 장에서 가장 낯선 줄입니다. <code>s[:, None]</code> 은 길이 3 의 \(s\) 를 3 × 1 <b>열</b>로, <code>s[None, :]</code> 은 1 × 3 <b>행</b>으로 세웁니다. 열과 행을 더하면 NumPy 가 부족한 방향을 복사해 늘려서 <b>3 × 3 표</b>가 되고, <code>(i, j)</code> 칸이 <code>s[i] + s[j]</code> 입니다. 이 규칙을 <span class="term" data-term="broadcast">브로드캐스팅</span>이라 부릅니다. 여기서 <code>2 * X @ X.T</code> 를 빼면 칸마다 \(x\cdot x + z\cdot z - 2x\cdot z = \lVert x - z\rVert ^{2}\), 두 점 사이 거리의 제곱이 됩니다(반복문 없이 모든 쌍을 한 번에). 예: 1번과 2번은 \((3-4)^{2} + 0 = 1\), 2번과 3번은 <code>9 + 4 = 13</code>.</li>
+    <li><span class="ln">7행</span> 이 줄이 이 장에서 가장 낯선 줄입니다. <code>s[:, None]</code> 은 길이 3 의 \(s\) 를 3 × 1 <b>열</b>로, <code>s[None, :]</code> 은 1 × 3 <b>행</b>으로 바꿉니다. 열과 행을 더하면 NumPy 가 부족한 방향을 복사해 늘려서 <b>3 × 3 표</b>가 되고, <code>(i, j)</code> 칸이 <code>s[i] + s[j]</code> 입니다. 이 규칙을 <span class="term" data-term="broadcast">브로드캐스팅</span>이라 부릅니다. 여기서 <code>2 * X @ X.T</code> 를 빼면 칸마다 \(x\cdot x + z\cdot z - 2x\cdot z = \lVert x - z\rVert ^{2}\), 두 점 사이 거리의 제곱이 됩니다(반복문 없이 모든 쌍을 한 번에). 예: 1번과 2번은 \((3-4)^{2} + 0 = 1\), 2번과 3번은 <code>9 + 4 = 13</code>.</li>
   </ol>
 
   <h3>커널 행렬 — <code>linear_kernel</code>, <code>rbf_kernel</code></h3>
@@ -242,14 +242,14 @@ def rbf_kernel(X, Z, gamma=1.0):
 
   <ol class="notes">
     <li><span class="ln">3~4행</span> 선형 커널. <code>X</code> 가 n × p, \(Z\) 가 m × p 이면 결과는 n × m 표입니다. 점 묶음을 한꺼번에 받는 이유는 파이썬 반복문(<code>for i</code>, <code>for j</code>)보다 NumPy 의 행렬곱이 훨씬 빠르기 때문입니다.</li>
-    <li><span class="ln">6~8행</span> RBF 커널. 7행은 앞의 맛보기와 같은 계산인데 <code>X</code> 와 \(Z\) 가 서로 다른 점 묶음이라 \(s\) 가 둘(점 묶음마다 하나)입니다. 8행의 <code>np.exp</code> 는 배열의 모든 칸에 <code>e^</code> 를 씌우고, <code>-gamma * sq</code> 가 6장의 \(-\gamma \lVert x - z\rVert ^{2}\) 입니다. 같은 점끼리(대각선)는 거리 0 이라 <code>K = 1</code> 이 됩니다. <code>gamma</code> 의 기본값 1.0 은 6장 위젯과 맞춘 값입니다.</li>
+    <li><span class="ln">6~8행</span> RBF 커널. 7행은 앞의 미리 보기와 같은 계산인데 <code>X</code> 와 \(Z\) 가 서로 다른 점 묶음이라 \(s\) 가 둘(점 묶음마다 하나)입니다. 8행의 <code>np.exp</code> 는 배열의 모든 칸에 거듭제곱 <code>e^</code> 를 계산하고, <code>-gamma * sq</code> 가 6장의 \(-\gamma \lVert x - z\rVert ^{2}\) 입니다. 같은 점끼리(대각선)는 거리 0 이라 <code>K = 1</code> 이 됩니다. <code>gamma</code> 의 기본값 1.0 은 6장 위젯과 맞춘 값입니다.</li>
   </ol>
 
   <h3>쌍 고르기와 구간 — <code>violating_pair</code>, <code>clip_range</code></h3>
 
-  <p>화면 2 의 식은 쌍 <code>(i, j)</code> 가 주어졌다고 보고 계산했습니다. 이제 그 쌍을 정합니다. 쌍을 &ldquo;D 가 가장 크게 오르는 쌍&rdquo;으로 고르는 것이 목표입니다. 두 \(\alpha ^{(i)}y^{(i)}\) 와 \(\alpha ^{(j)}y^{(j)}\) 를 같은 양 δ 만큼 하나는 올리고 하나는 내리면 합이 유지되어 제약이 지켜집니다. 이때 화면 2 의 ② 를 쓰면 \(D\) 의 변화는 처음에</p>
+  <p>화면 2 의 식은 쌍 <code>(i, j)</code> 가 주어졌다고 보고 계산했습니다. 이제 그 쌍을 정합니다. 쌍을 &ldquo;D 가 가장 크게 오르는 쌍&rdquo;으로 고르는 것이 목표입니다. 두 \(\alpha ^{(i)}y^{(i)}\) 와 \(\alpha ^{(j)}y^{(j)}\) 를 같은 양 δ 만큼 하나는 올리고 하나는 내리면 합이 유지되어 제약이 지켜집니다. 이때 화면 2 의 ② 를 쓰면, \(\delta \) 가 작을 때 \(D\) 의 변화량은 다음과 같습니다.</p>
   <p style="text-align:center;font-size:1.05rem">\[(-E^{(i)})\delta  + (+E^{(j)})\delta  = (E^{(j)} - E^{(i)})\delta \]</p>
-  <p>(\(\alpha ^{(i)}\) 는 \(y^{(i)}\delta \) 만큼 변하고 \(\partial D/\partial \alpha ^{(i)} = -y^{(i)}E^{(i)}\) 이므로 \(-E^{(i)}\delta \), \(\alpha ^{(j)}\) 는 \(-y^{(j)}\delta \) 만큼 변하므로 \(+E^{(j)}\delta \))이라, <b>\(E\) 가 작은 점의 \(\alpha y\) 를 올리고 \(E\) 가 큰 점의 \(\alpha y\) 를 내릴수록 이득이 큽니다.</b> 이득의 크기 \(E^{(j)} - E^{(i)}\) 가 그 쌍의 &lsquo;위반 정도&rsquo;이고, 위반이 가장 큰 쌍을 고르는 규칙이 <span class="term" data-term="violpair">최대 위반 쌍</span> 규칙입니다. 5장과 6장의 위젯이 쓴 방법과 같습니다. 가장 큰 위반 정도도 <code>tol</code> 보다 작으면 올라갈 방향이 없다고 보고 끝냅니다(화면 4).</p>
+  <p>\(\alpha ^{(i)}\) 는 \(y^{(i)}\delta \) 만큼 변하고 \(\partial D/\partial \alpha ^{(i)} = -y^{(i)}E^{(i)}\) 이므로 변화량은 \(-E^{(i)}\delta \) 입니다. \(\alpha ^{(j)}\) 는 \(-y^{(j)}\delta \) 만큼 변하므로 \(+E^{(j)}\delta \) 입니다. 따라서 <b>\(E\) 가 작은 점의 \(\alpha y\) 를 올리고 \(E\) 가 큰 점의 \(\alpha y\) 를 내릴수록 이득이 큽니다.</b> 이득의 크기 \(E^{(j)} - E^{(i)}\) 가 그 쌍의 &lsquo;위반 정도&rsquo;이고, 위반이 가장 큰 쌍을 고르는 규칙이 <span class="term" data-term="violpair">최대 위반 쌍</span> 규칙입니다. 5장과 6장의 위젯이 쓴 방법과 같습니다. 가장 큰 위반 정도도 <code>tol</code> 보다 작으면 올라갈 방향이 없다고 보고 끝냅니다(화면 4).</p>
 
   <p>단, \(\alpha \) 가 상자 끝에 붙어 있어서 그 방향으로 못 움직이는 점은 후보에서 뺍니다. \(\alpha y\) 를 올릴 수 있는 점과 내릴 수 있는 점은 다음과 같습니다.</p>
 
@@ -276,15 +276,15 @@ def clip_range(ai, aj, yi, yj, C):
 
   <ol class="notes">
     <li><span class="ln">2~3행</span> 위 표를 그대로 옮겼습니다. <code>y &gt; 0</code> 처럼 배열과 수를 비교하면 점마다 참 · 거짓이 담긴 <b>불리언 배열</b>이 나오고, <code>&amp;</code>(그리고), <code>|</code>(또는)로 점마다 따로 합칩니다(파이썬의 <code>and</code> · <code>or</code> 는 배열에 쓸 수 없고, 괄호는 꼭 필요합니다). 결과 <code>up</code> 과 <code>down</code> 은 길이 n 의 참 · 거짓 배열입니다.</li>
-    <li><span class="ln">4행</span> <code>E[up]</code> 은 불리언 배열을 인덱스로 써서 참인 점의 \(E\) 만 뽑아냅니다(<b>불리언 마스크</b>). <code>np.argmin</code> 은 그중 가장 작은 값의 순서를 알려 주는데 이것은 뽑은 배열 안의 순서입니다. <code>np.flatnonzero(up)</code> 이 참인 점의 원래 번호 목록이라 <code>[...]</code> 로 한 번 더 이어 원래 번호 \(i\) 를 얻습니다. 동점이면 번호가 빠른 쪽이 뽑힙니다.</li>
-    <li><span class="ln">5행</span> 같은 방식으로 <code>down</code> 중 \(E\) 가 가장 큰 점 \(j\). 한 점이 <code>up</code> 과 <code>down</code> 에 모두 들 수 있는데(예: \(0 &lt; \alpha  &lt; C\) 인 점), 그래서 <code>i == j</code> 도 나올 수 있고 그때는 위반 정도가 0 이라 끝나게 됩니다.</li>
+    <li><span class="ln">4행</span> <code>E[up]</code> 은 불리언 배열을 인덱스로 써서 참인 점의 \(E\) 만 뽑아냅니다(<b>불리언 마스크</b>). <code>np.argmin</code> 은 그중 가장 작은 값의 위치(뽑은 배열 안에서의 번호)를 알려 줍니다. <code>np.flatnonzero(up)</code> 은 참인 점의 원래 번호 목록이므로, 그 목록에서 <code>[...]</code> 로 해당 번호를 꺼내 원래 번호 \(i\) 를 얻습니다. 동점이면 번호가 빠른 쪽이 뽑힙니다.</li>
+    <li><span class="ln">5행</span> 같은 방식으로 <code>down</code> 중 \(E\) 가 가장 큰 점 \(j\). 한 점이 <code>up</code> 과 <code>down</code> 에 모두 속할 수 있습니다(예: \(0 &lt; \alpha  &lt; C\) 인 점). 그러면 <code>i == j</code> 도 나올 수 있고, 그때는 위반 정도가 0 이라 반복이 끝납니다.</li>
     <li><span class="ln">6행</span> <code>return i, j</code> 는 값을 둘 돌려줍니다(<b>튜플</b>). 부르는 쪽에서 <code>i, j = violating_pair(...)</code> 로 한 번에 받습니다.</li>
-    <li><span class="ln">8~11행</span> 화면 2 의 <code>[L, H]</code> 공식 그대로입니다. 9~10행이 \(y^{(i)} \ne  y^{(j)}\)(차가 일정), 11행이 \(y^{(i)} = y^{(j)}\)(합이 일정)일 때입니다. <code>if</code> 안에서 <code>return</code> 하면 그 아래는 읽지 않으므로 <code>else</code> 를 따로 쓰지 않았습니다.</li>
+    <li><span class="ln">8~11행</span> 화면 2 의 <code>[L, H]</code> 공식 그대로입니다. 9~10행이 \(y^{(i)} \ne  y^{(j)}\)(차가 일정), 11행이 \(y^{(i)} = y^{(j)}\)(합이 일정)일 때입니다. <code>if</code> 안에서 <code>return</code> 하면 그 아래는 실행되지 않으므로 <code>else</code> 를 따로 쓰지 않았습니다.</li>
   </ol>
 
   <h3>끝난 뒤 b — <code>bias</code></h3>
 
-  <p>5장과 6장의 규칙을 코드로 옮깁니다. \(0 &lt; \alpha  &lt; C\) 인 점(경계 위에 정확히 있는 점)이 있으면 <code>y = f</code> 이므로 \(b = y - \sum \alpha  y K\), 이것은 화면 2 ① 의 \(E\) 로 \(-E^{(k)}\) 입니다. 그런 점이 여럿이면 평균을 냅니다. 하나도 없으면 \(b\) 는 한 값이 아니라 구간이고, 구간의 가운데를 고릅니다. 구간은 \(-E^{(i)}\)(올릴 수 있는 점 중 최소 \(E\))에서 \(-E^{(j)}\)(내릴 수 있는 점 중 최대 \(E\))까지입니다. 반복이 끝났다면 앞의 것이 뒤의 것 이하입니다.</p>
+  <p>5장과 6장의 규칙을 코드로 옮깁니다. \(0 &lt; \alpha  &lt; C\) 인 점(경계 위에 정확히 있는 점)이 있으면 <code>y = f</code> 이므로 \(b = y - \sum \alpha  y K\), 이것은 화면 2 ① 의 \(E\) 로 \(-E^{(k)}\) 입니다. 그런 점이 여럿이면 평균을 냅니다. 하나도 없으면 \(b\) 는 한 값이 아니라 구간이고, 구간의 가운데를 고릅니다. 구간은 \(-E^{(i)}\)(올릴 수 있는 점 중 최소 \(E\))에서 \(-E^{(j)}\)(내릴 수 있는 점 중 최대 \(E\))까지입니다. 반복이 끝났다면 \(-E^{(i)} \le  -E^{(j)}\) 입니다.</p>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>def bias(E, y, a, C, eps=1e-8):
     free = (a &gt; eps) &amp; (a &lt; C - eps)
@@ -306,12 +306,12 @@ def clip_range(ai, aj, yi, yj, C):
   <p class="kicker">7장 · 화면 4</p>
   <h2>SMO 본체</h2>
 
-  <p>준비한 부품을 화면 2 의 순서대로 이어 붙이면 반복문 하나입니다. 이 함수가 이 장의 심장입니다. 전체 흐름은 이렇습니다.</p>
+  <p>준비한 부품을 화면 2 의 순서대로 이어 붙이면 반복문 하나입니다. 이 함수가 이 장의 핵심입니다. 전체 흐름은 이렇습니다.</p>
   <ol>
-    <li>모든 \(\alpha \) 를 0 으로 시작한다(\(\sum \alpha y = 0\) 과 상자 제약을 지키는 가능한 점).</li>
+    <li>모든 \(\alpha \) 를 0 으로 시작한다(\(\sum \alpha y = 0\) 과 상자 제약을 모두 만족하는 점이기 때문이다).</li>
     <li>오차 \(E\) 를 구하고 최대 위반 쌍 <code>(i, j)</code> 를 고른다.</li>
     <li>위반 정도 \(E^{(j)} - E^{(i)}\) 가 <code>tol</code> 보다 작으면 끝낸다.</li>
-    <li>꼭짓점 <code>t*</code> 를 구하고 <code>[L, H]</code> 로 자른 뒤 \(\alpha ^{(j)}\), \(\alpha ^{(i)}\) 를 갱신하고 2 로 돌아간다.</li>
+    <li>꼭짓점 <code>t*</code> 를 구하고 <code>[L, H]</code> 로 자른 뒤 \(\alpha ^{(j)}\), \(\alpha ^{(i)}\) 를 갱신하고 2단계로 돌아간다.</li>
   </ol>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>def smo(K, y, C, tol=1e-10, max_iter=100000):
@@ -334,7 +334,7 @@ def clip_range(ai, aj, yi, yj, C):
     <li><span class="ln">2행</span> <code>np.zeros(n)</code> 은 0 이 n 개인 배열. 시작점 \(\alpha  = 0\) 은 제약을 모두 지킵니다.</li>
     <li><span class="ln">4행</span> <code>a * y</code> 는 같은 자리끼리 곱한 배열 \(\alpha ^{(m)}y^{(m)}\) 이고, <code>K @ (...)</code> 는 표와 벡터의 곱이라 \(k\) 번째 값이 <code>Σ<sub>m</sub> K[k, m]·α⁽ᵐ⁾y⁽ᵐ⁾</code> 입니다. 여기서 \(y\) 를 빼면 화면 2 ① 의 \(E^{(k)}\) 가 모든 점에 대해 한 번에 나옵니다. 매번 처음부터 다시 구하는 단순한 방식입니다(비용은 화면 5 의 한계).</li>
     <li><span class="ln">5행</span> 화면 3 의 함수로 이번에 움직일 쌍을 고릅니다.</li>
-    <li><span class="ln">6~7행</span> 끝내는 조건. 가장 큰 위반 정도가 <code>tol</code> 보다 작으면 더 올라갈 방향이 없으니 지금 \(\alpha \) 를 돌려줍니다. 함수 안에서 <code>return</code> 하면 반복문을 한꺼번에 빠져나옵니다. 이 규칙이 KKT 를 만족한다는 것과 정확히 같은 말이라는 점은 증명하지 않습니다(LIBSVM 도 같은 꼴의 멈춤 규칙을 씁니다).</li>
+    <li><span class="ln">6~7행</span> 끝내는 조건. 가장 큰 위반 정도가 <code>tol</code> 보다 작으면 더 올라갈 방향이 없으니 지금 \(\alpha \) 를 돌려줍니다. 함수 안에서 <code>return</code> 하면 반복문을 한꺼번에 빠져나옵니다. 이 멈춤 조건이 KKT 조건과 동치라는 것은 증명하지 않습니다(LIBSVM 도 같은 꼴의 멈춤 규칙을 씁니다).</li>
     <li><span class="ln">8행</span> 화면 2 ④ 의 \(\eta \). <code>max(…, 1e-12)</code> 는 0 으로 나누는 오류를 피합니다. \(\eta  = 0\) 이면 \(D\) 가 직선이라 기울기 방향의 끝으로 가는 것이 답인데, 아주 작은 수로 나누면 <code>t*</code> 가 매우 커져 10행의 클리핑이 같은 끝으로 보내 줍니다.</li>
     <li><span class="ln">9행</span> 화면 2 의 구간 <code>[L, H]</code>. 쌍의 현재 값과 레이블을 넘깁니다.</li>
     <li><span class="ln">10행</span> 화면 2 ⑤ 의 <code>t*</code> 를 구하고 <code>np.clip(값, L, H)</code> 로 <code>[L, H]</code> 밖이면 가까운 끝으로 잘라 화면 2 ⑥ 의 클리핑을 합니다.</li>
@@ -344,7 +344,7 @@ def clip_range(ai, aj, yi, yj, C):
 
   <h3>이 함수가 12점에서 하는 일 — 한 단계씩</h3>
 
-  <p>6장의 원형 12 점에 RBF(\(\gamma  = 1\), <code>C = 1</code>)로 <code>smo</code> 를 돌리는 과정을 단계별로 봅니다(화면 5 의 파이썬 실행과 같은 알고리즘을 같은 식으로 계산하는 JavaScript 입니다). 점의 위치는 6장과 같고, 점 둘레의 테두리 반지름이 \(\alpha \) 의 크기입니다. 이번 단계에서 움직인 두 점에는 <b>i</b> (올림), <b>j</b> (내림) 표시가 붙습니다.</p>
+  <p>6장의 원형 12 점에 RBF(\(\gamma  = 1\), <code>C = 1</code>)로 <code>smo</code> 를 돌리는 과정을 단계별로 봅니다(화면 5 의 파이썬 코드와 같은 알고리즘을 JavaScript 로 옮긴 것입니다). 점의 위치는 6장과 같고, 점 둘레의 테두리 반지름이 \(\alpha \) 의 크기입니다. 이번 단계에서 움직인 두 점에는 <b>i</b> (올림), <b>j</b> (내림) 표시가 붙습니다.</p>
 
   <figure class="fig">
     <svg id="s-svg" viewBox="0 0 420 380" role="img" aria-label="원형 12점 데이터에서 SMO 가 한 단계씩 두 α 를 갱신하는 그림. 점 둘레의 테두리 크기가 α 의 크기이고 이번 단계에서 움직인 두 점에 i 와 j 표시가 붙는다" style="max-width:28rem">
@@ -497,7 +497,7 @@ def clip_range(ai, aj, yi, yj, C):
   <p class="kicker">7장 · 화면 5</p>
   <h2>클래스로 묶어 돌려 보기</h2>
 
-  <p>지금까지의 함수를 <code>SVM</code> 클래스 하나로 묶습니다. <code>fit</code> 은 K 를 만들고 <code>smo</code> 로 \(\alpha \) 를 구하고 <code>bias</code> 로 \(b\) 를 구해 기억합니다. <code>decision_function</code> 은 6장의 \(f(x) = \sum \alpha  y K(x^{(i)}, x) + b\) 입니다. 이름은 scikit-learn 의 <code>SVC</code> 와 같게 지었습니다(비교가 쉽도록).</p>
+  <p>지금까지의 함수를 <code>SVM</code> 클래스 하나로 묶습니다. <code>fit</code> 은 K 를 만들고 <code>smo</code> 로 \(\alpha \) 를 구하고 <code>bias</code> 로 \(b\) 를 구해 저장합니다. <code>decision_function</code> 은 6장의 \(f(x) = \sum \alpha  y K(x^{(i)}, x) + b\) 입니다. 이름은 scikit-learn 의 <code>SVC</code> 와 같게 지었습니다(비교가 쉽도록).</p>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>class SVM:
     def __init__(self, C=1.0, kernel="rbf", gamma=1.0, tol=1e-10, max_iter=100000):
@@ -529,17 +529,17 @@ def clip_range(ai, aj, yi, yj, C):
 </code></pre>
 
   <ol class="notes">
-    <li><span class="ln">1~4행</span> <code>class</code> 는 데이터(\(C\), <code>gamma</code> …)와 함수(<code>fit</code> …)를 한 묶음으로 만드는 틀이고, <code>__init__</code> 은 <code>SVM(C=1, ...)</code> 으로 만들 때 한 번 불립니다. 첫 인자 <code>self</code> 는 만들어진 객체 자신이라, <code>self.C = C</code> 는 &ldquo;이 객체에 \(C\) 를 기억해 둔다&rdquo;는 뜻입니다. 3행의 쉼표 대입 <code>a, b, c = x, y, z</code> 는 세 줄을 한 줄로 쓴 것입니다.</li>
-    <li><span class="ln">6~9행</span> 문자열 <code>kernel</code> 에 따라 화면 3 의 두 함수 중 하나를 고르는 도우미입니다. 이름 앞의 <code>_</code> 는 &ldquo;클래스 안에서만 쓰는 함수&rdquo;라는 파이썬 관례입니다. 이 간이 버전에는 선형과 RBF 두 가지만 있습니다.</li>
-    <li><span class="ln">12~13행</span> <code>np.asarray(X, float)</code> 는 리스트든 배열이든 실수 배열로 맞춥니다(리스트·정수 배열이 들어와도 항상 실수 배열로 맞춰, 이후 계산과 <code>@</code> 에서 자료형을 신경 쓰지 않게). <code>X, y = ..., ...</code> 로 둘을 한 줄에 맞춥니다. 13행이 n × n 그램 행렬 \(K\) 입니다.</li>
+    <li><span class="ln">1~4행</span> <code>class</code> 는 데이터(\(C\), <code>gamma</code> …)와 함수(<code>fit</code> …)를 한 묶음으로 만드는 틀이고, <code>__init__</code> 은 <code>SVM(C=1, ...)</code> 으로 만들 때 한 번 불립니다. 첫 인자 <code>self</code> 는 만들어진 객체 자신이라, <code>self.C = C</code> 는 &ldquo;이 객체에 \(C\) 를 저장해 둔다&rdquo;는 뜻입니다. 3행의 쉼표 대입 <code>a, b, c = x, y, z</code> 는 세 줄을 한 줄로 쓴 것입니다.</li>
+    <li><span class="ln">6~9행</span> 문자열 <code>kernel</code> 에 따라 화면 3 의 두 함수 중 하나를 고르는 보조 함수입니다. 이름 앞의 <code>_</code> 는 &ldquo;클래스 안에서만 쓰는 함수&rdquo;라는 파이썬 관례입니다. 이 간이 버전에는 선형과 RBF 두 가지만 있습니다.</li>
+    <li><span class="ln">12~13행</span> <code>np.asarray(X, float)</code> 는 리스트나 정수 배열이 들어와도 실수 배열로 바꿔, 이후 계산에서 자료형을 신경 쓰지 않게 합니다. 쉼표 대입 <code>X, y = ..., ...</code> 로 \(X\) 와 \(y\) 를 한 줄에서 함께 바꿉니다. 13행이 n × n 그램 행렬 \(K\) 입니다.</li>
     <li><span class="ln">14행</span> 화면 4 의 <code>smo</code> 가 돌려주는 두 값 \((\alpha , \text{횟수})\) 를 한 번에 받습니다. <code>self.n_iter_</code> 처럼 끝에 <code>_</code> 가 붙은 이름은 scikit-learn 에서 &ldquo;학습한 결과&rdquo;를 나타내는 관례입니다.</li>
     <li><span class="ln">15~16행</span> 끝난 \(\alpha \) 로 \(E\) 를 다시 구해 <code>bias</code> 에 넘깁니다. (\(E\) 는 <code>smo</code> 안의 지역 변수라 돌려받지 못하므로, 끝난 \(\alpha \) 로 다시 구합니다.)</li>
-    <li><span class="ln">17~19행</span> 예측에 필요한 것(학습 점 <code>X_</code>, 레이블 <code>y_</code>, \(\alpha \)), 서포트 벡터의 번호 <code>support_</code>(\(\alpha  > 1e-8\) 인 점, 0 부터 센 번호), 쌍대 목적값 <code>dual_</code>(<code>(a * y) @ K @ (a * y)</code> 가 <code>ΣΣ α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾K<sub>ij</sub></code> 입니다)을 기억합니다. 20행의 <code>return self</code> 는 <code>SVM(...).fit(X, y)</code> 처럼 이어 쓰게 해 줍니다.</li>
+    <li><span class="ln">17~19행</span> 예측에 필요한 학습 점 <code>X_</code>, 레이블 <code>y_</code>, \(\alpha \) 를 저장합니다. 서포트 벡터의 번호는 <code>support_</code> 에 저장하는데, \(\alpha  > 1e-8\) 인 점이고 0 부터 센 번호입니다. 쌍대 목적값은 <code>dual_</code> 에 저장하며, <code>(a * y) @ K @ (a * y)</code> 가 <code>ΣΣ α⁽ⁱ⁾α⁽ʲ⁾y⁽ⁱ⁾y⁽ʲ⁾K<sub>ij</sub></code> 입니다. 20행의 <code>return self</code> 는 <code>SVM(...).fit(X, y)</code> 처럼 이어 쓰게 해 줍니다.</li>
     <li><span class="ln">22~24행</span> \(K\) 는 새 점 <code>X</code> 와 학습 점 <code>X_</code> 사이의 표(m × n)이고, <code>K @ (α y)</code> 가 점마다 \(\sum \alpha  y K\) 이므로 <code>b_</code> 를 더하면 <code>f(x)</code> 입니다.</li>
     <li><span class="ln">26~27행</span> <code>np.where(조건, 1, −1)</code> 은 조건이 참인 곳은 1, 거짓인 곳은 −1 로 채운 배열입니다. <code>f(x) = 0</code>(경계 위)은 +1 로 칩니다.</li>
   </ol>
 
-  <h3>점 3개 — 4장 손계산 답이 나오는가</h3>
+  <h3>점 3개: 4장 손계산과 비교</h3>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>X3 = np.array([[3, 3], [4, 3], [1, 1]])
 y3 = np.array([1, 1, -1])
@@ -556,7 +556,7 @@ print(m3.decision_function([[2, 3]]), m3.predict([[2, 3]]))
 
   <p>\(\alpha  = (\tfrac14 , 0, \tfrac14 )\), \(b = -2\), 갱신은 1 번이었습니다(화면 2 의 손계산과 같음). 둘째 줄의 \(\sum \alpha  y x^{(i)}\) 은 4장 결과 ① 의 \(w = (\tfrac12 , \tfrac12 )\), \(D = \tfrac14 \) 이고, 셋째 줄은 4장 화면 6 의 <code>q = (2, 3)</code> 에서 \(f(q) = \tfrac12 \) 입니다. <code>C = 10</code> 으로 한 것은 깨끗한 3점이라 \(C \ge  \tfrac14 \) 이면 하드 마진과 같기 때문입니다.</p>
 
-  <h3>원형 12 점 — 6장의 검증값이 나오는가</h3>
+  <h3>원형 12 점: 6장 검증값과 비교</h3>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>np.set_printoptions(precision=5, suppress=True)
 inner = [[0, 0], [0.9, 0.3], [0.5, -0.8], [-0.6, -0.6], [-1, 0.4], [-0.3, 1]]
@@ -575,11 +575,13 @@ print((m.predict(X12) == y12).all())
 True
 </code></pre>
 
-  <p>6장 화면 6 위젯에서 <b>원형 데이터</b>, \(\gamma  = 1\), <code>C = 1</code> 로 맞추면 나오는 <code>D = 4.53924</code>, <code>b = −0.36583</code> 과 같습니다(위젯 표시는 <code>4.5392</code>, <code>−0.366</code>; \(C\) 슬라이더는 처음에 10 이라 1 로 내려야 합니다). 서포트 벡터는 12 점 중 11 개이고(<code>support_</code> 는 0 부터 센 번호라 <code>+ 1</code> 해서 맞췄습니다), 원점에 있는 \(x^{(1)}\) 만 \(\alpha  = 0\) 입니다. \(x^{(2)}\) 의 \(\alpha  = 1 = C\) 인 점은 클리핑으로 상자 끝에 붙은 점이고, 나머지는 모두 \(0 &lt; \alpha  &lt; C\) 라 \(b\) 는 한 값으로 정해집니다. 12 점을 모두 맞혔습니다. 갱신 횟수 67 은 <b>환경에 따라 달라질 수 있는 값</b>입니다. 끝으로 갈수록 후보 점들의 \(E\) 가 거의 같아져서(자유 서포트 벡터의 \(E\) 는 모두 같아야 하므로) 어느 쪽이 근소하게 큰지가 부동소수 반올림에 달려 있습니다. 화면 4 의 위젯은 같은 식을 JavaScript 로 계산하는데 앞 34 번은 같은 쌍을 고르다가 그 뒤 쌍이 갈라져 59 번에 끝나지만, 도착한 \(D\) 와 \(b\) 는 같습니다.</p>
+  <p>6장 화면 6 위젯에서 <b>원형 데이터</b>, \(\gamma  = 1\), <code>C = 1</code> 로 맞추면 나오는 <code>D = 4.53924</code>, <code>b = −0.36583</code> 과 같습니다(위젯 표시는 <code>4.5392</code>, <code>−0.366</code>; \(C\) 슬라이더는 처음에 10 이라 1 로 내려야 합니다). 서포트 벡터는 12 점 중 11 개이고(<code>support_</code> 는 0 부터 센 번호라 <code>+ 1</code> 해서 맞췄습니다), 원점에 있는 \(x^{(1)}\) 만 \(\alpha  = 0\) 입니다. \(x^{(2)}\) 의 \(\alpha  = 1 = C\) 인 점은 클리핑으로 상자 끝에 붙은 점이고, 나머지는 모두 \(0 &lt; \alpha  &lt; C\) 라 \(b\) 는 한 값으로 정해집니다. 12 점을 모두 정확히 분류했습니다. 갱신 횟수 67 은 <b>환경에 따라 달라질 수 있는 값</b>입니다. 끝으로 갈수록 후보 점들의 \(E\) 가 거의 같아져서(자유 서포트 벡터의 \(E\) 는 모두 같아야 하므로) 어느 쪽이 근소하게 큰지가 부동소수 반올림에 달려 있습니다.</p>
+
+  <p>화면 4 의 위젯은 같은 식을 JavaScript 로 계산합니다. 처음 34 번은 같은 쌍을 고르지만 그 뒤로는 고르는 쌍이 달라져 59 번 만에 끝납니다. 그래도 \(D\) 와 \(b\) 는 같은 값에 도착합니다.</p>
 
   <h3>scikit-learn 과 같은 답인가</h3>
 
-  <p>같은 문제를 scikit-learn 의 <code>SVC</code> 로 풀어서 서포트 벡터와 \(\alpha \), \(b\) 를 비교합니다. <code>SVC</code> 는 \(\alpha \) 를 <code>dual_coef_</code>(= \(\alpha \odot y\)) 로, 서포트 벡터 번호를 <code>support_</code> 로, \(b\) 를 <code>intercept_</code> 로 알려 줍니다. 여기서는 &ldquo;같은 답이 나오는지 확인&rdquo;만 하고 사용법은 다음 장에서 자세히 봅니다. <span class="later">8장에서 사용법을 본다</span> 먼저 점 3개입니다.</p>
+  <p>같은 문제를 scikit-learn 의 <code>SVC</code> 로 풀어서 서포트 벡터와 \(\alpha \), \(b\) 를 비교합니다. <code>SVC</code> 는 \(\alpha \) 를 <code>dual_coef_</code>(= \(\alpha \odot y\)) 로, 서포트 벡터 번호를 <code>support_</code> 로, \(b\) 를 <code>intercept_</code> 로 알려 줍니다. 여기서는 &ldquo;같은 답이 나오는지 확인&rdquo;만 하고 사용법은 다음 장에서 자세히 봅니다. 먼저 점 3개입니다. <span class="later">8장에서 사용법을 본다</span></p>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>from sklearn.svm import SVC
 s3 = SVC(kernel="linear", C=10).fit(X3, y3)
@@ -589,7 +591,7 @@ print(s3.support_ + 1, s3.dual_coef_, s3.intercept_)
 <pre><span class="cap"># 출력</span><code>[3 1] [[-0.25  0.25]] [-2.]
 </code></pre>
 
-  <p>서포트 벡터가 3번과 1번으로 같습니다(번호가 <code>[3 1]</code> 인 것은 <code>SVC</code> 가 레이블 −1 인 점을 먼저 나열하기 때문입니다). <code>dual_coef_ = α·y</code> 이므로 \((-\tfrac14 , +\tfrac14 )\) 는 \(\alpha  = (\tfrac14 , \tfrac14 )\), \(b = -2\) 도 같습니다. 다음은 12 점입니다. <code>SVC</code> 의 기본 <code>tol</code>(멈춤 허용 오차)은 1e-3 이라 두 값(기본, 우리와 같은 1e-10)으로 돌려 \(\alpha \) 의 최대 차이와 \(b\) 의 차이를 봅니다.</p>
+  <p>서포트 벡터가 3번과 1번으로 같습니다(번호가 <code>[3 1]</code> 인 것은 <code>SVC</code> 가 레이블 −1 인 점을 먼저 나열하기 때문입니다). <code>dual_coef_ = α·y</code> 이므로 \((-\tfrac14 , +\tfrac14 )\) 는 \(\alpha  = (\tfrac14 , \tfrac14 )\), \(b = -2\) 도 같습니다. 다음은 12 점입니다. <code>SVC</code> 의 기본 <code>tol</code>(멈춤 허용 오차)은 1e-3 입니다. <code>tol</code> 을 이 기본값과 우리 구현과 같은 1e-10, 두 가지로 돌려 \(\alpha \) 의 최대 차이와 \(b\) 의 차이를 봅니다.</p>
 
 <pre><span class="cap"># svm.py (이어서)</span><code>for tol in (1e-3, 1e-10):
     s = SVC(kernel="rbf", gamma=1, C=1, tol=tol).fit(X12, y12)
@@ -604,7 +606,7 @@ print(s3.support_ + 1, s3.dual_coef_, s3.intercept_)
 1e-10 [ 2  3  4  5  6  7  8  9 10 11 12] 1.2e-08 2.2e-09
 </code></pre>
 
-  <p>서포트 벡터 집합은 두 경우 모두 우리와 같습니다. 기본 <code>tol</code> 에서는 \(\alpha \) 가 넷째 자리(최대 3.7e-4)에서 다르고, <code>tol = 1e-10</code> 으로 맞추면 1e-8 이하로 일치합니다. 우리 구현이 틀린 것이 아니라 <b>멈춤 기준을 느슨하게 잡은 것의 차이</b>입니다. 길은 다르고(<code>SVC</code> 는 쌍을 고르는 규칙이 이 교재의 것보다 정교합니다) 답이 같습니다.</p>
+  <p>서포트 벡터 집합은 두 경우 모두 우리와 같습니다. 기본 <code>tol</code> 에서는 \(\alpha \) 가 넷째 자리(최대 3.7e-4)에서 다르고, <code>tol = 1e-10</code> 으로 맞추면 1e-8 이하로 일치합니다. 우리 구현이 틀린 것이 아니라, <b><code>SVC</code> 의 기본 멈춤 기준이 더 느슨하기 때문</b>입니다. 과정(<code>SVC</code> 는 쌍을 고르는 규칙이 이 교재의 것보다 정교합니다)은 다르지만 도착하는 답은 같습니다.</p>
 
   <h3>b 가 한 값으로 정해지지 않을 때</h3>
 
@@ -626,17 +628,17 @@ print(SVC(kernel="linear", C=1, tol=1e-10).fit(X4, y4).intercept_)
 [-1.25]
 </code></pre>
 
-  <p>가능한 \(b\) 는 <code>[−2, −½]</code> 전체(5장 화면 4 의 한계 상자에서 구한 구간과 같음)이고, 우리 코드는 가운데 <code>−1.25</code> 를 고릅니다. 이 환경에서 돌린 <code>SVC</code> 도 <code>−1.25</code> 를 냈지만, 이것은 두 구현이 우연히 같은 규칙(구간의 가운데)을 골랐기 때문입니다. 규칙이 다른 구현은 구간 안의 다른 값을 낼 수 있고, 어느 쪽도 틀린 답이 아닙니다. 서포트 벡터와 \(\alpha \) 가 같더라도 이런 경우에는 \(b\) 를 비교하지 말아야 합니다. 그 경우 구간 안에 들어오는지로 확인합니다.</p>
+  <p>가능한 \(b\) 는 <code>[−2, −½]</code> 전체(5장 화면 4 의 한계 상자에서 구한 구간과 같음)이고, 우리 코드는 가운데 <code>−1.25</code> 를 고릅니다. 이 환경에서 돌린 <code>SVC</code> 도 <code>−1.25</code> 를 냈지만, 이것은 두 구현이 우연히 같은 규칙(구간의 가운데)을 골랐기 때문입니다. 규칙이 다른 구현은 구간 안의 다른 값을 낼 수 있고, 어느 쪽도 틀린 답이 아닙니다. 서포트 벡터와 \(\alpha \) 가 같더라도 이런 경우에는 \(b\) 의 값을 서로 비교하지 말고, 구간 안에 들어오는지만 확인합니다.</p>
 
   <div class="box warn">
-    <p class="box-t">이 구현의 한계 — 어디가 &lsquo;간이&rsquo;인가</p>
+    <p class="box-t">이 구현의 한계</p>
     <ul>
       <li><b>메모리 <code>O(n²)</code></b> — 그램 행렬이 \(n \times  n\) 칸이고 칸마다 8 바이트입니다. <code>n = 10,000</code> 이면 \(10^{8}\) 칸으로 약 0.8 GB, <code>n = 100,000</code> 이면 약 80 GB 라 메모리에 올라가지 않습니다. LIBSVM 은 필요한 행만 계산해서 캐시에 두는 방식으로 이 문제를 줄입니다.</li>
       <li><b>반복마다 <code>O(n²)</code></b> — 4행의 <code>K @ (a * y)</code> 로 \(E\) 를 매번 처음부터 구합니다. 두 \(\alpha \) 만 바뀌었으니 \(E\) 의 변화분(<code>O(n)</code>)만 더해 주는 것이 Platt 원전과 LIBSVM 의 방식인데, 이 교재의 코드는 읽기 쉽게 단순화했습니다.</li>
-      <li><b>쌍 고르기가 단순함</b> — 최대 위반 쌍(Keerthi 외 2001 에서 온 규칙)이라 계산은 간단해도 수렴이 느릴 수 있고, LIBSVM 은 2차 정보를 쓰는 더 정교한 규칙(Fan · Chen · Lin 2005)을 씁니다.</li>
-      <li><b><code>tol</code> 과 수치 안정성</b> — 위 비교처럼 <code>tol</code> 에 따라 \(\alpha \) 의 자릿수가 달라집니다. <code>tol</code> 을 부동소수의 반올림 오차(1e-16 근처)보다 작게 잡으면 끝나지 않을 수 있고(이 구현은 <code>max_iter</code> 로 막으며 <code>n_iter_ == max_iter</code> 면 수렴 실패), 너무 크게 잡으면 답이 거칩니다. \(\eta  \approx  0\) 처리와 <code>eps</code> 도 간이입니다.</li>
-      <li><b>입력 가정</b> — 두 레이블(+1, −1)이 모두 있다고 가정합니다. 한쪽만 있으면 <code>violating_pair</code> 가 빈 배열에서 값을 뽑다가 오류를 냅니다. 같은 점이 중복되거나 \(y\) 가 ±1 이 아닌 경우도 처리하지 않습니다.</li>
-      <li><b>정당성 증명 생략</b> — 화면 2 는 한 번의 갱신이 \(D\) 를 줄이지 않는다는 것까지만 보였고, 수렴 증명은 문헌(Platt 1998, Keerthi 외 2001 이후의 수렴 논문들, Fan · Chen · Lin 2005)에 맡겼습니다.</li>
+      <li><b>쌍 고르기가 단순하다</b> — 최대 위반 쌍(Keerthi 외 2001 에서 온 규칙)이라 계산은 간단해도 수렴이 느릴 수 있고, LIBSVM 은 2차 정보를 쓰는 더 정교한 규칙(Fan · Chen · Lin 2005)을 씁니다.</li>
+      <li><b><code>tol</code> 과 수치 안정성</b> — 위 비교처럼 <code>tol</code> 에 따라 \(\alpha \) 가 일치하는 자릿수가 달라집니다. <code>tol</code> 을 부동소수의 반올림 오차(1e-16 근처)보다 작게 잡으면 끝나지 않을 수 있고(이 구현은 <code>max_iter</code> 로 막으며 <code>n_iter_ == max_iter</code> 면 수렴 실패), 너무 크게 잡으면 답의 정밀도가 떨어집니다. \(\eta  \approx  0\) 처리와 <code>eps</code> 도 간단하게 처리했습니다.</li>
+      <li><b>입력 조건</b> — 두 레이블(+1, −1)이 모두 있어야 합니다. 한쪽만 있으면 <code>violating_pair</code> 가 빈 배열에서 값을 뽑다가 오류를 냅니다. 같은 점이 중복되거나 \(y\) 가 ±1 이 아닌 경우도 처리하지 않습니다.</li>
+      <li><b>정당성 증명 생략</b> — 화면 2 는 한 번의 갱신이 \(D\) 를 늘리거나 같게 유지한다는 것까지만 보였고, 수렴 증명은 문헌(Platt 1998, Keerthi 외 2001 이후의 수렴 논문들, Fan · Chen · Lin 2005)을 참고하시기 바랍니다.</li>
     </ul>
   </div>
 </section>
@@ -649,11 +651,11 @@ print(SVC(kernel="linear", C=1, tol=1e-10).fit(X4, y4).intercept_)
   <div class="summary">
     <h3>핵심 요약</h3>
     <ol>
-      <li>풀 문제는 6장의 커널 소프트 마진 쌍대문제입니다. 까다로운 것은 \(\sum \alpha y = 0\) 이라서, 하나만 움직이면 제약이 깨지므로 <b>두 개씩</b> 움직입니다(SMO). 두 개의 합 \(\alpha ^{(i)}y^{(i)} + \alpha ^{(j)}y^{(j)}\) 을 일정하게 두면 \(D\) 가 \(\alpha ^{(j)}\) 하나의 2차함수가 됩니다.</li>
+      <li>풀 문제는 6장의 커널 소프트 마진 쌍대문제입니다. 까다로운 것은 \(\sum \alpha y = 0\) 입니다. 하나만 움직이면 이 제약이 깨지기 때문에 <b>두 개씩</b> 움직입니다(SMO). 두 개의 합 \(\alpha ^{(i)}y^{(i)} + \alpha ^{(j)}y^{(j)}\) 을 일정하게 두면 \(D\) 가 \(\alpha ^{(j)}\) 하나의 2차함수가 됩니다.</li>
       <li>갱신식은 \(\alpha ^{(j)} \leftarrow  \alpha ^{(j)} + y^{(j)}(E^{(i)} - E^{(j)})/\eta \), <code>η = K<sub>ii</sub> + K<sub>jj</sub> − 2K<sub>ij</sub></code> 이고 구간 <code>[L, H]</code> 로 클리핑합니다. \(\alpha ^{(i)}\) 는 합을 유지하며 따라오고, \(b\) 는 \(E\) 의 차에서 사라지므로 끝에 한 번 구합니다.</li>
       <li>쌍은 \(E\) 가 가장 작은 <code>up</code> 점 \(i\) 와 가장 큰 <code>down</code> 점 \(j\)(최대 위반 쌍)로 고르고, 위반 정도 <code>E⁽ʲ⁾ − E⁽ⁱ⁾ &lt; tol</code> 이면 끝냅니다. 코드는 <code>linear_kernel / rbf_kernel</code>, <code>violating_pair</code>, <code>clip_range</code>, <code>bias</code>, <code>smo</code>, <code>SVM</code> 으로 약 70 줄입니다.</li>
       <li>점 3개에서 \(\alpha  = (\tfrac14 , 0, \tfrac14 )\), \(b = -2\), 원형 12 점(RBF \(\gamma  = 1\), <code>C = 1</code>)에서 <code>D = 4.53924</code>, <code>b = −0.36583</code> 이 나왔고 scikit-learn 과 서포트 벡터가 같았습니다. <code>tol</code> 을 같게 하면 \(\alpha \) 가 1e-8 이하로 일치합니다.</li>
-      <li>한계: \(n \times  n\) 행렬의 메모리, 매번 <code>O(n²)</code> 인 \(E\) 계산, 단순한 쌍 선택, <code>tol</code> 에 민감한 수치, 생략한 증명. \(b\) 가 구간이면 구현마다 값이 다를 수 있습니다.</li>
+      <li>한계는 \(n \times  n\) 행렬이 메모리를 많이 쓰고, \(E\) 를 매번 <code>O(n²)</code> 로 계산하고, 쌍 선택이 단순하고, 수치가 <code>tol</code> 에 민감하고, 수렴 증명을 생략했다는 점입니다. \(b\) 가 구간이면 구현마다 값이 다를 수 있습니다.</li>
     </ol>
   </div>
 
@@ -665,7 +667,7 @@ print(SVC(kernel="linear", C=1, tol=1e-10).fit(X4, y4).intercept_)
       <li data-why="맞습니다. Σα⁽ⁱ⁾y⁽ⁱ⁾ = 0 은 모든 α 를 묶고 있어서, 이 제약을 지키는 점에서 하나만 바꾸면 합이 0 이 아니게 됩니다(화면 2 의 0.05). 두 개를 같은 양만큼 반대 방향으로 움직이면 합이 유지됩니다.">Σα⁽ⁱ⁾y⁽ⁱ⁾ = 0 때문에, 하나만 바꾸면 제약이 깨지므로</li>
     </ol>
     <div class="explain">
-      <p>한 가지 더. 이 등식 제약은 모델에 절편 \(b\) 를 넣었기 때문에 생깁니다(4장 화면 3 의 \(\partial L/\partial b = 0\)). \(b\) 가 없는 모델이라면 쌍대문제에 이 제약이 없어서 \(\alpha \) 를 하나씩 올리는 좌표상승이 가능해집니다. 대신 경계가 원점을 지나야 하는 형태가 되어 표현할 수 있는 경계가 달라지므로, 이 교재는 \(b\) 를 둡니다.</p>
+      <p>덧붙이면, 이 등식 제약은 모델에 절편 \(b\) 를 넣었기 때문에 생깁니다(4장 화면 3 의 \(\partial L/\partial b = 0\)). \(b\) 가 없는 모델이라면 쌍대문제에 이 제약이 없어서 \(\alpha \) 를 하나씩 올리는 좌표상승이 가능해집니다. 대신 경계가 원점을 지나야 하는 형태가 되어 표현할 수 있는 경계가 달라지므로, 이 교재는 \(b\) 를 둡니다.</p>
     </div>
   </div>
 
@@ -674,7 +676,7 @@ print(SVC(kernel="linear", C=1, tol=1e-10).fit(X4, y4).intercept_)
     <ol class="options">
       <li data-why="틀렸습니다. t* 를 그대로 쓰면 α⁽ʲ⁾ 가 C 를 넘거나 α⁽ⁱ⁾ 가 음수가 되어 상자 제약 0 ≤ α ≤ C 가 깨집니다. 제약을 어긴 값은 아무리 D 가 커도 답이 아닙니다.">t* 를 그대로 쓴다. 꼭짓점이 D 가 가장 큰 곳이기 때문에</li>
       <li data-why="맞습니다. np.clip 이 t* 를 H 로 자릅니다. D 는 t 의 위로 볼록한 2차함수라 꼭짓점에서 멀어질수록 줄어드니, 구간 [L, H] 안에서 가장 큰 곳은 꼭짓점에 가장 가까운 끝 H 입니다.">H 로 자른다. 위로 볼록한 2차함수는 꼭짓점에서 멀수록 작으므로 구간 안에서는 H 가 가장 크다</li>
-      <li data-why="틀렸습니다. 이 간이 구현은 쌍을 버리지 않고 H 로 잘라서 갱신합니다. 그 갱신도 D 를 줄이지 않는 정당한 갱신입니다. (쌍을 건너뛰는 규칙을 쓰는 구현도 있지만 이 코드의 방식은 아닙니다.)">이 쌍은 건너뛰고 다음으로 위반이 큰 쌍을 고른다</li>
+      <li data-why="틀렸습니다. 이 간이 구현은 쌍을 버리지 않고 H 로 잘라서 갱신합니다. 그 갱신도 D 를 늘리거나 같게 유지하는 정당한 갱신입니다. (쌍을 건너뛰는 규칙을 쓰는 구현도 있지만 이 코드의 방식은 아닙니다.)">이 쌍은 건너뛰고 다음으로 위반이 큰 쌍을 고른다</li>
     </ol>
     <div class="explain">
       <p>클리핑은 &lsquo;구간에 맞추는 편의&rsquo;를 넘어 5장에서 본 \(\alpha  = C\) 인 점(마진 안쪽이나 오분류 점)이 생기는 경로입니다. 12 점 예제에서 \(x^{(2)}\) 의 \(\alpha  = 1 = C\) 가 나온 것도 위젯의 어느 단계에서 클리핑이 일어났기 때문이고, 한번 \(C\) 에 붙은 점도 뒤의 단계에서 다시 내려올 수 있습니다.</p>
@@ -689,17 +691,17 @@ print(SVC(kernel="linear", C=1, tol=1e-10).fit(X4, y4).intercept_)
       <li data-why="틀렸습니다. 이 12 점 예제는 tol 을 줄이면 α 까지 일치했으므로 답이 여러 개여서 생긴 차이가 아닙니다. 해가 여러 개인 경우는 b 가 구간이 되는 것이고, 5장 4점 예에서는 그때도 α 가 같았습니다.">쌍대문제의 해가 여러 개여서 구현마다 다른 해를 고른 것이다</li>
     </ol>
     <div class="explain">
-      <p>서로 다른 점에 RBF 커널을 쓰면 그램 행렬이 양의 정부호(c≠0 이면 ΣΣcᵢcⱼK_ij &gt; 0 인 성질)로 알려져 있어 \(D\) 가 엄밀하게 볼록(오목)이고 \(\alpha \) 가 유일합니다. 반대로 선형 커널은 점이 차원보다 많으면 그램 행렬에 여유가 생겨 \(\alpha \) 마저 유일하지 않을 수 있습니다. 구현끼리 비교할 때 \(b\) 구간 외에도 &lsquo;\(\alpha \) 의 비교 가능성&rsquo;을 따져야 하는 이유입니다.</p>
+      <p>서로 다른 점에 RBF 커널을 쓰면 그램 행렬이 양의 정부호(c≠0 이면 ΣΣcᵢcⱼK_ij &gt; 0 인 성질)로 알려져 있어 \(D\) 가 엄밀하게 오목이고 \(\alpha \) 가 유일합니다. 반대로 선형 커널은 점이 차원보다 많으면 그램 행렬이 특이해져(역행렬이 없어져) \(\alpha \) 마저 유일하지 않을 수 있습니다. 구현끼리 비교할 때 \(b\) 구간 외에도 &lsquo;\(\alpha \) 의 비교 가능성&rsquo;을 따져야 하는 이유입니다.</p>
     </div>
   </div>
 
   <div class="box note">
-    <h3>직접 해보기</h3>
+    <h3>직접 해 보기</h3>
     <p>점 3개에서 첫 쌍을 <b><code>(i, j) = (2, 3)</code></b> 으로 골랐다고 합니다(선형 커널, <code>C = 10</code>, 시작 \(\alpha  = 0\)).</p>
     <ol>
       <li>화면 2 의 방법으로 \(\eta \), 꼭짓점 <code>t*</code>, 갱신된 \(\alpha \) 를 구하세요.</li>
       <li>\(\sum \alpha y = 0\) 이 유지되는지 확인하세요.</li>
-      <li>갱신된 \(\alpha \) 에서 쌍대 목적값 \(D\) 를 손으로 구하고, 4장의 최대값 \(\tfrac14 \) 과 비교하세요. 이 \(\alpha \) 가 답이 아니라고 판단하는 근거를 한 줄로 쓰세요.</li>
+      <li>갱신된 \(\alpha \) 에서 쌍대 목적값 \(D\) 를 손으로 구하고, 4장의 최댓값 \(\tfrac14 \) 과 비교하세요. 이 \(\alpha \) 가 답이 아니라고 판단하는 근거를 한 줄로 쓰세요.</li>
       <li>코드로 1~3 의 \(D\) 값을 확인하세요(<code>X3</code>, <code>y3</code> 를 쓰세요).</li>
     </ol>
   </div>
@@ -724,7 +726,8 @@ print(dual(np.array([0.25, 0, 0.25]), K3, y3))
 0.25
 </code></pre>
 
-      <p><b>흔한 실수 1</b> — <code>(2, 3)</code> 에서 끝났다고 보는 것. 제약이 지켜졌어도(2번) 최댓값이 아닐 수 있습니다. 제약을 지키는 것과 최적인 것은 다릅니다. <b>흔한 실수 2</b> — \(\alpha ^{(2)}\) 를 \(\alpha ^{(2)} + y^{(2)}y^{(3)}(\ldots )\) 로 부호를 바꿔 쓰는 것. 새 \(\alpha ^{(i)}\) 는 \(\alpha ^{(i)} + y^{(i)}y^{(j)}(\alpha ^{(j)} - \text{새} \alpha ^{(j)})\) 이니 \(\alpha ^{(j)}\) 가 오르면 \(y\) 가 다를 때 \(\alpha ^{(i)}\) 도 오르고(예: 지금 \(y^{(2)}y^{(3)} = -1\), \(\alpha ^{(3)}\) 이 0 에서 올랐으니 \(\alpha ^{(2)}\) 도 오름), \(y\) 가 같으면 내립니다. <b>이 교재가 가는 길</b> — 시작 \(\alpha  = 0\) 에서 코드의 쌍 선택은 <code>(1, 3)</code> 을 고르고(\(E\) 가 같으면 번호가 빠른 점), 8장에서는 같은 문제를 scikit-learn 으로 풀며 실제로 쓰는 방법을 봅니다.</p>
+      <p><b>흔한 실수 1</b> — <code>(2, 3)</code> 에서 끝났다고 보는 것. 제약이 지켜졌어도(2번) 최댓값이 아닐 수 있습니다. 제약을 지키는 것과 최적인 것은 다릅니다. <b>흔한 실수 2</b> — 새 \(\alpha ^{(2)}\) 를 구할 때 부호를 반대로 쓰는 것(\(\alpha ^{(2)} - y^{(2)}y^{(3)}(\ldots )\) 처럼). 새 \(\alpha ^{(i)}\) 는 \(\alpha ^{(i)} + y^{(i)}y^{(j)}(\alpha ^{(j)} - \text{새} \alpha ^{(j)})\) 이니 \(\alpha ^{(j)}\) 가 오르면 \(y\) 가 다를 때 \(\alpha ^{(i)}\) 도 오르고(예: 지금 \(y^{(2)}y^{(3)} = -1\), \(\alpha ^{(3)}\) 이 0 에서 올랐으니 \(\alpha ^{(2)}\) 도 오름), \(y\) 가 같으면 내립니다. <b>이 교재의 코드는</b> 시작 \(\alpha  = 0\) 에서 쌍 <code>(1, 3)</code> 을 먼저 고릅니다(\(E\) 가 같으면 번호가 빠른 점).</p>
+      <p>8장에서는 같은 문제를 scikit-learn 으로 풀며 실제로 쓰는 방법을 봅니다.</p>
     </div>
   </details>
 
