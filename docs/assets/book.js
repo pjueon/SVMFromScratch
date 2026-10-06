@@ -23,7 +23,7 @@
     { id: 'ch05', num: '5장', title: '소프트 마진', part: '3부 · 현실로 넓히기', screens: 5, hours: 0.8, ready: true },
     { id: 'ch06', num: '6장', title: '커널 트릭', part: '3부 · 현실로 넓히기', screens: 8, hours: 1.3, ready: true },
     { id: 'ch07', num: '7장', title: '밑바닥부터 구현 (NumPy, SMO)', part: '4부 · 구현과 실전', screens: 6, hours: 1.0, ready: true },
-    { id: 'ch08', num: '8장', title: '실전: scikit-learn 과 SVM 의 자리', part: '4부 · 구현과 실전', screens: 4, hours: 0.7, ready: true }
+    { id: 'ch08', num: '8장', title: '실전: scikit-learn 과 SVM 의 활용', part: '4부 · 구현과 실전', screens: 4, hours: 0.7, ready: true }
   ];
 
   /* ── [교재별 3/5] 용어집 — 툴팁의 원천 ────────────────────────
