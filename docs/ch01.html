@@ -384,13 +384,13 @@
       $('h-wlab').setAttribute('x', -50);
     } else {
       var nx = w1 / nn, ny = w2 / nn, dx = -ny, dy = nx;            // n: w 방향 단위벡터, d: 직선 방향
-      var px = -b * w1 / (nn * nn), py = -b * w2 / (nn * nn);      // 원점에서 직선까지 내린 발
+      var px = -b * w1 / (nn * nn), py = -b * w2 / (nn * nn);      // 원점에서 직선에 내린 수선의 발
       $('h-line').setAttribute('d', 'M' + pt(px - L * dx, py - L * dy) + ' L' + pt(px + L * dx, py + L * dy));
       $('h-pos').setAttribute('points', [pt(px - L * dx, py - L * dy), pt(px + L * dx, py + L * dy),
         pt(px + L * dx + L * nx, py + L * dy + L * ny), pt(px - L * dx + L * nx, py - L * dy + L * ny)].join(' '));
       $('h-neg').setAttribute('points', [pt(px - L * dx, py - L * dy), pt(px + L * dx, py + L * dy),
         pt(px + L * dx - L * nx, py + L * dy - L * ny), pt(px - L * dx - L * nx, py - L * dy - L * ny)].join(' '));
-      // 화살표: 화면 중심 (3,3) 에서 직선에 내린 발에서 시작해 w 방향으로 1.3
+      // 화살표: 화면 중심 (3,3) 에서 직선에 내린 수선의 발에서 시작해 w 방향으로 1.3
       var fc = w1 * 3 + w2 * 3 + b, bx = 3 - fc * w1 / (nn * nn), by = 3 - fc * w2 / (nn * nn);
       var tx = bx + 1.3 * nx, ty = by + 1.3 * ny;
       $('h-arrow').setAttribute('d', 'M' + pt(bx, by) + ' L' + pt(tx - 0.2 * nx, ty - 0.2 * ny));
