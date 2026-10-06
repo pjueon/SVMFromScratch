@@ -627,7 +627,7 @@ print((cal.predict(X) != svc.predict(X)).sum())
   <div class="table-wrap">
     <table>
       <tr><th style="width:8.5rem">장</th><th>핵심 한 줄</th></tr>
-      <tr><td>1장 점들을 가르는 직선</td><td>분류는 \(w\cdot x+b\) 의 부호이고, 가르는 직선은 무수히 많아서 &ldquo;어느 직선이 최선인가&rdquo;가 남는다.</td></tr>
+      <tr><td>1장 점들을 분류하는 직선</td><td>분류는 \(w\cdot x+b\) 의 부호이고, 분류하는 직선은 무수히 많아서 &ldquo;어느 직선이 최선인가&rdquo;가 남는다.</td></tr>
       <tr><td>2장 마진과 하드 마진</td><td>가장 가까운 점까지 거리가 가장 큰 직선: <code>min ½‖w‖²  s.t.  y(w·x+b) ≥ 1</code>, 마진은 \(2/\lVert w\rVert \).</td></tr>
       <tr><td>3장 제약 있는 최적화</td><td>라그랑지안 \(L = J - \lambda g\) 와 KKT 네 줄. 제약이 활성이면 <code>g = 0</code>, 비활성이면 \(\lambda  = 0\).</td></tr>
       <tr><td>4장 쌍대문제</td><td>\(w\), \(b\) 를 지우면 <code>max Σα − ½ΣΣαα yy (x·x)</code>, \(\sum \alpha y = 0\), \(\alpha  \ge  0\). \(\alpha  > 0\) 인 점이 서포트 벡터이고, 점 3개의 답은 \(\alpha  = (\tfrac14 , 0, \tfrac14 )\).</td></tr>
