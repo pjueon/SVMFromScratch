@@ -118,7 +118,7 @@
   <p class="kicker">4장 · 화면 2</p>
   <h2>SVM 의 라그랑지안 세우기</h2>
 
-  <p>지도의 ② 입니다. 3장 화면 3 에서 정한 규약은 이랬습니다. <b>최소화할 식 \(J\), 제약은 \(g \ge  0\) 꼴, 라그랑지안은 \(L = J - \lambda \cdot g\), 그리고 \(\lambda  \ge  0\).</b>
+  <p>지도의 ② 입니다. 3장 화면 3 에서 정한 규약은 이랬습니다. <b>최소화할 식 \(J\), 제약은 \(g \ge  0\) 꼴, 라그랑지안은 \(L = J - \lambda g\), 그리고 \(\lambda  \ge  0\).</b>
   SVM 의 각 부분을 이 규약에 하나씩 맞춰 봅시다.</p>
 
   <div class="table-wrap">
@@ -174,7 +174,7 @@
 
   <div class="box note">
     <p class="box-t">숫자로 감 잡기 — 2장의 답에서 대괄호 값</p>
-    <p>2장의 답 \((w, b) = ((\tfrac12 , \tfrac12 ), -2)\) 에서 세 대괄호의 값은 \(3\cdot \tfrac12  + 3\cdot \tfrac12  - 2 - 1 = 0\), \(4\cdot \tfrac12  + 3\cdot \tfrac12  - 2 - 1 = \tfrac12 \), \(-\tfrac12  - \tfrac12  + 2 - 1 = 0\) 입니다
+    <p>2장의 답 \((w, b) = ((\tfrac12 , \tfrac12 ), -2)\) 에서 세 대괄호의 값은 \(3\times \tfrac12  + 3\times \tfrac12  - 2 - 1 = 0\), \(4\times \tfrac12  + 3\times \tfrac12  - 2 - 1 = \tfrac12 \), \(-\tfrac12  - \tfrac12  + 2 - 1 = 0\) 입니다
     (2장 화면 5 의 함수 마진 1, 1.5, 1 에서 1 을 뺀 값). <b>제약이 딱 맞는 점은 대괄호가 0 이고, 여유 있는 점은 양수</b>입니다. 이 차이가 화면 6 에서 중요해집니다.</p>
   </div>
 
@@ -194,21 +194,21 @@
   <div class="table-wrap">
     <table>
       <tr><th style="width:3rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
-      <tr><td>a</td><td>\(\alpha ^{(i)}[ y^{(i)}(w\cdot x^{(i)} + b) - 1 ] = \alpha ^{(i)}y^{(i)}(w\cdot x^{(i)}) + \alpha ^{(i)}y^{(i)}b - \alpha ^{(i)}\)</td><td>분배법칙입니다. 대괄호 안의 세 덩어리(\(y\cdot w\cdot x\), \(y\cdot b\), \(-1\))에 \(\alpha ^{(i)}\) 를 각각 곱했습니다.</td></tr>
+      <tr><td>a</td><td>\(\alpha ^{(i)}[ y^{(i)}(w\cdot x^{(i)} + b) - 1 ] = \alpha ^{(i)}y^{(i)}(w\cdot x^{(i)}) + \alpha ^{(i)}y^{(i)}b - \alpha ^{(i)}\)</td><td>분배법칙입니다. 대괄호 안의 세 덩어리(\(yw\cdot x\), \(yb\), \(-1\))에 \(\alpha ^{(i)}\) 를 각각 곱했습니다.</td></tr>
       <tr><td>b</td><td>\(\sum _{i} [ A^{(i)} + B^{(i)} + C^{(i)} ] = \sum _{i} A^{(i)} + \sum _{i} B^{(i)} + \sum _{i} C^{(i)}\)</td><td>Σ 는 항을 전부 더하라는 뜻이라 더하는 순서를 바꿔도 됩니다. 점이 3개면 \((A^{(1)}+B^{(1)}+C^{(1)}) + (A^{(2)}+B^{(2)}+C^{(2)}) + (A^{(3)}+B^{(3)}+C^{(3)})\) 을 같은 종류끼리 묶은 것입니다.</td></tr>
-      <tr><td>c</td><td>\(\sum _{i} \alpha ^{(i)}y^{(i)}b = b \cdot  \sum _{i} \alpha ^{(i)}y^{(i)}\)</td><td>\(b\) 는 점 번호 \(i\) 와 상관없는 한 개의 수라서 Σ 밖으로 꺼냅니다 (\(\alpha ^{1}y^{1}b + \alpha ^{2}y^{2}b + \alpha ^{3}y^{3}b = b(\alpha ^{1}y^{1} + \alpha ^{2}y^{2} + \alpha ^{3}y^{3})\)).</td></tr>
-      <tr><td>d</td><td>\(\sum _{i} \alpha ^{(i)}y^{(i)}(w\cdot x^{(i)}) = w \cdot  ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} )\)</td><td>\(w\) 도 \(i\) 와 상관없습니다. 내적의 분배법칙 \(w\cdot u + w\cdot v = w\cdot (u + v)\) 를 점 3개에 적용한 것입니다.</td></tr>
+      <tr><td>c</td><td>\(\sum _{i} \alpha ^{(i)}y^{(i)}b = b\sum _{i} \alpha ^{(i)}y^{(i)}\)</td><td>\(b\) 는 점 번호 \(i\) 와 상관없는 한 개의 수라서 Σ 밖으로 꺼냅니다 (\(\alpha ^{1}y^{1}b + \alpha ^{2}y^{2}b + \alpha ^{3}y^{3}b = b(\alpha ^{1}y^{1} + \alpha ^{2}y^{2} + \alpha ^{3}y^{3})\)).</td></tr>
+      <tr><td>d</td><td>\(\sum _{i} \alpha ^{(i)}y^{(i)}(w\cdot x^{(i)}) = w \cdot  ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} )\)</td><td>\(w\) 도 \(i\) 와 상관없습니다. 내적의 분배법칙 \(w\cdot u + wv = w\cdot (u + v)\) 를 점 3개에 적용한 것입니다.</td></tr>
     </table>
   </div>
 
   <p>세 덩어리를 모으면 \(L\) 은 이렇게 정리됩니다. 이 식에 <b>(★)</b> 표시를 해 두고 화면 4 에서 다시 씁니다.</p>
 
-  <p style="text-align:center">\[(\star ) \;  L = \tfrac12 \lVert w\rVert ^{2} - w \cdot  ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} ) - b \cdot  \sum _{i} \alpha ^{(i)}y^{(i)} + \sum _{i} \alpha ^{(i)}\]</p>
+  <p style="text-align:center">\[(\star ) \;  L = \tfrac12 \lVert w\rVert ^{2} - w \cdot  ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} ) - b\sum _{i} \alpha ^{(i)}y^{(i)} + \sum _{i} \alpha ^{(i)}\]</p>
 
   <h3>2단계 — \(w\) 로 편미분</h3>
 
   <p>\(w = (w_{1}, w_{2})\) 이므로 편미분이 둘입니다. (★) 에서 \(w_{1}\) 이 들어 있는 항은 둘뿐입니다. \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 (w_{1}^{2} + w_{2}^{2})\) 와
-  \(w\cdot (\sum \alpha yx) = w_{1}\cdot (\sum \alpha yx \text{의 첫째 성분}) + w_{2}\cdot (\text{둘째 성분})\) 입니다. 점 \(i\) 의 첫째·둘째 좌표를 \(x_{1}^{(i)}, x_{2}^{(i)}\) 로 쓰면 첫째 성분은 \(\sum _{i} \alpha ^{(i)}y^{(i)}x_{1}^{(i)}\) 입니다.</p>
+  \(w\cdot (\sum \alpha yx) = w_{1}(\sum \alpha yx \text{의 첫째 성분}) + w_{2}(\text{둘째 성분})\) 입니다. 점 \(i\) 의 첫째·둘째 좌표를 \(x_{1}^{(i)}, x_{2}^{(i)}\) 로 쓰면 첫째 성분은 \(\sum _{i} \alpha ^{(i)}y^{(i)}x_{1}^{(i)}\) 입니다.</p>
 
   <div class="table-wrap">
     <table>
@@ -232,7 +232,7 @@
 
   <h3>3단계 — \(b\) 로 편미분</h3>
 
-  <p>(★) 에서 \(b\) 가 들어 있는 항은 \(-b\cdot \sum  \alpha ^{(i)}y^{(i)}\) 하나뿐입니다. 이 항은 \(b\) 에 대한 일차식이라 기울기는 \(b\) 앞의 계수 \(-\sum  \alpha ^{(i)}y^{(i)}\) 입니다.</p>
+  <p>(★) 에서 \(b\) 가 들어 있는 항은 \(-b\sum  \alpha ^{(i)}y^{(i)}\) 하나뿐입니다. 이 항은 \(b\) 에 대한 일차식이라 기울기는 \(b\) 앞의 계수 \(-\sum  \alpha ^{(i)}y^{(i)}\) 입니다.</p>
 
   <div class="box good">
     <p class="box-t">결과 ② — \(\alpha \) 들 사이의 식</p>
@@ -298,9 +298,9 @@
   <div class="table-wrap">
     <table>
       <tr><th style="width:2.2rem">줄</th><th>식</th><th>왜 이렇게 되는지</th></tr>
-      <tr><td>0</td><td>\(L = \tfrac12  w\cdot w - w\cdot ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} ) - b\cdot \sum _{i} \alpha ^{(i)}y^{(i)} + \sum _{i} \alpha ^{(i)}\)</td><td>화면 3 의 (★) 입니다. \(\lVert w\rVert ^{2} = w\cdot w\) 로 썼습니다(1장).</td></tr>
+      <tr><td>0</td><td>\(L = \tfrac12  w\cdot w - w\cdot ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} ) - b\sum _{i} \alpha ^{(i)}y^{(i)} + \sum _{i} \alpha ^{(i)}\)</td><td>화면 3 의 (★) 입니다. \(\lVert w\rVert ^{2} = w\cdot w\) 로 썼습니다(1장).</td></tr>
       <tr><td>1</td><td>\(- w\cdot ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} ) = - w\cdot w\)</td><td>괄호 안이 결과 ① 에 의해 바로 \(w\) 이기 때문입니다.</td></tr>
-      <tr><td>2</td><td>\(- b\cdot \sum _{i} \alpha ^{(i)}y^{(i)} = - b \cdot  0 = 0\)</td><td>결과 ② 에 의해 Σ 가 0 이기 때문입니다. <b>\(b\) 가 사라지는 곳</b>이 여기입니다.</td></tr>
+      <tr><td>2</td><td>\(- b\sum _{i} \alpha ^{(i)}y^{(i)} = - b \times  0 = 0\)</td><td>결과 ② 에 의해 Σ 가 0 이기 때문입니다. <b>\(b\) 가 사라지는 곳</b>이 여기입니다.</td></tr>
       <tr><td>3</td><td>\(L = \tfrac12  w\cdot w - w\cdot w + 0 + \sum _{i} \alpha ^{(i)} = -\tfrac12  w\cdot w + \sum _{i} \alpha ^{(i)}\)</td><td>0 줄에 1·2 줄을 넣었습니다. \(\tfrac12  - 1 = -\tfrac12 \) 입니다. 이제 \(w\) 만 남았습니다.</td></tr>
       <tr><td>4</td><td>\(w\cdot w = ( \sum _{i} \alpha ^{(i)}y^{(i)}x^{(i)} ) \cdot  ( \sum _{j} \alpha ^{(j)}y^{(j)}x^{(j)} ) = \sum _{i}\sum _{j} \alpha ^{(i)}\alpha ^{(j)}y^{(i)}y^{(j)}(x^{(i)}\cdot x^{(j)})\)</td><td>결과 ① 을 \(w\cdot w\) 의 두 \(w\) 에 각각 넣고(번호는 \(i\), \(j\)) 위 격자처럼 9 칸으로 펼쳤습니다. <b>\(w\) 가 사라지는 곳</b>입니다.</td></tr>
       <tr><td>5</td><td>\(L = \sum _{i} \alpha ^{(i)} - \tfrac12  \sum _{i}\sum _{j} \alpha ^{(i)}\alpha ^{(j)}y^{(i)}y^{(j)}(x^{(i)}\cdot x^{(j)})\)</td><td>3 줄의 \(w\cdot w\) 에 4 줄을 넣었습니다. 남은 문자는 \(\alpha , y, x\) 뿐이고 \(w, b\) 는 없습니다.</td></tr>
@@ -323,10 +323,10 @@
       <tr><th>항</th><th>계산</th><th>값</th></tr>
       <tr><td>0 줄 첫 항 \(\tfrac12 \lVert w\rVert ^{2}\)</td><td>\(\tfrac12 (\tfrac14  + \tfrac14 )\)</td><td><b>¼</b></td></tr>
       <tr><td>1 줄 \(- w\cdot w\)</td><td>\(-(\tfrac14  + \tfrac14 )\)</td><td><b>−½</b></td></tr>
-      <tr><td>2 줄 \(- b\cdot \sum \alpha y\)</td><td>\(-b \cdot  0\) (\(b\) 가 무엇이든)</td><td><b>0</b></td></tr>
+      <tr><td>2 줄 \(- b\sum \alpha y\)</td><td>\(-b \times  0\) (\(b\) 가 무엇이든)</td><td><b>0</b></td></tr>
       <tr><td>0 줄 끝 항 \(\sum \alpha \)</td><td>\(\tfrac14  + 0 + \tfrac14 \)</td><td><b>½</b></td></tr>
       <tr><td>합 \(L\)</td><td>\(\tfrac14  - \tfrac12  + 0 + \tfrac12 \)</td><td><b>¼</b></td></tr>
-      <tr><td>5 줄 \(\sum \alpha  - \tfrac12 \sum \sum \)</td><td>\(\alpha ^{(2)} = 0\) 이라 2 행과 2 열의 5 칸이 0 이고 \((1,1)\), \((1,3)\), \((3,1)\), \((3,3)\) 네 칸만 남습니다. 값은 \((1/16)\cdot (18, -6, -6, 2)\), 합 \(\tfrac12 \). 그래서 \(\tfrac12  - \tfrac12 \cdot \tfrac12 \)</td><td><b>¼</b></td></tr>
+      <tr><td>5 줄 \(\sum \alpha  - \tfrac12 \sum \sum \)</td><td>\(\alpha ^{(2)} = 0\) 이라 2 행과 2 열의 5 칸이 0 이고 \((1,1)\), \((1,3)\), \((3,1)\), \((3,3)\) 네 칸만 남습니다. 값은 \((1/16)(18, -6, -6, 2)\), 합 \(\tfrac12 \). 그래서 \(\tfrac12  - \tfrac12 \times \tfrac12 \)</td><td><b>¼</b></td></tr>
     </table>
   </div>
 
@@ -407,7 +407,7 @@
     <p class="box-t">왜 굳이 쌍대로 푸나 — 이유 두 가지</p>
     <ol>
       <li><b>내적만 남는다.</b> 위에서 본 이 모양이 6장의 출발점입니다.</li>
-      <li><b>답에서 \(\alpha \) 가 0 인 점이 대개 많다.</b> 3장의 상보 여유성(\(\alpha \cdot g = 0\))에서 나오는 성질로, 화면 6 에서 근거를 확인합니다.</li>
+      <li><b>답에서 \(\alpha \) 가 0 인 점이 대개 많다.</b> 3장의 상보 여유성(\(\alpha \odot g = 0\), \(\odot\) 는 1장 화면 2 의 원소별 곱)에서 나오는 성질로, 화면 6 에서 근거를 확인합니다.</li>
     </ol>
   </div>
 </section>
@@ -419,7 +419,7 @@
 
   <p>3장 화면 5 의 상보 여유성을 SVM 에 적용합니다. 모든 점 \(i\) 에서 이것이 성립해야 합니다.</p>
 
-  <p style="text-align:center">\[\alpha ^{(i)} \cdot  g^{(i)} = 0 \; \; (g^{(i)} = y^{(i)}(w\cdot x^{(i)} + b) - 1)\]</p>
+  <p style="text-align:center">\[\alpha ^{(i)}g^{(i)} = 0 \; \; (g^{(i)} = y^{(i)}(w\cdot x^{(i)} + b) - 1)\]</p>
 
   <p>\(g^{(i)} = 0\) 은 함수 마진이 정확히 1, 곧 2장 화면 3 의 <b>띠의 가장자리에 점이 닿은 상태</b>이고, \(g^{(i)} > 0\) 은 가장자리에서 떨어져 띠 바깥쪽에 여유 있게 있는 상태입니다.
   곱이 0 이니 둘 중 하나는 0 이어야 합니다.</p>
@@ -745,7 +745,7 @@
 
   <p>화면 4 의 격자 9 칸을 위 값으로 채웁니다. 대각선이 아닌 칸은 두 번씩 나오므로 \(2 \times \) 로 묶습니다. 아래 \(a_{1}, a_{2}, a_{3}\) 는 \(\alpha ^{(1)}, \alpha ^{(2)}, \alpha ^{(3)}\) 의 약식입니다(좌표가 아니라 승수입니다).</p>
 
-  <p style="text-align:center">\[\sum \sum  = 18a_{1}^{2} + 25a_{2}^{2} + 2a_{3}^{2} + 2\cdot 21 a_{1}a_{2} + 2\cdot (-6) a_{1}a_{3} + 2\cdot (-7) a_{2}a_{3}\]</p>
+  <p style="text-align:center">\[\sum \sum  = 18a_{1}^{2} + 25a_{2}^{2} + 2a_{3}^{2} + 2\times 21 a_{1}a_{2} + 2\times (-6) a_{1}a_{3} + 2\times (-7) a_{2}a_{3}\]</p>
 
   <p style="text-align:center">\[D = a_{1} + a_{2} + a_{3} - \tfrac12  ( 18a_{1}^{2} + 25a_{2}^{2} + 2a_{3}^{2} + 42a_{1}a_{2} - 12a_{1}a_{3} - 14a_{2}a_{3} )\]</p>
 
@@ -765,7 +765,7 @@
   <div class="box good">
     <p class="box-t">두 변수로 줄어든 목적식</p>
     <p style="text-align:center;font-size:1.1rem">\(D(a_{1}, a_{2}) = 2a_{1} + 2a_{2} - 4a_{1}^{2} - 10a_{1}a_{2} - 6.5a_{2}^{2}\) &nbsp;&nbsp; (\(a_{1} \ge  0, a_{2} \ge  0\))</p>
-    <p>(\(-\tfrac12 \cdot (8, 20, 13) = -4, -10, -6.5\).)</p>
+    <p>(\(-\tfrac12(8, 20, 13) = -4, -10, -6.5\).)</p>
   </div>
 
   <h3>3단계 — 가장 큰 곳 찾기</h3>
@@ -778,7 +778,7 @@
     <table>
       <tr><th>경우</th><th>풀면</th><th>점검</th><th>판정</th></tr>
       <tr><td>\(a_{1} > 0, a_{2} > 0\) (둘 다 안쪽)</td><td>두 편미분 = 0 → \(8a_{1} + 10a_{2} = 2\), \(10a_{1} + 13a_{2} = 2\). 첫째 ×13, 둘째 ×10 으로 빼면 \(4a_{1} = 6\), \(a_{1} = 3/2\), \(a_{2} = -1\)</td><td>\(a_{2} &lt; 0\) 위반 (이때 \(D = \tfrac12 \) 로 화면 5 의 마지막 줄)</td><td>탈락</td></tr>
-      <tr><td>\(a_{2} = 0\), \(a_{1} > 0\)</td><td>\(\partial D/\partial a_{1} = 2 - 8a_{1} = 0\) → \(a_{1} = \tfrac14 \), \(a_{3} = \tfrac14 \), \(D = \tfrac12  - \tfrac14  = \tfrac14 \)</td><td>\(a_{2}\) 를 0 에서 키우면 어떻게 되나? \(\partial D/\partial a_{2} = 2 - 10\cdot \tfrac14  = -\tfrac12  \le  0\). 키우면 <b>D 가 줄어든다</b> ✓</td><td><b>통과</b></td></tr>
+      <tr><td>\(a_{2} = 0\), \(a_{1} > 0\)</td><td>\(\partial D/\partial a_{1} = 2 - 8a_{1} = 0\) → \(a_{1} = \tfrac14 \), \(a_{3} = \tfrac14 \), \(D = \tfrac12  - \tfrac14  = \tfrac14 \)</td><td>\(a_{2}\) 를 0 에서 키우면 어떻게 되나? \(\partial D/\partial a_{2} = 2 - 10\times \tfrac14  = -\tfrac12  \le  0\). 키우면 <b>D 가 줄어든다</b> ✓</td><td><b>통과</b></td></tr>
       <tr><td>\(a_{1} = 0\), \(a_{2} > 0\)</td><td>\(\partial D/\partial a_{2} = 2 - 13a_{2} = 0\) → \(a_{2} = 2/13\), \(D = 2/13 \approx  0.154\)</td><td>\(\partial D/\partial a_{1} = 2 - 20/13 = 6/13 > 0\). \(a_{1}\) 을 키우면 <b>D 가 늘어난다</b>. 최대가 아님</td><td>탈락</td></tr>
       <tr><td>\(a_{1} = a_{2} = 0\)</td><td>\(\alpha  = (0, 0, 0)\), \(D = 0\)</td><td>두 편미분이 모두 2 &gt; 0, 키우면 \(D\) 가 늘어난다</td><td>탈락</td></tr>
     </table>
@@ -800,21 +800,21 @@
   <div class="table-wrap">
     <table>
       <tr><th>구하는 것</th><th>식</th><th>계산</th></tr>
-      <tr><td>\(w\)</td><td>화면 3 의 결과 ① \(w = \sum \alpha yx\)</td><td>\(\tfrac14 \cdot (+1)\cdot (3, 3) + 0\cdot (4, 3) + \tfrac14 \cdot (-1)\cdot (1, 1) = (\tfrac34 , \tfrac34 ) - (\tfrac14 , \tfrac14 ) = (\tfrac12 , \tfrac12 )\)</td></tr>
-      <tr><td>\(b\) (\(x^{(1)}\) 에서)</td><td>\(\alpha ^{(1)} > 0\) 이므로 \(g^{(1)} = 0\), 곧 \(y^{(1)}(w\cdot x^{(1)} + b) = 1\)</td><td>\((+1)(\tfrac12 \cdot 3 + \tfrac12 \cdot 3 + b) = 1\) → \(3 + b = 1\) → <b>\(b = -2\)</b></td></tr>
-      <tr><td>\(b\) (\(x^{(3)}\) 에서 검산)</td><td>\(\alpha ^{(3)} > 0\) 이므로 \(y^{(3)}(w\cdot x^{(3)} + b) = 1\)</td><td>\((-1)(\tfrac12 \cdot 1 + \tfrac12 \cdot 1 + b) = 1\) → \(-(1 + b) = 1\) → \(b = -2\) ✓ 같은 값</td></tr>
+      <tr><td>\(w\)</td><td>화면 3 의 결과 ① \(w = \sum \alpha yx\)</td><td>\(\tfrac14 \times (+1)(3, 3) + 0(4, 3) + \tfrac14 \times (-1)(1, 1) = (\tfrac34 , \tfrac34 ) - (\tfrac14 , \tfrac14 ) = (\tfrac12 , \tfrac12 )\)</td></tr>
+      <tr><td>\(b\) (\(x^{(1)}\) 에서)</td><td>\(\alpha ^{(1)} > 0\) 이므로 \(g^{(1)} = 0\), 곧 \(y^{(1)}(w\cdot x^{(1)} + b) = 1\)</td><td>\((+1)(\tfrac12 \times 3 + \tfrac12 \times 3 + b) = 1\) → \(3 + b = 1\) → <b>\(b = -2\)</b></td></tr>
+      <tr><td>\(b\) (\(x^{(3)}\) 에서 검산)</td><td>\(\alpha ^{(3)} > 0\) 이므로 \(y^{(3)}(w\cdot x^{(3)} + b) = 1\)</td><td>\((-1)(\tfrac12 \times 1 + \tfrac12 \times 1 + b) = 1\) → \(-(1 + b) = 1\) → \(b = -2\) ✓ 같은 값</td></tr>
     </table>
   </div>
 
   <p>\(b\) 를 서포트 벡터에서 구하는 이유는 \(\alpha  > 0\) 일 때만 상보 여유성에서 <b>등식</b> \(g = 0\) 이 나오기 때문입니다. \(x^{(2)}\) 로는 등식이 나오지 않습니다
-  (\((+1)(\tfrac12 \cdot 4 + \tfrac12 \cdot 3 - 2) = 1.5 \ge  1\), 부등식일 뿐).</p>
+  (\((+1)(\tfrac12 \times 4 + \tfrac12 \times 3 - 2) = 1.5 \ge  1\), 부등식일 뿐).</p>
 
   <div class="box good">
     <p class="box-t">검산 — 세 가지가 모두 맞아떨어집니다</p>
     <ul>
       <li><b>2장의 답과 같다.</b> \(w = (\tfrac12 , \tfrac12 )\), \(b = -2\). 마진 \(2/\lVert w\rVert  = 2/(1/\sqrt{2}) = 2\sqrt{2}\) 도 2장 화면 5 와 같습니다.</li>
       <li><b>쌍대 값 = 원문제 값.</b> \(D = \tfrac14 \), \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 (\tfrac14  + \tfrac14 ) = \tfrac14 \). 화면 5 에서 증명 없이 말한 강쌍대성이 이 문제에서 성립한 것입니다.</li>
-      <li><b>KKT 네 줄.</b> ① 정상성 \(w = \sum \alpha yx\) (위에서 만든 식), ② 원문제 가능성 \(g = (0, \tfrac12 , 0) \ge  0\), ③ 쌍대 가능성 \(\alpha  = (\tfrac14 , 0, \tfrac14 ) \ge  0\), ④ 상보 여유성 \(\alpha \cdot g = (\tfrac14 \cdot 0, 0\cdot \tfrac12 , \tfrac14 \cdot 0) = 0\) — 모두 ✓.</li>
+      <li><b>KKT 네 줄.</b> ① 정상성 \(w = \sum \alpha yx\) (위에서 만든 식), ② 원문제 가능성 \(g = (0, \tfrac12 , 0) \ge  0\), ③ 쌍대 가능성 \(\alpha  = (\tfrac14 , 0, \tfrac14 ) \ge  0\), ④ 상보 여유성 \(\alpha \odot g = (\tfrac14 \times 0, 0\times \tfrac12 , \tfrac14 \times 0) = 0\) — 모두 ✓.</li>
     </ul>
   </div>
 
@@ -858,7 +858,7 @@
       <li data-why="맞습니다. 기존 (w, b) 에서 새 점의 g = 3 − 1 = 2 > 0 이라 제약을 지키고 α⁽⁴⁾ = 0 으로 두면 KKT 네 줄이 그대로 성립합니다. 이 교재의 문제에서는 KKT 를 만족하면 답이므로 답이 안 바뀝니다.">답은 그대로이고 α⁽⁴⁾ = 0 이다</li>
     </ol>
     <div class="explain">
-      <p>반대로 같은 파란 점을 \((2, 2)\) 에 두면 기존 직선에서 \(w\cdot x + b = \tfrac12 \cdot 2 + \tfrac12 \cdot 2 - 2 = 0\) 으로 직선 위에 놓이게 되어 제약 \(y(w\cdot x+b) \ge  1\) 을 지키지 못하므로 답이 달라집니다.
+      <p>반대로 같은 파란 점을 \((2, 2)\) 에 두면 기존 직선에서 \(w\cdot x + b = \tfrac12 \times 2 + \tfrac12 \times 2 - 2 = 0\) 으로 직선 위에 놓이게 되어 제약 \(y(w\cdot x+b) \ge  1\) 을 지키지 못하므로 답이 달라집니다.
       서포트 벡터가 아닌 점이 해를 바꾸려면 <b>띠 안으로 들어와 제약을 어겨야</b> 합니다. 학습 데이터를 모을 때도 &ldquo;경계 가까운 점이 정보를 갖고 있다&rdquo;는 감각의 근거가 이것입니다.</p>
     </div>
   </div>
@@ -891,14 +891,14 @@
   <details class="fold answer">
     <summary>모범답안 — 그리고 흔한 실수가 왜 부족한지</summary>
     <div class="fold-body">
-      <p><b>1.</b> 내적은 \(x^{(1)}\cdot x^{(1)} = 4\), \(x^{(1)}\cdot x^{(2)} = 0\), \(x^{(2)}\cdot x^{(2)} = 0\). 레이블 곱을 하면 \(y^{(1)}y^{(1)}\cdot 4 = 4\), \(y^{(1)}y^{(2)}\cdot 0 = 0\), \(y^{(2)}y^{(2)}\cdot 0 = 0\) 입니다.
-      따라서 \(D = \alpha ^{(1)} + \alpha ^{(2)} - \tfrac12 \cdot 4(\alpha ^{(1)})^{2} = \alpha ^{(1)} + \alpha ^{(2)} - 2(\alpha ^{(1)})^{2}\) 입니다.</p>
+      <p><b>1.</b> 내적은 \(x^{(1)}\cdot x^{(1)} = 4\), \(x^{(1)}\cdot x^{(2)} = 0\), \(x^{(2)}\cdot x^{(2)} = 0\). 레이블 곱을 하면 \(y^{(1)}y^{(1)}\times 4 = 4\), \(y^{(1)}y^{(2)}\times 0 = 0\), \(y^{(2)}y^{(2)}\times 0 = 0\) 입니다.
+      따라서 \(D = \alpha ^{(1)} + \alpha ^{(2)} - \tfrac12 \times 4(\alpha ^{(1)})^{2} = \alpha ^{(1)} + \alpha ^{(2)} - 2(\alpha ^{(1)})^{2}\) 입니다.</p>
       <p><b>2.</b> \(\sum \alpha y = \alpha ^{(1)} - \alpha ^{(2)} = 0\) 에서 \(\alpha ^{(2)} = \alpha ^{(1)} = a\). \(D = 2a - 2a^{2}\), \(dD/da = 2 - 4a = 0\) 에서 \(a = \tfrac12 \) 이고 \(D = 1 - \tfrac12  = \tfrac12 \) 입니다
       (\(a \ge  0\) 의 경계 \(a = 0\) 은 \(D = 0\) 이고 키우면 늘어나므로 최대가 아닙니다). \(\alpha  = (\tfrac12 , \tfrac12 )\).</p>
-      <p><b>3.</b> \(w = \tfrac12 \cdot (+1)\cdot (2, 0) + \tfrac12 \cdot (-1)\cdot (0, 0) = (1, 0)\). \(\alpha ^{(1)} > 0\) 이므로 \(y^{(1)}(w\cdot x^{(1)} + b) = 1\), 곧 \(2 + b = 1\), \(b = -1\). 검산: \(x^{(2)}\) 에서 \(-(0 + b) = 1\), \(b = -1\) ✓.
+      <p><b>3.</b> \(w = \tfrac12 \times (+1)(2, 0) + \tfrac12 \times (-1)(0, 0) = (1, 0)\). \(\alpha ^{(1)} > 0\) 이므로 \(y^{(1)}(w\cdot x^{(1)} + b) = 1\), 곧 \(2 + b = 1\), \(b = -1\). 검산: \(x^{(2)}\) 에서 \(-(0 + b) = 1\), \(b = -1\) ✓.
       직선은 \(x_{1} = 1\) 로 두 점의 한가운데이고 마진은 \(2/\lVert w\rVert  = 2\) 입니다.</p>
-      <p><b>4.</b> \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 \cdot 1 = \tfrac12 \), \(D = \tfrac12 \) 로 같습니다.</p>
-      <p><b>5.</b> \(g^{(3)} = y(w\cdot x + b) - 1 = (1\cdot 3 - 1) - 1 = 1 > 0\) 이므로 띠 바깥이고 \(\alpha ^{(3)} = 0\), 서포트 벡터가 아닙니다. 답은 그대로 \(w = (1, 0)\), \(b = -1\) 입니다.</p>
+      <p><b>4.</b> \(\tfrac12 \lVert w\rVert ^{2} = \tfrac12 \times 1 = \tfrac12 \), \(D = \tfrac12 \) 로 같습니다.</p>
+      <p><b>5.</b> \(g^{(3)} = y(w\cdot x + b) - 1 = (1\times 3 - 1) - 1 = 1 > 0\) 이므로 띠 바깥이고 \(\alpha ^{(3)} = 0\), 서포트 벡터가 아닙니다. 답은 그대로 \(w = (1, 0)\), \(b = -1\) 입니다.</p>
       <p><b>흔한 실수 1</b> — 2번에서 \(a_{1}, a_{2}\) 를 따로 최대화하기. \(D = \alpha ^{(1)} + \alpha ^{(2)} - 2(\alpha ^{(1)})^{2}\) 에서 \(\alpha ^{(2)}\) 를 한없이 키우면 \(D\) 도 한없이 커지는 것처럼 보이지만, \(\sum \alpha y = 0\) 이라는 조건이 둘을 묶습니다. 쌍대문제는 목적식만이 아니라 <b>제약까지 합쳐</b> 하나의 문제입니다.</p>
       <p><b>흔한 실수 2</b> — \(b\) 를 \(\sum \alpha y = 0\) 에서 구하려 하기. 그 식에는 \(b\) 가 없습니다. \(b\) 는 \(\alpha  > 0\) 인 점의 등식 \(y(w\cdot x+b) = 1\) 에서 구합니다. \(\alpha  = 0\) 인 점에서는 부등식만 나와서 \(b\) 를 정할 수 없습니다.</p>
       <p><b>흔한 실수 3</b> — 답 \(\alpha \) 가 양수인지 확인하지 않기. 편미분 = 0 으로 구한 점이 \(\alpha  &lt; 0\) 이면 가능해가 아닙니다(화면 7 의 \((3/2, -1)\)).</p>

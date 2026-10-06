@@ -55,7 +55,7 @@
   <p>2장의 \(\tfrac12 \lVert w\rVert ^{2}\) 를 좌표로 풀어 쓰면 \(\lVert w\rVert ^{2} = w_{1}^{2} + w_{2}^{2}\) 이므로,</p>
   <p style="text-align:center">\[J(w_{1}, w_{2}) = \tfrac12 (w_{1}^{2} + w_{2}^{2})\]</p>
   <p>점 \((w_{1}, w_{2}) = (3, 1)\) 에서 시작해 봅시다. \(w_{2}\) 를 1 로 얼리면 남는 것은 \(J = \tfrac12 w_{1}^{2} + \tfrac12 \) 입니다
-  (얼린 \(w_{2}\) 부분 \(\tfrac12 \cdot 1^{2} = \tfrac12 \) 은 그냥 숫자입니다). 이 함수를 \(w_{1}\) 로 보았을 때의 기울기는 \(w_{1} = 3\) 입니다.
+  (얼린 \(w_{2}\) 부분 \(\tfrac12 \times 1^{2} = \tfrac12 \) 은 그냥 숫자입니다). 이 함수를 \(w_{1}\) 로 보았을 때의 기울기는 \(w_{1} = 3\) 입니다.
   \(w_{1}\) 을 0.01 늘려 확인하면 \(J(3, 1) = 5\) 가 \(J(3.01, 1) = 5.03005\) 로 변해 늘어난 양 0.03005 를 0.01 로 나누면 약 3.005 입니다.
   3 에 가깝습니다. 이 값을 \(w_{1}\) 에 대한 편미분이라 부릅니다.</p>
 
@@ -98,7 +98,7 @@
 
   <p>이 벡터의 뜻은 이렇습니다. 점에서 작은 걸음 \(\delta  = (\delta _{1}, \delta _{2})\) 만큼 움직이면 \(J\) 는 대략
   \(\nabla J\cdot \delta  = 3\delta _{1} + 1\delta _{2}\) 만큼 변합니다(1장의 내적입니다). 확인해 봅시다. \(\delta  = (0.01, 0.01)\) 이면 예측은
-  \(3\cdot 0.01 + 1\cdot 0.01 = 0.04\) 이고, 실제로는 \(J(3.01, 1.01) - J(3, 1) = 5.0401 - 5 = 0.0401\) 입니다. 같은 길이만큼 걸을 때 내적은
+  \(3\times 0.01 + 1\times 0.01 = 0.04\) 이고, 실제로는 \(J(3.01, 1.01) - J(3, 1) = 5.0401 - 5 = 0.0401\) 입니다. 같은 길이만큼 걸을 때 내적은
   \(\delta \) 가 \(\nabla J\) 와 같은 방향일 때 가장 크므로, <b>\(\nabla J\) 는 값이 가장 빨리 오르는 방향</b>이고 그 반대가 가장 빨리 내리는 방향입니다.</p>
 
   <h2>제약이 없다면 — ∇J = 0</h2>
@@ -210,7 +210,7 @@
 
   <div class="table-wrap">
     <table>
-      <tr><th>현재 점 \((w_{1}, w_{2}) = (t, 1-t)\)</th><th>\(J = \tfrac12 (w_{1}^{2}+w_{2}^{2})\)</th><th>\(\nabla J = (w_{1}, w_{2})\)</th><th>평행한가? \(w_{1}\cdot 1 - w_{2}\cdot 1\)</th></tr>
+      <tr><th>현재 점 \((w_{1}, w_{2}) = (t, 1-t)\)</th><th>\(J = \tfrac12 (w_{1}^{2}+w_{2}^{2})\)</th><th>\(\nabla J = (w_{1}, w_{2})\)</th><th>평행한가? \(w_{1}\times 1 - w_{2}\times 1\)</th></tr>
       <tr><td id="t-p" style="font-weight:700"></td><td id="t-j" style="font-weight:700"></td><td id="t-g" style="font-weight:700"></td><td id="t-x" style="font-weight:700"></td></tr>
     </table>
   </div>
@@ -305,7 +305,7 @@
 
   <div class="box good">
     <p class="box-t">정의 — 라그랑지안과 라그랑주 승수</p>
-    <p style="text-align:center;font-size:1.1rem">\[L(w_{1}, w_{2}, \lambda ) = J(w_{1}, w_{2}) - \lambda  \cdot  h(w_{1}, w_{2})\]</p>
+    <p style="text-align:center;font-size:1.1rem">\[L(w_{1}, w_{2}, \lambda ) = J(w_{1}, w_{2}) - \lambda h(w_{1}, w_{2})\]</p>
     <ul>
       <li>\(L\) — <span class="term" data-term="lagrangian">라그랑지안</span>. 목적함수와 제약을 한 함수로 묶은 것입니다.</li>
       <li>\(\lambda \) — <b>라그랑주 승수</b>. 제약식 \(h\) 에 곱해 주는 수이며, 이 값도 \(w_{1}, w_{2}\) 처럼 풀어서 찾아야 하는 미지수입니다.</li>
@@ -326,8 +326,8 @@
   <div class="table-wrap">
     <table>
       <tr><th>편미분 = 0</th><th>계산</th><th>뜻</th></tr>
-      <tr><td>\(\partial L/\partial w_{1} = 0\)</td><td>\(w_{1} - \lambda \cdot 1 = 0\) → \(w_{1} = \lambda \)</td><td>∇J 의 첫째 성분 = λ × (∇h 의 첫째 성분)</td></tr>
-      <tr><td>\(\partial L/\partial w_{2} = 0\)</td><td>\(w_{2} - \lambda \cdot 1 = 0\) → \(w_{2} = \lambda \)</td><td>∇J 의 둘째 성분 = λ × (∇h 의 둘째 성분)</td></tr>
+      <tr><td>\(\partial L/\partial w_{1} = 0\)</td><td>\(w_{1} - \lambda \times 1 = 0\) → \(w_{1} = \lambda \)</td><td>∇J 의 첫째 성분 = λ × (∇h 의 첫째 성분)</td></tr>
+      <tr><td>\(\partial L/\partial w_{2} = 0\)</td><td>\(w_{2} - \lambda \times 1 = 0\) → \(w_{2} = \lambda \)</td><td>∇J 의 둘째 성분 = λ × (∇h 의 둘째 성분)</td></tr>
       <tr><td>\(\partial L/\partial \lambda  = 0\)</td><td>\(-(w_{1} + w_{2} - 1) = 0\) → \(w_{1} + w_{2} = 1\)</td><td>제약 \(h = 0\) 이 그대로 되살아남</td></tr>
     </table>
   </div>
@@ -357,7 +357,7 @@
   <h3>\(\lambda \) 는 무엇인가</h3>
 
   <p>\(\lambda  = \tfrac12 \) 은 계산 도중의 부산물처럼 보이지만 뜻이 있습니다. 제약을 \(w_{1} + w_{2} = c\) 로 바꾸고 같은 방법으로 풀면
-  \(w_{1} = w_{2} = \lambda \), \(2\lambda  = c\) 이니 \(\lambda  = c/2\), 최솟값은 \(J = \tfrac12 \cdot 2\cdot (c/2)^{2} = c^{2}/4\) 입니다.
+  \(w_{1} = w_{2} = \lambda \), \(2\lambda  = c\) 이니 \(\lambda  = c/2\), 최솟값은 \(J = \tfrac12 \times 2\times (c/2)^{2} = c^{2}/4\) 입니다.
   \(c = 1\) 에서 \(c\) 를 조금 올렸을 때 최솟값이 늘어나는 비율은 \(c^{2}/4\) 의 기울기 \(c/2 = \tfrac12 \) 로 \(\lambda \) 와 같습니다.
   <b>\(\lambda \) 는 &ldquo;제약을 한 단위 조일 때 목적함수가 얼마나 손해를 보는가&rdquo;</b>, 곧 제약이 얼마나 세게 답을 밀고 있는가의 크기입니다.</p>
 
@@ -379,7 +379,7 @@
 
   <p>제약을 부등식으로 바꿉니다. 이 교재는 부등식을 항상 <b>&ldquo;식 ≥ 0&rdquo; 꼴</b>로 씁니다. 2장의 \(y(w\cdot x+b) \ge  1\) 도 1 을 넘겨
   \(y(w\cdot x+b) - 1 \ge  0\) 으로 쓰면 이 꼴입니다. 그 왼쪽 식을 \(g\) 라 두고 라그랑지안은 같은 방식으로
-  \(L = J - \lambda \cdot g\) 로 씁니다.</p>
+  \(L = J - \lambda g\) 로 씁니다.</p>
 
   <h3>예 A — 제약이 경계에서 힘을 쓴다</h3>
 
@@ -475,10 +475,10 @@
     <div class="table-wrap">
       <table>
         <tr><th>이름</th><th>식</th><th>읽는 법</th><th>예 A 로 확인</th></tr>
-        <tr><td>① <span class="term" data-term="stationarity">정상성</span></td><td>\(\nabla _{w}L = 0\), 곧 \(\nabla J = \lambda _{1}\nabla g_{1} + \ldots  + \lambda _{m}\nabla g_{m}\)</td><td>\(w\) 로 편미분한 것이 0 (λ 는 숫자로 봄). 욕심 \(\nabla J\) 와 제약이 미는 힘이 맞섬</td><td>\((\tfrac12 , \tfrac12 ) = \tfrac12 \cdot (1, 1)\) ✓</td></tr>
+        <tr><td>① <span class="term" data-term="stationarity">정상성</span></td><td>\(\nabla _{w}L = 0\), 곧 \(\nabla J = \lambda _{1}\nabla g_{1} + \ldots  + \lambda _{m}\nabla g_{m}\)</td><td>\(w\) 로 편미분한 것이 0 (λ 는 숫자로 봄). 욕심 \(\nabla J\) 와 제약이 미는 힘이 맞섬</td><td>\((\tfrac12 , \tfrac12 ) = \tfrac12(1, 1)\) ✓</td></tr>
         <tr><td>② <span class="term" data-term="primalfeas">원문제 가능성</span></td><td>\(g_{i}(w) \ge  0\)</td><td>답은 모든 제약을 지켜야 한다</td><td>\(g = \tfrac12 +\tfrac12 -1 = 0 \ge  0\) ✓</td></tr>
         <tr><td>③ <span class="term" data-term="dualfeas">쌍대 가능성</span></td><td>\(\lambda _{i} \ge  0\)</td><td>승수는 음수가 될 수 없다 (벽은 당길 수 없다)</td><td>\(\tfrac12  \ge  0\) ✓</td></tr>
-        <tr><td>④ <span class="term" data-term="compslack">상보 여유성</span></td><td>\(\lambda _{i} \cdot  g_{i}(w) = 0\)</td><td>각 제약마다 <b>λ 와 g 둘 중 하나는 반드시 0</b></td><td>\(\tfrac12  \cdot  0 = 0\) ✓</td></tr>
+        <tr><td>④ <span class="term" data-term="compslack">상보 여유성</span></td><td>\(\lambda _{i}g_{i}(w) = 0\)</td><td>각 제약마다 <b>λ 와 g 둘 중 하나는 반드시 0</b></td><td>\(\tfrac12  \times  0 = 0\) ✓</td></tr>
       </table>
     </div>
   </div>
@@ -540,7 +540,7 @@
       <li>편미분 \(\partial J/\partial w_{1}\) 은 다른 변수를 얼려 두고 한 변수만 움직일 때의 기울기이고, 모으면 기울기 벡터 \(\nabla J\) 입니다. 제약이 없으면 그릇 모양 함수의 바닥은 \(\nabla J = 0\) 입니다.</li>
       <li>등식 제약 \(h = 0\) 아래의 최소점은 등고선과 제약선이 접하는 곳이고, 거기서 \(\nabla J = \lambda \nabla h\) 입니다. 라그랑지안 \(L = J - \lambda h\) 의 편미분을 모두 0 으로 놓아 푸는 것이 라그랑주 승수법입니다.</li>
       <li>부등식 제약 \(g \ge  0\) 은 답에서 활성(\(g = 0\))이거나 비활성(\(g > 0\), 이때 \(\lambda  = 0\))이고, 부등식의 승수는 \(\lambda  \ge  0\) 입니다.</li>
-      <li>KKT 조건 네 줄: ① 정상성 \(\nabla _{w}L = 0\), ② 원문제 가능성 \(g \ge  0\), ③ 쌍대 가능성 \(\lambda  \ge  0\), ④ 상보 여유성 \(\lambda \cdot g = 0\). 이 교재의 문제(그릇 모양 + 직선 제약)에서는 이 네 줄을 만족하는 점이 곧 답입니다.</li>
+      <li>KKT 조건 네 줄: ① 정상성 \(\nabla _{w}L = 0\), ② 원문제 가능성 \(g \ge  0\), ③ 쌍대 가능성 \(\lambda  \ge  0\), ④ 상보 여유성 \(\lambda g = 0\). 이 교재의 문제(그릇 모양 + 직선 제약)에서는 이 네 줄을 만족하는 점이 곧 답입니다.</li>
     </ol>
   </div>
 
@@ -598,11 +598,11 @@
     <summary>모범답안 — 그리고 흔한 실수가 왜 부족한지</summary>
     <div class="fold-body">
       <p><b>1.</b> \(\partial L/\partial w_{1} = w_{1} - \lambda  = 0\), \(\partial L/\partial w_{2} = w_{2} - 2\lambda  = 0\), \(\partial L/\partial \lambda  = -(w_{1} + 2w_{2} - 5) = 0\). 앞의 둘에서 \(w_{1} = \lambda \), \(w_{2} = 2\lambda \) 이고 셋째에 넣으면
-      \(\lambda  + 4\lambda  = 5\), \(\lambda  = 1\) 입니다. 따라서 \(w = (1, 2)\), \(J = \tfrac12 (1 + 4) = 2.5\) 입니다. 검산: \(1 + 2\cdot 2 = 5\) ✓, \(\nabla J = (1, 2) = 1\cdot (1, 2) = \lambda \nabla h\) ✓.</p>
+      \(\lambda  + 4\lambda  = 5\), \(\lambda  = 1\) 입니다. 따라서 \(w = (1, 2)\), \(J = \tfrac12 (1 + 4) = 2.5\) 입니다. 검산: \(1 + 2\times 2 = 5\) ✓, \(\nabla J = (1, 2) = 1(1, 2) = \lambda \nabla h\) ✓.</p>
       <p><b>2.</b> 비활성(\(\lambda  = 0\))이라 가정하면 \(w = (0, 0)\) 인데 \(g = -5 &lt; 0\) 이라 탈락합니다. 활성(\(g = 0\))이라 가정하면 1번과 같은 \(w = (1, 2)\), \(\lambda  = 1 \ge  0\) 으로 통과하므로 답이 같습니다.</p>
       <p><b>3.</b> 비활성이라 가정하면 \(w = (0, 0)\), \(g = 5 \ge  0\) 으로 통과하고 \(J = 0\) 입니다. 활성이라 가정하면 \(w_{1} = \lambda \), \(w_{2} = 2\lambda \), \(5\lambda  = -5\) 에서 \(\lambda  = -1 &lt; 0\) 이라 탈락합니다.
       답은 \(w = (0, 0)\) 이고 이 제약은 비활성(\(\lambda  = 0\))입니다.</p>
-      <p><b>4.</b> \(w = (1, 2)\), \(\lambda  = 1\): ① \(\nabla J = (1, 2) = 1\cdot \nabla g = 1\cdot (1, 2)\) ✓, ② \(g = 1 + 4 - 5 = 0 \ge  0\) ✓, ③ \(\lambda  = 1 \ge  0\) ✓, ④ \(\lambda \cdot g = 1\cdot 0 = 0\) ✓.</p>
+      <p><b>4.</b> \(w = (1, 2)\), \(\lambda  = 1\): ① \(\nabla J = (1, 2) = 1\nabla g = 1(1, 2)\) ✓, ② \(g = 1 + 4 - 5 = 0 \ge  0\) ✓, ③ \(\lambda  = 1 \ge  0\) ✓, ④ \(\lambda g = 1\times 0 = 0\) ✓.</p>
       <p><b>덧붙임</b> — 제약을 \(w_{1} + 2w_{2} = c\) 로 두고 풀면 \(w = (c/5, 2c/5)\), 최솟값 \(J = c^{2}/10\) 이고 \(c = 5\) 에서 기울기 \(c/5 = 1\) 이 \(\lambda \) 와 같습니다.</p>
       <p><b>흔한 실수 1</b> — 부등식 문제를 풀 때 활성이라고만 가정하고 \(\lambda \) 의 부호를 확인하지 않기. 3번에서 활성으로만 풀면 \(w = (-1, -2)\) 가 나오지만 \(\lambda  = -1\) 이라 답이 아닙니다(실제 \(J = 2.5\) 로 원점의 0 보다 큽니다).</p>
       <p><b>흔한 실수 2</b> — 라그랑지안에서 \(\lambda \) 로 편미분하는 것을 빼먹기. 그러면 제약식이 식에서 빠져 \(w_{1} = \lambda \), \(w_{2} = 2\lambda \) 만 남고 미지수를 정할 수 없습니다.</p>
