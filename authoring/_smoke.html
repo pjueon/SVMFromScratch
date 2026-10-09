@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>smoke — 런타임 점검</title>
+<link rel="stylesheet" href="../docs/assets/katex/katex.min.css">
 <link rel="stylesheet" href="../docs/assets/book.css">
 </head>
 <body>
@@ -10,6 +11,13 @@
   <section class="screen" data-title="첫 페이지">
     <h1>첫 페이지</h1>
     <p>점선 용어 <span class="term" data-term="_smoke">용어</span> 확인. 참조는 페이지 2, 코드 안 <code>페이지 3</code>은 그대로.</p>
+    <div id="m-ok">
+      <p>수식: \(x^{(1)} = (3, 3)\), \(\lVert a\rVert &lt; \sqrt{2}\), \(\text{모든 } i\).</p>
+      <p style="text-align:center">\[\sum_{i=1}^{n} \alpha^{(i)} y^{(i)} = 0\]</p>
+    </div>
+    <p id="m-bad">일부러 틀린 식: \(\undefinedcmd\)</p>
+    <p id="m-raw">중괄호가 안 닫힌 식: \(\frac{1\)</p>
+    <p id="m-code">코드 안은 그대로: <code>\(x\)</code></p>
 <pre><span class="cap"># cap.py</span><code>def place(self, x: int) -&gt; None:
     # 주석 "가짜문자열" 아님
     if x &lt; 3000:
@@ -35,8 +43,39 @@
     </div>
   </section>
 </div></main>
+<script src="../docs/assets/katex/katex.min.js"></script>
+<script src="../docs/assets/katex/auto-render.min.js"></script>
+<script src="../docs/assets/math.js"></script>
 <script src="../docs/assets/book.js"></script>
 <script>
+/* shared/quiz.smoke.js 의 사본 — 고치면 양쪽 */
+function quizSmoke(ok, quiz) {
+  var opts = quiz.querySelectorAll('ol.options > li');
+  var answer = parseInt(quiz.dataset.answer, 10);
+  var qn = quiz.querySelector('.qn');
+  ok('퀴즈 정답 번호가 선택지 범위 안', answer >= 1 && answer <= opts.length, 'answer=' + quiz.dataset.answer + ' / li=' + opts.length);
+  ok('퀴즈 번호(.qn) 존재', !!qn && qn.textContent.length > 0);
+  var whyOk = true, keyOk = true;
+  Array.prototype.forEach.call(opts, function (li) {
+    var why = li.querySelector('.why');
+    if (!li.dataset.why || !why || why.textContent !== li.dataset.why) whyOk = false;
+    if (li.getAttribute('tabindex') !== '0' || li.getAttribute('role') !== 'button') keyOk = false;
+  });
+  ok('모든 선택지에 해설 주입', whyOk);
+  ok('선택지 키보드 조작 가능', keyOk);
+  if (!(answer >= 1 && answer <= opts.length)) return;
+
+  var wrong = answer === 1 ? 1 : 0;   // 정답이 아닌 첫 선택지(0-기반)
+  opts[wrong].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  ok('틀린 선택 표시', opts[wrong].classList.contains('pick-bad'));
+  ok('정답도 함께 표시', opts[answer - 1].classList.contains('pick-good'));
+  ok('해설 공개', quiz.classList.contains('done'));
+  var before = Array.prototype.map.call(opts, function (li) { return li.className; }).join('|');
+  Array.prototype.forEach.call(opts, function (li) { li.click(); });
+  var after = Array.prototype.map.call(opts, function (li) { return li.className; }).join('|');
+  ok('채점 후 재선택 무시', before === after, before + ' → ' + after);
+}
+
 window.addEventListener('load', function () {
   var out = [];
   function ok(name, cond, extra) { out.push((cond ? 'PASS ' : 'FAIL ') + name + (extra ? ' :: ' + extra : '')); }
@@ -113,18 +152,18 @@ window.addEventListener('load', function () {
   ok('→ 키로 이동', screens[2].classList.contains('is-active'));
   ok('마지막 페이지에서 다음은 다음 장 또는 비활성', nav.querySelector('#next').disabled || nav.querySelector('#next').textContent !== '다음 →', nav.querySelector('#next').textContent + ' / disabled=' + nav.querySelector('#next').disabled);
 
-  // 퀴즈 (틀린 답 선택)
-  var quiz = document.querySelector('.quiz');
-  var opts = quiz.querySelectorAll('ol.options > li');
-  ok('퀴즈 번호 자동 부여', quiz.querySelector('.qn').textContent === '퀴즈 1', quiz.querySelector('.qn').textContent);
-  ok('선택지 해설 주입', opts[0].querySelector('.why').textContent === '틀린 이유');
-  ok('선택지 키보드 조작 가능', opts[0].getAttribute('tabindex') === '0' && opts[0].getAttribute('role') === 'button');
-  opts[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-  ok('틀린 선택 표시', opts[0].classList.contains('pick-bad'));
-  ok('정답도 함께 표시', opts[1].classList.contains('pick-good'));
-  ok('해설 공개', quiz.classList.contains('done'));
-  opts[1].click();
-  ok('채점 후 재선택 무시', !opts[1].classList.contains('picked') || opts[1].classList.contains('pick-good'));
+  // 퀴즈 — shared/quiz.smoke.js 의 quizSmoke 사본(틀린 답 선택 → 채점 → 재선택 무시)
+  quizSmoke(ok, document.querySelector('.quiz'));
+
+  // 수식 (KaTeX) — 오류는 .katex-error(구문 오류) 또는 빨간 글자(정의되지 않은 명령)로 나타난다
+  var KATEX_ERR = '.katex-error, .katex-html [style*="rgb(204, 0, 0)"]';
+  var mok = document.getElementById('m-ok');
+  ok('인라인 수식 렌더', mok.querySelectorAll('.katex').length >= 4, mok.querySelectorAll('.katex').length + '개');
+  ok('별행 수식 렌더', mok.querySelectorAll('.katex-display').length === 1);
+  ok('정상 수식에 오류 없음', mok.querySelectorAll(KATEX_ERR).length === 0);
+  ok('틀린 식을 오류로 잡음(점검 자체가 동작)', document.querySelectorAll('#m-bad .katex-error, #m-bad .katex-html [style*="rgb(204, 0, 0)"]').length >= 1);
+  ok('중괄호 불일치는 렌더되지 않고 원문으로 남음(rawMath 점검 대상)', document.querySelectorAll('#m-raw .katex').length === 0 && document.getElementById('m-raw').textContent.indexOf('\\(') >= 0);
+  ok('code 안의 \\( 는 렌더하지 않음', document.querySelectorAll('#m-code .katex').length === 0 && document.querySelector('#m-code code').textContent === '\\(x\\)');
 
   var box = document.createElement('pre');
   box.id = 'test-out';
